@@ -30,6 +30,11 @@ window.UILayoutManager = {
     // Create Ancient Terminals window
     this.createAncientTerminalsWindow();
     
+    // Create Character Status Panel
+    if (window.CharacterStatusPanel) {
+      CharacterStatusPanel.initialize(gameEngine);
+    }
+    
     // Create 2D Engine window (initially hidden)
     this.createEngineWindow();
     

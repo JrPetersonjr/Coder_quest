@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DICE_SYSTEM_INTEGRATION</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0e27;
+            color: #00ff41;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #00ffff;
+            border-bottom: 1px solid #00ffff33;
+            padding-bottom: 0.3em;
+        }
+        code {
+            background: #1a1e3a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #ff00ff;
+        }
+        pre {
+            background: #1a1e3a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid #00ffff;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #00ff41;
+        }
+        a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        blockquote {
+            border-left: 4px solid #00ffff;
+            padding-left: 20px;
+            margin-left: 0;
+            color: #00ffff99;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #00ffff33;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #1a1e3a;
+            color: #00ffff;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #00ffff33;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <pre># DICE SYSTEM - Complete Integration Guide
+
+**Version:** Enhanced for AI DM + Modifiers + Expansion Templates  
+**Date:** January 19, 2026  
+**Status:** Ready for integration
+
+---
+
+## &#128203; SYSTEM OVERVIEW
+
+The enhanced DiceSystem now supports:
+
+1. **Character Modifiers** - Stored on character objects (level, class, equipment, buffs, debuffs)
+2. **AI DM Decision Flow** - AI silently calculates, determines roll type, player rolls, outcome resolves
+3. **Dynamic Outcomes** - High/mid/low roll branches with scaling
+4. **Percentage Calculations** - For HP restoration, damage as % of target, etc
+5. **Template Saving** - Store encounters as expansion cards for offline processing
+
+---
+
+## &#127922; USAGE PATTERNS
+
+### Pattern 1: Combat with Modifiers
+
+```javascript
+// Setup characters with modifiers
+const player = {
+  name: &quot;Technomancer&quot;,
+  level: 5,
+  classBonus: { attack: 2, defense: 1, spell: 3 },
+  equipment: { attack: 1, defense: 2 },
+  activeBuffs: [
+    { type: &quot;attack&quot;, value: 2, name: &quot;Haste&quot; },
+    { type: &quot;all&quot;, value: 1, name: &quot;Blessing&quot; }
+  ],
+  activeDebuffs: [
+    { type: &quot;defense&quot;, value: 1, name: &quot;Curse&quot; }
+  ]
+};
+
+const enemy = {
+  name: &quot;Goblin&quot;,
+  level: 2,
+  classBonus: { attack: 1, defense: 0 },
+  equipment: { attack: 0, defense: 1 },
+  activeBuffs: [],
+  activeDebuffs: []
+};
+
+// Calculate modifiers
+const playerMod = DiceSystem.calculateModifier(player, &quot;attack&quot;);
+// Result: floor(5/2) + 2 + 1 + 2 + 1 - 0 = 9
+
+const enemyMod = DiceSystem.calculateModifier(enemy, &quot;defense&quot;);
+// Result: floor(2/2) + 0 + 1 + 0 - 0 = 2
+
+// Combat rolls automatically include modifiers
+const combat = DiceSystem.rollCombat(player, enemy);
+```
+
+---
+
+### Pattern 2: AI DM Negotiation Flow
+
+```javascript
+// STEP 1: Player attempts action
+const playerAction = &quot;I try to negotiate with the imps&quot;;
+
+// STEP 2: AI silently calculates outcome
+const aiDecision = DiceSystem.aiCalculateOutcome({
+  player: player,
+  target: impLeader,
+  action: &quot;negotiate&quot;,
+  difficulty: 14
+});
+
+// Result:
+// {
+//   rollType: &quot;social&quot;,
+//   rollDice: &quot;3d12&quot;,
+//   difficulty: 14,
+//   modifier: 5,
+//   silentDecision: {
+//     wouldSucceed: true,
+//     criticalChance: 0.15,
+//     targetDifficulty: 14,
+//     modifiedDifficulty: 9
+//   },
+//   prompt: &quot;Roll 3d12 (DC 9)&quot;
+// }
+
+// STEP 3: AI prompts player with roll type
+console.log(`${aiDecision.prompt}`);
+// Output: &quot;Roll 3d12 (DC 9)&quot;
+
+// STEP 4: Player rolls
+const playerRoll = DiceSystem.rollNotation(&quot;3d12&quot;);
+// Let&#39;s say they get 15 total
+
+// STEP 5: Define possible outcomes
+const outcomes = {
+  critical_success: {
+    narrative: &quot;The imp leader is impressed by your wisdom. &#39;You understand us better than most.&#39;&quot;,
+    rewards: [{ type: &quot;ally&quot;, value: &quot;Imp Scout&quot; }],
+    consequences: []
+  },
+  success: {
+    narrative: &quot;The imps lower their weapons. Most of them wander off, but the leader stays.&quot;,
+    rewards: [{ type: &quot;peace&quot;, value: true }],
+    consequences: []
+  },
+  partial_success: {
+    narrative: &quot;They seem interested, but suspicious. &#39;Prove your sincerity...&#39;&quot;,
+    rewards: [],
+    consequences: [{ type: &quot;followUp&quot;, value: &quot;prove_worth&quot; }]
+  },
+  failure: {
+    narrative: &quot;The imps laugh mockingly and attack!&quot;,
+    rewards: [],
+    consequences: [{ type: &quot;combat&quot;, value: true }]
+  }
+};
+
+// STEP 6: Resolve based on player&#39;s roll
+const result = DiceSystem.resolveRoll(playerRoll.final, aiDecision, outcomes);
+
+// Result:
+// {
+//   playerRoll: 15,
+//   difficulty: 14,
+//   effectiveDC: 9,
+//   success: true,
+//   outcome: &quot;success&quot;,
+//   narrative: &quot;The imps lower their weapons...&quot;,
+//   rewards: [{ type: &quot;peace&quot;, value: true }],
+//   margin: 6
+// }
+
+// STEP 7: Apply outcome
+console.log(result.narrative);
+applyRewards(result.rewards);
+```
+
+---
+
+### Pattern 3: Percentage-Based Effects
+
+```javascript
+// Spell: &quot;Drain Life&quot; - Deals 15% of target&#39;s HP
+const targetHP = 80;
+const damage = DiceSystem.calculatePercentage(15, targetHP, &quot;damage&quot;);
+// Result: { percentage: 15, baseValue: 80, amount: 12, result: 68 }
+
+// Item: &quot;Potion of Healing&quot; - Restores 25% of max HP
+const maxHP = 100;
+const healing = DiceSystem.calculatePercentage(25, maxHP, &quot;restore&quot;);
+// Result: { percentage: 25, baseValue: 100, amount: 25, result: 125 }
+
+// Mana drain effect - Drains 10% of target&#39;s MP
+const targetMP = 50;
+const manaDrain = DiceSystem.calculatePercentage(10, targetMP, &quot;drain&quot;);
+// Result: { percentage: 10, baseValue: 50, amount: 5, result: 45 }
+```
+
+---
+
+### Pattern 4: Saving Dynamic Encounters as Expansion
+
+```javascript
+// After a successful negotiation with imps...
+
+// Collect the data
+const encounterData = {
+  type: &quot;negotiation&quot;,
+  rolls: {
+    initial: aiDecision,
+    playerRoll: playerRoll.final,
+    aiRolls: [
+      { type: &quot;silentDecision&quot;, value: aiDecision.silentDecision.wouldSucceed }
+    ]
+  },
+  outcomes: outcomes,
+  scaling: {
+    difficulty: 14,
+    rewardScaling: 1.0,
+    enemyLevelScale: 0,
+    lootMultiplier: 1.0
+  },
+  context: {
+    location: &quot;imp_warren&quot;,
+    npcNames: [&quot;Imp Scout&quot;, &quot;Imp Leader&quot;],
+    theme: &quot;negotiation&quot;,
+    difficulty: &quot;medium&quot;
+  },
+  aiNarrative: &quot;The player demonstrated diplomacy. The imps appreciated the gesture but remained wary. This could lead to an alliance questline.&quot;
+};
+
+// Create template (clean, templated format)
+const template = DiceSystem.createExpansionTemplate(encounterData);
+
+// Save for later conversion to expansion card
+DiceSystem.saveTemplate(template, &quot;Imp Warren Negotiation&quot;);
+
+// Template saved to:
+// 1. window.offlineTemplates (in-memory)
+// 2. localStorage (persistent)
+// 3. Ready for dev to export and process
+```
+
+---
+
+### Pattern 5: Using //save Command
+
+```javascript
+// In game, after an encounter, dev types:
+// //save -encounter
+
+// System automatically:
+// 1. Collects last encounter data
+// 2. Creates expansion template
+// 3. Saves to localStorage
+// 4. Notifies dev: &quot;Encounter saved: imp_warren_001&quot;
+
+// Later, dev can:
+DiceSystem.getTemplates(); // Get all saved templates
+DiceSystem.exportTemplates(); // Export as JSON for processing
+// Send to expansion card converter
+// Add to offline content library
+```
+
+---
+
+## &#128736;️ INTEGRATION CHECKLIST
+
+### GameEngine.js Modifications Needed:
+
+- [ ] Add `player` character object with modifiers
+- [ ] Track `activeBuffs` and `activeDebuffs` arrays
+- [ ] On each command, call `DiceSystem.calculateModifier(player, actionType)`
+- [ ] In negotiation/social encounters, use `aiCalculateOutcome()` pattern
+- [ ] In combat, ensure `resolveCombat()` uses character modifiers
+- [ ] Hook `//save` command to save templates
+
+### Battle System Modifications:
+
+- [ ] Use `aiCalculateOutcome()` to determine enemy actions
+- [ ] Pass enemy stats with modifiers
+- [ ] Support percentage-based damage (boss abilities)
+- [ ] Track battle for expansion template
+
+### Quest System Modifications:
+
+- [ ] AI DM generates quests using `aiCalculateOutcome()` patterns
+- [ ] Dynamic difficulty scaling via modifiers
+- [ ] Save completed quests as templates
+- [ ] Load templates for offline quests
+
+---
+
+## &#128202; MODIFIER EXAMPLES
+
+### Character Setup:
+
+```javascript
+// High-level warrior
+{
+  level: 10,
+  classBonus: { attack: 4, defense: 3 },
+  equipment: { attack: 2, defense: 3 },
+  activeBuffs: [{ type: &quot;all&quot;, value: 2 }],
+  activeDebuffs: []
+}
+// Attack modifier: 5 + 4 + 2 + 2 = 13
+
+// Low-level rogue
+{
+  level: 3,
+  classBonus: { attack: 2, defense: 0 },
+  equipment: { attack: 0, defense: 0 },
+  activeBuffs: [],
+  activeDebuffs: [{ type: &quot;defense&quot;, value: 1 }]
+}
+// Attack modifier: 1 + 2 + 0 + 0 - 0 = 3
+
+// Mage with temporary power
+{
+  level: 5,
+  classBonus: { spell: 3, attack: 1, defense: 1 },
+  equipment: { spell: 2 },
+  activeBuffs: [
+    { type: &quot;spell&quot;, value: 3, name: &quot;Mana Surge&quot; }
+  ],
+  activeDebuffs: [
+    { type: &quot;defense&quot;, value: 2, name: &quot;Vulnerability&quot; }
+  ]
+}
+// Spell modifier: 2 + 3 + 2 + 3 = 10
+// Defense modifier: 2 + 1 + 0 - 2 = 1
+```
+
+---
+
+## &#127919; WORKFLOW SUMMARY
+
+### Normal Combat:
+```
+Player attacks
+  ↓
+Player&#39;s modifier calculated
+  ↓
+Roll with modifier applied
+  ↓
+Damage resolved
+  ↓
+Potential to save as template
+```
+
+### AI DM Social Encounter:
+```
+Player attempts action
+  ↓
+AI silently decides outcome + determines roll type
+  ↓
+Player prompted to roll
+  ↓
+Roll resolved against AI&#39;s calculation
+  ↓
+Outcome applied with narrative
+  ↓
+Template saved for expansion
+```
+
+### Offline Mode:
+```
+Load saved templates
+  ↓
+Use scaled difficulty
+  ↓
+Procedurally generate variations
+  ↓
+Add to offline quest library
+```
+
+---
+
+## ✅ NEXT STEPS
+
+1. **Integrate into GameEngine.js**
+   - Add player character object with modifiers
+   - Hook commands to modifier calculations
+
+2. **Integrate into Battle System**
+   - Use percentage-based abilities
+   - Track for template saving
+
+3. **Integrate into Quest System**
+   - AI DM uses aiCalculateOutcome()
+   - Dynamic difficulty scaling
+
+4. **Test Pattern 2 (Negotiation)**
+   - Test high/mid/low roll outcomes
+   - Verify AI decision logic
+
+5. **Test Pattern 4 (Template Saving)**
+   - Verify localStorage persistence
+   - Test export format
+
+---
+
+**Document:** DICE_SYSTEM_INTEGRATION.md  
+**Created:** January 19, 2026  
+**Status:** Ready for implementation
+    </pre>
+</body>
+</html>

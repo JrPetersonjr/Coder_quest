@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI_INTEGRATION_GUIDE</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0e27;
+            color: #00ff41;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #00ffff;
+            border-bottom: 1px solid #00ffff33;
+            padding-bottom: 0.3em;
+        }
+        code {
+            background: #1a1e3a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #ff00ff;
+        }
+        pre {
+            background: #1a1e3a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid #00ffff;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #00ff41;
+        }
+        a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        blockquote {
+            border-left: 4px solid #00ffff;
+            padding-left: 20px;
+            margin-left: 0;
+            color: #00ffff99;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #00ffff33;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #1a1e3a;
+            color: #00ffff;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #00ffff33;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <pre># &#129302; AI INTEGRATION GUIDE - TECHNOMANCER
+
+## **Overview**
+
+The TECHNOMANCER RPG now has a complete AI integration framework that powers three core features:
+
+1. **&#128142; Crystal Ball** - Mystical prophecy generation (divination terminal)
+2. **&#127917; DM (Dungeon Master)** - Dynamic narrative &amp; dialogue generation
+3. **✨ Generative Content** - Procedural quest/enemy/challenge generation
+
+All features have **graceful fallbacks** - if AI is unavailable, the game uses pre-written content.
+
+---
+
+## **Quick Start for Site Admins**
+
+### **Option 1: Free HuggingFace API (No Setup)**
+
+HuggingFace works out-of-the-box with rate limiting. Best for small deployments.
+
+```html
+&lt;!-- In your deployment: --&gt;
+&lt;script&gt;
+  AIConfig.setAPIKey(&#39;huggingface&#39;, &#39;YOUR_HUGGINGFACE_TOKEN&#39;);
+  // Optional - improves reliability:
+  AIConfig.initialize();
+&lt;/script&gt;
+```
+
+**Get free token:** https://huggingface.co/settings/tokens
+
+### **Option 2: Local Model (Best Performance)**
+
+Run **LM Studio** or **Ollama** locally, then configure:
+
+```html
+&lt;script&gt;
+  AIConfig.setLocalModelURL(&#39;http://localhost:1234/v1/chat/completions&#39;);
+  // or for Ollama:
+  AIConfig.setLocalModelURL(&#39;http://localhost:11434/api/generate&#39;);
+  AIConfig.initialize();
+&lt;/script&gt;
+```
+
+**Download:** https://lmstudio.ai or https://ollama.ai
+
+### **Option 3: OpenAI API (Production Quality)**
+
+For professional deployments:
+
+```html
+&lt;script&gt;
+  AIConfig.setAPIKey(&#39;openai&#39;, &#39;sk-YOUR_OPENAI_API_KEY&#39;);
+  AIConfig.initialize();
+&lt;/script&gt;
+```
+
+---
+
+## **Architecture: AI Framework**
+
+### **Three-Tier System**
+
+```
+┌─────────────────────────────────────────┐
+│  Game Features                          │
+│  (Crystal Ball, DM, Content Gen)        │
+└────────────────┬────────────────────────┘
+                 │
+┌────────────────▼────────────────────────┐
+│  AIConfig.js - Abstraction Layer        │
+│  (Provider selection, fallbacks)        │
+└────────────────┬────────────────────────┘
+                 │
+        ┌────────┼────────┬───────────┐
+        │        │        │           │
+┌───────▼──┐  ┌──▼──┐  ┌──▼──┐  ┌────▼────┐
+│  Local   │  │ HF  │  │OpenAI│  │Fallback │
+│ LM Studio│  │ API │  │ API │  │Content  │
+└──────────┘  └─────┘  └─────┘  └─────────┘
+```
+
+### **Key Components**
+
+| File | Purpose |
+|------|---------|
+| `ai-config.js` | Central hub for all AI operations |
+| `ancient-terminals.js` | Terminal minigames using AI |
+| `quest-system.js` | Quest generation (optional AI) |
+| `index.html` | Initialize AI on boot |
+
+---
+
+## **Feature Breakdown**
+
+### **1. Crystal Ball &#128142;**
+
+**Location:** Hub Nexus Portal (terminal minigame)
+
+**What it does:** Generates mysterious prophecies and divinations
+
+**System Prompt:**
+```
+You are an ancient Oracle bound within a crystal orb. 
+You speak in cryptic riddles and mysterious prophecies. 
+Your responses are poetic, metaphorical, and always leave the seeker questioning.
+Respond in 2-3 sentences maximum. Stay mysterious and in-character.
+```
+
+**Usage:**
+```javascript
+const prophecy = await AIConfig.generateCrystalBall(&quot;What awaits me in the city zone?&quot;);
+// Returns: &quot;The neon gods watch from above. A choice between power and truth.&quot;
+```
+
+**Fallback Content:**
+- &quot;The crystal grows cloudy... Your fate remains unwritten.&quot;
+- &quot;Shadows dance across the sphere. Great trials await you.&quot;
+- &quot;The future shifts. Many paths diverge from this moment.&quot;
+
+---
+
+### **2. DM (Dungeon Master) &#127917;**
+
+**Location:** Narrative interactions, encounters, dialogue
+
+**What it does:** Generates responsive narrative content that reacts to player actions
+
+**System Prompt:**
+```
+You are the Dungeon Master of a cyberpunk hacker RPG called TECHNOMANCER.
+The player is a digital entity exploring a world of code, magic, and ancient terminals.
+Generate vivid, atmospheric descriptions that blend hacker culture with fantasy.
+Respond to player actions with narrative callbacks and consequences.
+```
+
+**Usage:**
+```javascript
+const narrative = await AIConfig.generateDMNarrative(
+  &quot;The player enters the Forest Zone for the first time&quot;
+);
+// Returns: &quot;Towering functions cast long shadows. You feel watched by ancient algorithms.&quot;
+```
+
+**Integration Points:**
+- Hub Nexus Portal (narrative terminal)
+- Zone transitions (entry descriptions)
+- Encounter generation
+- Enemy dialogue
+
+---
+
+### **3. Generative Content ✨**
+
+**Location:** Quest generation, procedural content
+
+**What it does:** Creates dynamic quest descriptions, enemy names, terminal prompts
+
+**Usage:**
+```javascript
+// Generate a quest description
+const questDesc = await AIConfig.generateContent(&quot;quest&quot;, 
+  &quot;theme: cyberpunk hacker, location: city zone&quot;
+);
+
+// Generate enemy description
+const enemyDesc = await AIConfig.generateContent(&quot;enemy&quot;,
+  &quot;type: corrupted algorithm&quot;
+);
+
+// Generate terminal challenge
+const challenge = await AIConfig.generateContent(&quot;challenge&quot;,
+  &quot;difficulty: beginner, skill: coding&quot;
+);
+```
+
+**Fallback Content:**
+- Quest names: &quot;Delve Deeper into Data&quot;, &quot;Crash the Corrupted Core&quot;
+- Descriptions: &quot;A corrupted entity that shouldn&#39;t exist&quot;
+- Challenges: &quot;Write a function to reverse this string&quot;
+
+---
+
+## **Integration with Game Systems**
+
+### **AncientTerminals.js Integration**
+
+The `ancient-terminals.js` file now calls `AIConfig` instead of managing providers directly:
+
+```javascript
+// BEFORE (old way):
+const response = await this.aiBackend.generate(prompt);
+
+// AFTER (new way):
+const response = await AIConfig.generate(prompt, &quot;dm&quot;);
+```
+
+### **Quest System Integration**
+
+Optional: Quests can use AI for descriptions:
+
+```javascript
+questSystem.onQuestCreated = async (quest) =&gt; {
+  if (AIConfig.config.aiFeatures.generativeContent) {
+    quest.description = await AIConfig.generateContent(&quot;quest&quot;, 
+      `theme: ${quest.theme}`
+    );
+  }
+};
+```
+
+### **Index.html Initialization**
+
+Add to your boot sequence:
+
+```html
+&lt;script src=&quot;ai-config.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+  // Initialize AI after page loads
+  AIConfig.initialize().then(success =&gt; {
+    if (success) {
+      console.log(&quot;AI system ready!&quot;);
+    } else {
+      console.log(&quot;AI system unavailable - using fallback content&quot;);
+    }
+  });
+&lt;/script&gt;
+```
+
+---
+
+## **Deployment Configurations**
+
+### **Development (Local Model)**
+
+```javascript
+// .env or config file
+AIConfig.setLocalModelURL(&#39;http://localhost:1234/v1/chat/completions&#39;);
+```
+
+**Setup:**
+1. Download LM Studio: https://lmstudio.ai
+2. Load any model (e.g., Mistral 7B)
+3. Start local server on port 1234
+4. Game will auto-detect
+
+### **Staging (HuggingFace Free)**
+
+```javascript
+// Use free tier (rate-limited but free)
+// No configuration needed - works out-of-the-box
+```
+
+**Limitations:**
+- ~30 requests per minute
+- Occasional rate-limiting
+
+### **Production (HuggingFace Pro)**
+
+```javascript
+AIConfig.setAPIKey(&#39;huggingface&#39;, &#39;hf_YOUR_PRO_TOKEN_HERE&#39;);
+```
+
+**Benefits:**
+- 1000+ requests per minute
+- Dedicated resources
+- Priority support
+
+### **Production (OpenAI)**
+
+```javascript
+AIConfig.setAPIKey(&#39;openai&#39;, &#39;sk_YOUR_OPENAI_KEY_HERE&#39;);
+```
+
+**Benefits:**
+- Highest quality responses
+- GPT-4 available
+- Reliable production SLA
+
+---
+
+## **Admin Controls**
+
+### **Enable/Disable Features**
+
+```javascript
+// Disable Crystal Ball
+AIConfig.setFeature(&#39;crystalBall&#39;, false);
+
+// Disable DM generation
+AIConfig.setFeature(&#39;dmNarrative&#39;, false);
+
+// Disable all procedural content
+AIConfig.setFeature(&#39;generativeContent&#39;, false);
+```
+
+### **Get System Status**
+
+```javascript
+const status = AIConfig.getStatus();
+console.log(status);
+/* Output:
+{
+  initialized: true,
+  activeProvider: &quot;local&quot;,
+  availableProviders: [&quot;local&quot;, &quot;huggingface&quot;],
+  requestCount: 247,
+  failureCount: 3,
+  features: {
+    crystalBall: true,
+    dmNarrative: true,
+    generativeContent: true
+  }
+}
+*/
+```
+
+### **Tune Generation Parameters**
+
+```javascript
+AIConfig.setGenerationParams({
+  maxTokens: 200,      // Longer responses
+  temperature: 0.9,    // More creative
+  topP: 0.95,          // Broader vocabulary
+});
+```
+
+---
+
+## **Fallback Strategy**
+
+When AI is unavailable, the system uses pre-written content:
+
+```
+┌─────────────────────────────────────┐
+│ 1. Try primary provider             │ (e.g., local model)
+└──────────┬──────────────────────────┘
+           │ (fails)
+┌──────────▼──────────────────────────┐
+│ 2. Try fallback provider            │ (e.g., HuggingFace)
+└──────────┬──────────────────────────┘
+           │ (fails)
+┌──────────▼──────────────────────────┐
+│ 3. Use pre-written fallback content │
+└──────────────────────────────────────┘
+```
+
+**Fallback content is:**
+- ✅ Always available
+- ✅ Thematic and appropriate
+- ✅ Loaded at startup (no latency)
+- ✅ Rotated randomly for variety
+
+---
+
+## **Error Handling**
+
+All AI calls gracefully handle failures:
+
+```javascript
+// Example: Failed AI request
+try {
+  const response = await AIConfig.generateDMNarrative(&quot;...&quot;);
+  // If AI fails, returns fallback automatically
+  console.log(response); // &quot;The terminal falls silent...&quot;
+} catch (e) {
+  // Won&#39;t throw - fallback always succeeds
+  console.log(&quot;This catch block never executes&quot;);
+}
+```
+
+**Failure scenarios handled:**
+- ❌ API key invalid → Try fallback provider
+- ❌ Network timeout → Retry with exponential backoff
+- ❌ All providers down → Use pre-written content
+- ❌ Invalid response format → Return fallback
+
+---
+
+## **Performance Considerations**
+
+### **Request Caching (Future)**
+
+```javascript
+// Cache prophecies for 1 hour
+AIConfig.enableCache(&#39;crystalBall&#39;, 3600);
+
+// Same query returns cached result (0ms vs 2000ms)
+const prophecy = await AIConfig.generateCrystalBall(&quot;What&#39;s next?&quot;);
+const cached = await AIConfig.generateCrystalBall(&quot;What&#39;s next?&quot;);
+// cached returns instantly
+```
+
+### **Batch Requests**
+
+```javascript
+// Generate multiple challenges concurrently
+const challenges = await Promise.all([
+  AIConfig.generateContent(&quot;quest&quot;, &quot;theme: security&quot;),
+  AIConfig.generateContent(&quot;enemy&quot;, &quot;type: data-corrupted&quot;),
+  AIConfig.generateContent(&quot;challenge&quot;, &quot;difficulty: hard&quot;),
+]);
+```
+
+### **Local Model Performance**
+
+| Model | Speed | Quality | VRAM |
+|-------|-------|---------|------|
+| Mistral 7B | ⚡⚡⚡ Fast | ⭐⭐⭐⭐ Good | 6GB |
+| Llama 2 13B | ⚡⚡ Medium | ⭐⭐⭐⭐⭐ Great | 10GB |
+| Llama 2 70B | ⚡ Slow | ⭐⭐⭐⭐⭐ Excellent | 40GB+ |
+
+---
+
+## **Troubleshooting**
+
+### **Issue: &quot;No AI providers available&quot;**
+
+```
+Reason: No API keys set, no local model running
+Fix: 
+  1. Set HuggingFace API key: AIConfig.setAPIKey(&#39;huggingface&#39;, &#39;hf_...&#39;)
+  2. Or start LM Studio: lmstudio.ai
+  3. Or game will use fallback content (works fine)
+```
+
+### **Issue: Rate limiting errors from HuggingFace**
+
+```
+Reason: Free tier is throttled
+Fix:
+  - Upgrade to pro: https://huggingface.co/pricing
+  - Or use local model: https://lmstudio.ai
+  - Or increase cache time (TODO feature)
+```
+
+### **Issue: Local model not detected**
+
+```
+Reason: Port mismatch
+Fix:
+  - LM Studio uses 1234 (default)
+  - Ollama uses 11434 (default)
+  - Set correct URL: AIConfig.setLocalModelURL(&#39;http://localhost:1234/v1/chat/completions&#39;)
+```
+
+### **Issue: Generation is slow**
+
+```
+Reason: Model too large for hardware
+Fix:
+  - Switch to faster model (Mistral 7B instead of Llama 70B)
+  - Use HuggingFace instead (optimized servers)
+  - Enable response caching (future feature)
+```
+
+---
+
+## **API Reference**
+
+### **Public Methods**
+
+```javascript
+// Core generation
+AIConfig.generateCrystalBall(query)           // Returns: string
+AIConfig.generateDMNarrative(context)         // Returns: string
+AIConfig.generateContent(type, hint)          // Returns: string
+AIConfig.generate(prompt, featureType)        // Returns: string
+
+// Configuration
+AIConfig.setAPIKey(provider, key)             // Returns: boolean
+AIConfig.setLocalModelURL(url)                // Returns: void
+AIConfig.setFeature(feature, enabled)         // Returns: boolean
+AIConfig.setGenerationParams(params)          // Returns: void
+AIConfig.initialize()                         // Returns: Promise&lt;boolean&gt;
+
+// Status
+AIConfig.getStatus()                          // Returns: object
+AIConfig.loadConfig()                         // Returns: void
+AIConfig.saveConfig()                         // Returns: void
+```
+
+### **Configuration Object**
+
+```javascript
+AIConfig.config = {
+  apiKeys: {
+    huggingface: null,  // Set your token here
+    openai: null,
+    anthropic: null,
+  },
+  primaryProvider: &quot;huggingface&quot;,  // &quot;local&quot;, &quot;huggingface&quot;, &quot;openai&quot;
+  fallbackProviders: [&quot;local&quot;, &quot;huggingface&quot;],
+  localModelUrl: &quot;http://localhost:1234/v1/chat/completions&quot;,
+  aiFeatures: {
+    crystalBall: true,
+    dmNarrative: true,
+    generativeContent: true,
+  },
+}
+```
+
+---
+
+## **Example: Complete Setup**
+
+```html
+&lt;!-- In index.html --&gt;
+
+&lt;!-- Load AI config before game engine --&gt;
+&lt;script src=&quot;ai-config.js&quot;&gt;&lt;/script&gt;
+
+&lt;!-- Load game --&gt;
+&lt;script src=&quot;GameEngine.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;ancient-terminals.js&quot;&gt;&lt;/script&gt;
+
+&lt;script&gt;
+  // Option A: Use local model (LM Studio)
+  AIConfig.setLocalModelURL(&#39;http://localhost:1234/v1/chat/completions&#39;);
+
+  // Option B: Use HuggingFace (uncomment and set your token)
+  // AIConfig.setAPIKey(&#39;huggingface&#39;, &#39;hf_YOUR_TOKEN_HERE&#39;);
+
+  // Initialize AI system
+  AIConfig.initialize().then(success =&gt; {
+    console.log(`AI System ${success ? &#39;Ready&#39; : &#39;Using Fallbacks&#39;}`);
+    
+    // Start game...
+    gameEngine.boot();
+  });
+&lt;/script&gt;
+```
+
+---
+
+## **Future Enhancements**
+
+- [ ] Response caching (1-24 hour TTL)
+- [ ] Batch API requests for cost savings
+- [ ] Fine-tuned models per feature
+- [ ] Streaming responses (for long narratives)
+- [ ] Multi-language support
+- [ ] Model A/B testing framework
+- [ ] Usage analytics &amp; cost tracking
+
+---
+
+## **Support &amp; Questions**
+
+For questions about AI integration:
+1. Check this guide first
+2. Review `AIConfig.getStatus()` output
+3. Check browser console for `[AI]` logs
+4. Check `ai-config.js` source code comments
+
+---
+
+**Status:** ✅ Ready for production deployment
+
+    </pre>
+</body>
+</html>

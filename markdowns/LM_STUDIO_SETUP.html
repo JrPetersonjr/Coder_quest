@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LM_STUDIO_SETUP</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0e27;
+            color: #00ff41;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #00ffff;
+            border-bottom: 1px solid #00ffff33;
+            padding-bottom: 0.3em;
+        }
+        code {
+            background: #1a1e3a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #ff00ff;
+        }
+        pre {
+            background: #1a1e3a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid #00ffff;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #00ff41;
+        }
+        a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        blockquote {
+            border-left: 4px solid #00ffff;
+            padding-left: 20px;
+            margin-left: 0;
+            color: #00ffff99;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #00ffff33;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #1a1e3a;
+            color: #00ffff;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #00ffff33;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <pre># &#128421;️ LM STUDIO LOCAL SERVER SETUP GUIDE
+
+## **Quick Start (5 Minutes)**
+
+### **Step 1: Download LM Studio**
+- Go to: https://lmstudio.ai
+- Download for your OS (Windows, Mac, Linux)
+- Install like any normal application
+
+### **Step 2: Launch LM Studio**
+1. Open LM Studio
+2. Click **&quot;Search models&quot;** (magnifying glass icon)
+3. Search for: `mistral` (fast, good quality)
+4. Click download on **&quot;Mistral 7B Instruct&quot;**
+5. Wait for download (~4GB)
+
+### **Step 3: Start Local Server**
+1. In LM Studio, go to **Local Server** tab (left sidebar)
+2. Select your downloaded model from dropdown
+3. Click **&quot;Start Server&quot;**
+4. You&#39;ll see: `Server is running on http://localhost:1234`
+
+### **Step 4: Verify Connection**
+Open browser console and run:
+```javascript
+fetch(&#39;http://localhost:1234/v1/chat/completions&#39;, {
+  method: &#39;POST&#39;,
+  headers: {&#39;Content-Type&#39;: &#39;application/json&#39;},
+  body: JSON.stringify({
+    messages: [{role: &#39;user&#39;, content: &#39;test&#39;}],
+    max_tokens: 10
+  })
+})
+.then(r =&gt; r.json())
+.then(d =&gt; console.log(&#39;✅ Connected!&#39;, d))
+.catch(e =&gt; console.log(&#39;❌ Failed:&#39;, e))
+```
+
+Should see: `✅ Connected!`
+
+---
+
+## **TECHNOMANCER Setup**
+
+### **In index.html, add this:**
+
+```html
+&lt;!-- BEFORE game initialization --&gt;
+&lt;script src=&quot;ai-config.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;ai-deployment-config.js&quot;&gt;&lt;/script&gt;
+
+&lt;script&gt;
+  // Auto-detect local LM Studio
+  AIConfig.initialize().then(success =&gt; {
+    if (success) {
+      console.log(&quot;[Boot] ✓ AI Ready:&quot;, AIConfig.getStatus().activeProvider);
+    }
+  });
+&lt;/script&gt;
+```
+
+That&#39;s it! The game will:
+1. ✅ Auto-detect LM Studio on localhost:1234
+2. ✅ Use it if available
+3. ✅ Fall back to HuggingFace if not
+4. ✅ Use pre-written content if neither available
+
+---
+
+## **How to Know It&#39;s Working**
+
+### **In Browser Console:**
+```javascript
+// Check status
+AIConfig.getStatus()
+
+// Should show:
+{
+  initialized: true,
+  activeProvider: &quot;local&quot;,  // ← This means LM Studio is connected!
+  availableProviders: [&quot;local&quot;],
+  requestCount: 0,
+  failureCount: 0,
+  features: {
+    crystalBall: true,
+    dmNarrative: true,
+    generativeContent: true
+  }
+}
+```
+
+### **In Game:**
+- Go to Crystal Ball terminal
+- It should generate unique prophecies (not repeating fallbacks)
+- Each prophecy should be different
+
+### **If It&#39;s NOT Working:**
+```javascript
+// Run diagnostic
+checkAIHealth()
+
+// Should show &quot;Local model detected&quot;
+// If not, check:
+// 1. Is LM Studio running? (http://localhost:1234 in browser)
+// 2. Is a model loaded? (should say &quot;Loaded: Mistral 7B&quot; in LM Studio)
+// 3. Any error messages in console?
+```
+
+---
+
+## **Recommended Models**
+
+| Model | Speed | Quality | VRAM | Recommendation |
+|-------|-------|---------|------|-----------------|
+| **Mistral 7B** | ⚡⚡⚡ Fast | ⭐⭐⭐⭐ | 6GB | ✅ BEST START |
+| Llama 2 13B | ⚡⚡ Medium | ⭐⭐⭐⭐⭐ | 10GB | If you have VRAM |
+| Phi 2.7B | ⚡⚡⚡⚡ Fastest | ⭐⭐⭐ | 3GB | If low VRAM |
+
+**Recommendation:** Start with **Mistral 7B** - best balance of speed &amp; quality
+
+---
+
+## **Troubleshooting**
+
+### **Issue: &quot;No local model found&quot;**
+```
+Fix:
+1. Check LM Studio is open and running
+2. Verify &quot;Start Server&quot; button is active
+3. Try: http://localhost:1234 in browser
+4. Should get JSON response (not error)
+```
+
+### **Issue: &quot;Server is running but AI not responding&quot;**
+```
+Fix:
+1. Make sure a model is selected in LM Studio
+2. Check model finished downloading
+3. Restart the local server
+4. Run: testAISystem() in console
+```
+
+### **Issue: &quot;Very slow responses&quot;**
+```
+Reasons:
+- Model is loading (first request is slow)
+- VRAM is limited (system using disk cache)
+- Model too large for hardware
+
+Fix:
+- Use smaller model (Phi 2.7B instead of Llama 70B)
+- Or use HuggingFace cloud (faster)
+- Or use OpenAI (fastest)
+```
+
+### **Issue: &quot;LM Studio won&#39;t start / crashes&quot;**
+```
+Fix:
+1. Restart LM Studio completely
+2. Try smaller model (Mistral 7B)
+3. Check system has enough VRAM available
+4. Update LM Studio to latest version
+```
+
+---
+
+## **Advanced: Custom Server URL**
+
+If you&#39;re running LM Studio on a different port or machine:
+
+```javascript
+AIConfig.setLocalModelURL(&#39;http://192.168.1.100:8000/v1/chat/completions&#39;);
+AIConfig.initialize();
+```
+
+---
+
+## **Switching Between Providers**
+
+### **Use Local LM Studio:**
+```javascript
+setupDevelopment();  // Auto-uses localhost:1234
+AIConfig.initialize();
+```
+
+### **Use HuggingFace Cloud:**
+```javascript
+setupStaging();  // Uses free cloud tier
+AIConfig.initialize();
+```
+
+### **Use OpenAI:**
+```javascript
+setupProductionOpenAI(&#39;sk_your_key&#39;);
+AIConfig.initialize();
+```
+
+### **Use Hybrid (Local + Cloud Fallback):**
+```javascript
+setupProductionHybrid(&#39;hf_token&#39;);  // Local first, HF backup
+AIConfig.initialize();
+```
+
+---
+
+## **Performance Tips**
+
+### **For Best Speed:**
+1. Use LM Studio + Mistral 7B locally
+2. First request: ~2-3 seconds (loading)
+3. Subsequent requests: &lt;1 second
+4. Keep LM Studio running in background
+
+### **For Best Quality:**
+1. Use OpenAI GPT-4 (or GPT-3.5)
+2. Cost: ~$0.001 per request
+3. Speed: &lt;500ms per request
+4. Reliability: 99.9% SLA
+
+### **For Offline/Demo:**
+1. Use `setupOffline()`
+2. Speed: Instant (&lt;10ms)
+3. Uses pre-written fallback content
+4. No internet needed
+
+---
+
+## **System Requirements**
+
+### **For LM Studio + Mistral 7B:**
+- **RAM:** 12GB+ (6GB model + OS overhead)
+- **GPU:** Recommended (10x faster with GPU)
+- **CPU:** 4+ cores
+- **Disk:** 10GB free (for model)
+
+### **GPU Acceleration:**
+LM Studio auto-detects:
+- NVIDIA CUDA (fastest)
+- AMD ROCm (good)
+- Apple Metal (M1/M2 optimized)
+- CPU fallback (slowest)
+
+---
+
+## **Keeping LM Studio Running**
+
+### **During Development:**
+1. Open LM Studio once
+2. Start the server
+3. Leave it running in background
+4. Game auto-connects
+
+### **For Deployment:**
+```bash
+# You could automate server startup:
+# (Platform-specific)
+
+# Windows batch file:
+@echo off
+start &quot;&quot; &quot;C:\Users\YourName\AppData\Local\LM Studio\LMStudio.exe&quot;
+timeout /t 5
+REM Now open game
+```
+
+### **Or use cloud providers for production:**
+- No need to manage local server
+- Automatic scaling
+- 99.9% uptime SLA
+
+---
+
+## **Testing AI Features**
+
+### **Test Crystal Ball:**
+```javascript
+AIConfig.generateCrystalBall(&quot;What is my destiny?&quot;)
+  .then(prophecy =&gt; console.log(prophecy))
+```
+
+### **Test DM Narrative:**
+```javascript
+AIConfig.generateDMNarrative(&quot;The player enters a mysterious cave&quot;)
+  .then(narrative =&gt; console.log(narrative))
+```
+
+### **Test Generative Content:**
+```javascript
+AIConfig.generateContent(&quot;quest&quot;, &quot;theme: security hacking&quot;)
+  .then(quest =&gt; console.log(quest))
+```
+
+### **Full System Test:**
+```javascript
+testAISystem()  // Runs all tests + diagnostics
+```
+
+---
+
+## **Full Integration Example**
+
+```html
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;title&gt;TECHNOMANCER&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div id=&quot;game-container&quot;&gt;&lt;/div&gt;
+
+  &lt;!-- Load AI system --&gt;
+  &lt;script src=&quot;ai-config.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;ai-deployment-config.js&quot;&gt;&lt;/script&gt;
+  
+  &lt;!-- Load game --&gt;
+  &lt;script src=&quot;GameEngine.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;ancient-terminals.js&quot;&gt;&lt;/script&gt;
+  
+  &lt;!-- Initialize --&gt;
+  &lt;script&gt;
+    async function init() {
+      // Setup AI (auto-detects local LM Studio)
+      setupDevelopment();
+      
+      // Initialize
+      await AIConfig.initialize();
+      
+      // Check status
+      const status = AIConfig.getStatus();
+      console.log(&quot;[Boot] AI Status:&quot;, status);
+      
+      // Start game
+      const gameEngine = new GameEngine({...});
+      gameEngine.boot();
+    }
+    
+    // Start when ready
+    document.addEventListener(&#39;DOMContentLoaded&#39;, init);
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+```
+
+---
+
+## **LM Studio + TECHNOMANCER Workflow**
+
+```
+1. Morning: Open LM Studio
+   └─ Click &quot;Start Server&quot; (stays running)
+
+2. Development: Open TECHNOMANCER in browser
+   └─ Auto-detects local LM Studio
+   └─ AI features work instantly
+   └─ Responses &lt;1 second
+
+3. Testing: Run testAISystem()
+   └─ Verifies all features working
+   └─ Shows any errors
+
+4. Playthrough: Enjoy dynamic AI narratives
+   └─ Each prophecy is unique
+   └─ Each zone description is fresh
+   └─ Never see same generated content twice
+
+5. End of day: Close LM Studio
+   └─ Can reopen next day, same model loaded
+```
+
+---
+
+## **One-Command Setup**
+
+If you want a completely automated setup:
+
+**Windows Batch (setup-lm-studio.bat):**
+```batch
+@echo off
+echo Starting LM Studio...
+start &quot;&quot; &quot;C:\Users\%USERNAME%\AppData\Local\LM Studio\LMStudio.exe&quot;
+timeout /t 3
+echo LM Studio starting...
+echo Once it loads, click: Local Server &gt; Start Server
+echo Then open the game
+pause
+```
+
+---
+
+**You&#39;re all set! LM Studio will power your game with locally-hosted AI that never leaves your computer.** &#128640;
+
+    </pre>
+</body>
+</html>

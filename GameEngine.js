@@ -458,53 +458,94 @@ class GameEngine {
   // ============================================================
 
   getZoneData(zoneId) {
-    const zones = {
+    // Use actual CastZones data from zones-puzzles.js
+    if (window.CastZones && window.CastZones[zoneId]) {
+      return window.CastZones[zoneId];
+    }
+    
+    // Fallback for basic zones if CastZones not loaded
+    const fallbackZones = {
       hub: {
         id: "hub",
         name: "Central Hub",
-        description: "A nexus of infinite corridors. The air hums with potential."
+        desc: "A nexus of infinite corridors. The air hums with potential."
       },
       forest: {
         id: "forest",
         name: "Refactor Forest",
-        description: "Ancient trees made of nested code. Branches hum with logic."
+        desc: "Ancient trees made of nested code. Branches hum with logic."
       },
       city: {
         id: "city",
         name: "Breakpoint City",
-        description: "Neon skyscrapers flicker with paused execution. Time feels frozen."
+        desc: "Neon skyscrapers flicker with paused execution. Time feels frozen."
+      },
+      wasteland: {
+        id: "wasteland",
+        name: "Debug Wasteland",
+        desc: "Scorched earth where errors burn eternal."
+      },
+      cosmic: {
+        id: "cosmic",
+        name: "Cosmic Archive",
+        desc: "Beyond reality, where all code converges."
       }
     };
 
-    return zones[zoneId] || null;
+    return fallbackZones[zoneId] || null;
   }
 
   getEnemyData(enemyId) {
-    const enemies = {
+    // Use actual CastEnemies data from encounters/battle systems
+    if (window.CastEnemies && window.CastEnemies[enemyId]) {
+      return window.CastEnemies[enemyId];
+    }
+    
+    // Fallback for basic enemies if CastEnemies not loaded
+    const fallbackEnemies = {
       "syntax-imp": {
         id: "syntax-imp",
         name: "Syntax Imp",
         hp: 15,
         attack: 3,
-        exp: 10
+        exp: 10,
+        level: 1
       },
       "null-wraith": {
         id: "null-wraith",
         name: "Null Wraith",
         hp: 25,
         attack: 5,
-        exp: 20
+        exp: 20,
+        level: 2
       },
       "debug-daemon": {
         id: "debug-daemon",
         name: "Debug Daemon",
         hp: 30,
         attack: 6,
-        exp: 25
+        exp: 25,
+        level: 3
+      },
+      "memory-leak": {
+        id: "memory-leak",
+        name: "Memory Leak",
+        hp: 20,
+        attack: 4,
+        exp: 15,
+        level: 2
+      },
+      "stack-overflow": {
+        id: "stack-overflow",
+        name: "Stack Overflow",
+        hp: 40,
+        attack: 8,
+        exp: 35,
+        level: 4
       }
     };
 
-    return enemies[enemyId] || null;
+    return fallbackEnemies[enemyId] || null;
   }
 
   // ============================================================

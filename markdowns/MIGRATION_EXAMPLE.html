@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIGRATION_EXAMPLE</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0e27;
+            color: #00ff41;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #00ffff;
+            border-bottom: 1px solid #00ffff33;
+            padding-bottom: 0.3em;
+        }
+        code {
+            background: #1a1e3a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #ff00ff;
+        }
+        pre {
+            background: #1a1e3a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid #00ffff;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #00ff41;
+        }
+        a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        blockquote {
+            border-left: 4px solid #00ffff;
+            padding-left: 20px;
+            margin-left: 0;
+            color: #00ffff99;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #00ffff33;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #1a1e3a;
+            color: #00ffff;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #00ffff33;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <pre># &#128221; MIGRATION EXAMPLE: Step-by-Step
+
+This guide shows how to migrate a real command from the old coupled system to the new modular architecture.
+
+---
+
+## **Example: Battle System Migration**
+
+Let&#39;s walk through migrating the full battle system as an example.
+
+### **Step 1: Identify What Needs to Move**
+
+In your old `core.js`, the battle system has:
+
+```javascript
+// OLD CODE in core.js:
+function cmdBattle(args) { ... }        // ← Entry point
+function attack() { ... }               // ← Combat action
+function enemyTurn() { ... }            // ← Enemy response
+function enemyAttack() { ... }          // ← Damage calculation
+function endBattle(victory) { ... }     // ← Cleanup
+function handleBattleCommand(cmd, args) { ... }  // ← Battle routing
+```
+
+**Dependencies it has:**
+- `gameState` (global)
+- `appendLine()` (DOM function)
+- `DiceSystem` (external)
+- `FXSystem.playSound()` (effects)
+- `FXSystem.createParticles()` (effects)
+
+---
+
+### **Step 2: Write It in GameEngine (No DOM)**
+
+In `GameEngine.js`, we already have basic battle. Here&#39;s the FULL version:
+
+```javascript
+// IN GameEngine.js - Add these methods
+
+cmdBattle(args) {
+  if (this.gameState.inBattle) {
+    this.output(&quot;Already in battle!&quot;, &quot;error&quot;);
+    return;
+  }
+
+  const enemyName = args.length &gt; 0 ? args[0].toLowerCase() : &quot;syntax-imp&quot;;
+  const enemy = this.getEnemyData(enemyName);
+
+  if (!enemy) {
+    this.output(`Enemy &#39;${enemyName}&#39; not found.`, &quot;error&quot;);
+    return;
+  }
+
+  // Clone enemy so we don&#39;t modify original
+  this.gameState.inBattle = true;
+  this.gameState.currentEnemy = JSON.parse(JSON.stringify(enemy));
+  
+  this.output(`⚔ A ${enemy.name} appears!`, &quot;battle&quot;);
+  this.output(`HP: ${enemy.hp}`, &quot;battle&quot;);
+  this.output(&quot;Commands: attack, cast, run, stats&quot;, &quot;battle&quot;);
+
+  // Callback for sound effects (optional)
+  this.onBattleStart?.(enemy);
+}
+
+handleBattleCommand(cmd, args) {
+  if (!this.gameState.inBattle) {
+    this.output(&quot;Not in battle!&quot;, &quot;error&quot;);
+    return;
+  }
+
+  switch (cmd) {
+    case &quot;attack&quot;:
+      this.attack();
+      break;
+    case &quot;cast&quot;:
+      this.cmdCast(args);
+      break;
+    case &quot;run&quot;:
+      this.run();
+      break;
+    case &quot;stats&quot;:
+      this.cmdStats();
+      break;
+    default:
+      this.output(&quot;Battle commands: attack, cast &lt;spell&gt;, run, stats&quot;, &quot;system&quot;);
+  }
+}
+
+attack() {
+  if (!this.gameState.inBattle) {
+    this.output(&quot;Not in battle!&quot;, &quot;error&quot;);
+    return;
+  }
+
+  const enemy = this.gameState.currentEnemy;
+  
+  // Damage calculation (using simple formula)
+  // Could integrate DiceSystem here if needed
+  const atkRoll = Math.floor(Math.random() * 6) + 1;
+  const dmg = atkRoll + this.gameState.level;
+
+  enemy.hp -= dmg;
+  this.output(`You attack for ${dmg} damage!`, &quot;battle&quot;);
+  
+  // Callback for sound/effects (UI layer can handle)
+  this.onPlaySound?.(&quot;attack&quot;);
+
+  if (enemy.hp &lt;= 0) {
+    this.endBattle(true);
+  } else {
+    // Brief delay before enemy turn
+    setTimeout(() =&gt; this.enemyTurn(), 500);
+  }
+}
+
+enemyTurn() {
+  if (!this.gameState.inBattle) return;
+
+  const enemy = this.gameState.currentEnemy;
+  this.enemyAttack();
+}
+
+enemyAttack() {
+  const enemy = this.gameState.currentEnemy;
+  
+  // Simple damage formula
+  const dmg = Math.floor(Math.random() * 5) + 2 + (enemy.attack || 3);
+  
+  this.gameState.hp -= dmg;
+  this.output(`${enemy.name} attacks for ${dmg} damage!`, &quot;battle&quot;);
+  
+  this.onPlaySound?.(&quot;enemy_attack&quot;);
+
+  if (this.gameState.hp &lt;= 0) {
+    this.gameState.hp = 0;
+    this.output(&quot;You were defeated!&quot;, &quot;error&quot;);
+    this.endBattle(false);
+    
+    // Reset to hub
+    this.gameState.hp = this.gameState.maxHp;
+    this.gameState.zone = &quot;hub&quot;;
+    this.gameState.inBattle = false;
+  }
+}
+
+endBattle(victory) {
+  const enemy = this.gameState.currentEnemy;
+
+  if (victory) {
+    this.output(`Defeated ${enemy.name}!`, &quot;battle&quot;);
+    const reward = enemy.exp || 10;
+    this.gameState.exp += reward;
+    this.output(`Gained ${reward} EXP!`, &quot;highlight&quot;);
+    
+    this.onPlaySound?.(&quot;victory&quot;);
+  } else {
+    this.output(&quot;Escaped from battle!&quot;, &quot;system&quot;);
+    this.onPlaySound?.(&quot;flee&quot;);
+  }
+
+  this.gameState.inBattle = false;
+  this.gameState.currentEnemy = null;
+  
+  // Notify UI of state change
+  this.onStateChange(this.gameState);
+}
+
+// Enhanced getEnemyData with more enemies
+getEnemyData(enemyId) {
+  const enemies = {
+    &quot;syntax-imp&quot;: {
+      id: &quot;syntax-imp&quot;,
+      name: &quot;Syntax Imp&quot;,
+      hp: 15,
+      attack: 3,
+      exp: 10
+    },
+    &quot;null-wraith&quot;: {
+      id: &quot;null-wraith&quot;,
+      name: &quot;Null Wraith&quot;,
+      hp: 25,
+      attack: 5,
+      exp: 20
+    },
+    &quot;debug-daemon&quot;: {
+      id: &quot;debug-daemon&quot;,
+      name: &quot;Debug Daemon&quot;,
+      hp: 30,
+      attack: 6,
+      exp: 25
+    },
+    &quot;void-entity&quot;: {
+      id: &quot;void-entity&quot;,
+      name: &quot;Void Entity&quot;,
+      hp: 40,
+      attack: 7,
+      exp: 35
+    }
+  };
+
+  return enemies[enemyId] || null;
+}
+```
+
+---
+
+### **Step 3: Update Command Router**
+
+In `GameEngine.handleCommand()`, update the battle command:
+
+```javascript
+handleCommand(rawInput) {
+  // ... existing code ...
+  
+  switch (cmd) {
+    // ... other commands ...
+    case &quot;battle&quot;:
+      this.cmdBattle(args);
+      break;
+    // ... other commands ...
+  }
+
+  // IMPORTANT: If in battle, different routing
+  if (this.gameState.inBattle) {
+    // Instead of letting normal commands run, route to battle handler
+    this.handleBattleCommand(cmd, args);
+    return;  // ← DON&#39;T process normal commands in battle
+  }
+}
+```
+
+Actually, let&#39;s fix this properly - update `handleCommand()` to check battle state EARLY:
+
+```javascript
+handleCommand(rawInput) {
+  const input = rawInput.trim();
+  if (!input) return;
+
+  this.output(`&gt; ${input}`, &quot;command&quot;);
+
+  const parts = input.split(&quot; &quot;);
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
+
+  // ⚠️ BATTLE MODE: Different routing
+  if (this.gameState.inBattle) {
+    if ([&quot;attack&quot;, &quot;cast&quot;, &quot;run&quot;, &quot;stats&quot;, &quot;help&quot;].includes(cmd)) {
+      this.handleBattleCommand(cmd, args);
+      return;
+    } else {
+      this.output(&quot;In battle! Commands: attack, cast, run, stats, help&quot;, &quot;error&quot;);
+      return;
+    }
+  }
+
+  // Normal mode: route to command handlers
+  switch (cmd) {
+    case &quot;help&quot;:
+      this.cmdHelp();
+      break;
+    case &quot;look&quot;:
+      this.cmdLook();
+      break;
+    // ... etc ...
+    case &quot;battle&quot;:
+      this.cmdBattle(args);
+      break;
+    // ... etc ...
+    default:
+      this.output(&quot;Unknown command. Type &#39;help&#39;.&quot;, &quot;error&quot;);
+  }
+
+  this.onStateChange(this.gameState);
+}
+```
+
+---
+
+### **Step 4: Add Sound Callbacks (Optional)**
+
+In `GameUI.js`, add sound effect handling:
+
+```javascript
+// In GameUI constructor:
+setupEventListeners() {
+  // ... existing code ...
+
+  // Setup optional callbacks
+  this.engine.onPlaySound = (soundType) =&gt; this.handleSound(soundType);
+  this.engine.onBattleStart = (enemy) =&gt; this.handleBattleStart(enemy);
+}
+
+handleSound(soundType) {
+  const sounds = {
+    &quot;attack&quot;: &quot;⚡&quot;,
+    &quot;enemy_attack&quot;: &quot;&#128165;&quot;,
+    &quot;victory&quot;: &quot;✨&quot;,
+    &quot;flee&quot;: &quot;&#127939;&quot;,
+    &quot;confirm&quot;: &quot;✓&quot;
+  };
+  
+  // You could integrate FXSystem here:
+  // if (window.FXSystem) FXSystem.playSound(soundType);
+  
+  console.log(`[SOUND] ${sounds[soundType] || soundType}`);
+}
+
+handleBattleStart(enemy) {
+  this.output(&quot;--- BATTLE START ---&quot;, &quot;battle&quot;);
+  // Could trigger animations here
+}
+```
+
+---
+
+### **Step 5: Test It**
+
+1. Open console
+2. Type: `battle`
+3. You should see enemy appear
+4. Type: `attack`
+5. Should see your damage
+6. Should see enemy counterattack
+7. Repeat until enemy dies or you escape
+
+**Expected output:**
+```
+&gt; battle
+⚔ A Syntax Imp appears!
+HP: 15
+Commands: attack, cast, run, stats
+
+&gt; attack
+You attack for 8 damage!
+Syntax Imp attacks for 4 damage!
+
+&gt; attack
+You attack for 6 damage!
+Defeated Syntax Imp!
+Gained 10 EXP!
+```
+
+---
+
+### **Step 6: Remove from Old Code** (Later!)
+
+ONLY after everything is working and tested:
+- Comment out old `cmdBattle()` in core.js
+- Comment out old `attack()`, `endBattle()`, etc.
+- Keep them as reference for a few weeks
+- Eventually delete
+
+---
+
+## **Pattern You Just Learned**
+
+This is the pattern for migrating ANY command:
+
+1. **Identify** - List all the code that needs to move
+2. **Write** - Put it in GameEngine (no DOM calls!)
+3. **Test** - Make sure it works in browser
+4. **Route** - Update handleCommand() to use new version
+5. **Enhance** - Add callbacks for side effects (sounds, particles, etc.)
+6. **Verify** - Test all edge cases
+7. **Remove** - Delete old code once confident
+
+---
+
+## **Commands Ready to Migrate Next**
+
+In order of difficulty (easiest first):
+
+1. ✅ **Battle system** - You just did this!
+2. `cmdDefine()` - Simple state change
+3. `cmdInspect()` - Simple lookup
+4. `cmdStats()` - Display stat
+5. `cmdGo()` - Zone navigation
+6. `cmdCast()` - Spell casting (more complex)
+7. `cmdTerminal()` - Terminal mini-games (complex)
+8. Encounter system - Full encounter logic
+
+---
+
+## **Estimated Timeline**
+
+- **1 command/day** = 2 weeks for all basic commands
+- **Complex commands** (encounters, terminals) = 3-4 days each
+- **Total refactor** = 3-4 weeks for full system
+
+Or take it slower, 1-2 commands per week = 2-3 months for complete migration.
+
+---
+
+## **You Now Know**
+
+✅ How to identify code to migrate
+✅ How to write it without DOM dependencies
+✅ How to route through the new system
+✅ How to handle side effects via callbacks
+✅ How to test each piece independently
+
+**Ready to migrate your next command?** Pick one and we&#39;ll walk through it! &#128640;
+    </pre>
+</body>
+</html>

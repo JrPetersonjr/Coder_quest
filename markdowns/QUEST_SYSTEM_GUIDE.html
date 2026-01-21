@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUEST_SYSTEM_GUIDE</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0e27;
+            color: #00ff41;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #00ffff;
+            border-bottom: 1px solid #00ffff33;
+            padding-bottom: 0.3em;
+        }
+        code {
+            background: #1a1e3a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #ff00ff;
+        }
+        pre {
+            background: #1a1e3a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid #00ffff;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #00ff41;
+        }
+        a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        blockquote {
+            border-left: 4px solid #00ffff;
+            padding-left: 20px;
+            margin-left: 0;
+            color: #00ffff99;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #00ffff33;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #1a1e3a;
+            color: #00ffff;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #00ffff33;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <pre># &#127918; QUEST SYSTEM &amp; GRAPHICS UNLOCK GUIDE
+
+## **What We Built**
+
+A **progressive quest system** that unlocks the 2D graphics layer as a **in-game achievement**. The player starts in pure text/terminal mode and gradually unlocks visual rendering through gameplay.
+
+---
+
+## **How It Works**
+
+### **Phase 1: Terminal Mode (Default)**
+- Pure text/ASCII interface
+- All commands work through terminal
+- Player completes quests by playing normally
+- Type `quests` to see active quests
+
+### **Phase 2: Graphics Unlock (Quest Reward)**
+When player completes the **&quot;Reality Glitch&quot;** master quest by finishing:
+1. ✅ Welcome to TECHNOMANCER (learn basic commands)
+2. ✅ Explorer&#39;s Journey (visit all 3 zones)
+3. ✅ Spell Apprentice (craft and cast spells)
+4. ✅ First Blood (win first battle)
+
+The system triggers:
+```
+[SYSTEM ALERT]
+A new layer of reality materializes...
+The visual rendering system is now ONLINE.
+Graphics mode has been UNLOCKED.
+```
+
+### **Phase 3: Hybrid Mode (Post-Unlock)**
+- Text terminal stays as primary interface
+- 2D canvas layer appears above
+- Both render simultaneously
+- All text events trigger sprite animations
+- Player can see battles, effects, character stats visually
+
+---
+
+## **Quest System Architecture**
+
+### **Quests Available**
+
+```javascript
+tutorial_basics
+├─ Check help menu
+├─ Check stats  
+└─ Look around
+
+explore_zones
+├─ Visit Central Hub
+├─ Visit Refactor Forest
+└─ Visit Breakpoint City
+
+master_spells
+├─ Craft first spell
+├─ Cast spell in battle
+└─ Cast 5 spells total
+
+first_victory
+├─ Enter a battle
+└─ Defeat an enemy
+
+data_collector
+├─ Define 1 concept
+├─ Define 5 concepts
+└─ Define 10 concepts
+
+graphics_unlock (MASTER QUEST)
+├─ Complete: Welcome to TECHNOMANCER
+├─ Complete: Explorer&#39;s Journey
+├─ Complete: Spell Apprentice
+└─ Complete: First Blood
+```
+
+### **Quest Commands**
+
+```bash
+# View all active quests
+quests
+
+# Start a specific quest
+quest start &lt;quest_id&gt;
+
+# Abandon a quest
+quest abandon &lt;quest_id&gt;
+```
+
+Example:
+```
+&gt; quests
+[ACTIVE QUESTS]
+  • Welcome to TECHNOMANCER (2/3)
+  • Explorer&#39;s Journey (1/3)
+  • Spell Apprentice (0/3)
+
+Completed quests: 1
+
+&gt; quest start data_collector
+[QUEST START] Data Collector
+Define 10 concepts using the &#39;define&#39; command
+```
+
+---
+
+## **How Progress Tracking Works**
+
+### **Automatic Tracking**
+The game automatically tracks progress when you:
+
+```javascript
+// Playing normally tracks quest progress
+
+define foo bar           // Tracks &quot;concept_defined&quot;
+battle                   // Tracks &quot;battle_entered&quot;
+attack                   // Tracks &quot;battle_won&quot; (if enemy dies)
+go forest                // Tracks &quot;zone_visited&quot;
+cast fireball            // Tracks &quot;spell_cast&quot;
+```
+
+### **Progress Actions**
+
+| Action | Triggered By | Quest Effect |
+|--------|-------------|--------------|
+| `concept_defined` | `define` command | Updates data_collector progress |
+| `battle_entered` | `battle` command | Marks &quot;enter battle&quot; step |
+| `battle_won` | Enemy defeated | Updates first_victory, master_spells |
+| `zone_visited` | `go` command | Updates explore_zones |
+| `spell_cast` | Casting spell in battle | Updates master_spells |
+| `spell_crafted` | Crafting spell | Updates master_spells |
+
+---
+
+## **Graphics Unlock Flow**
+
+### **Quest Completion Chain**
+
+```
+Player starts game
+    ↓
+help + stats + look commands
+    ↓
+Tutorial Basics COMPLETE ✓
+    ↓
+Visit all 3 zones
+    ↓
+Explorer&#39;s Journey COMPLETE ✓
+    ↓
+Craft and cast spells
+    ↓
+Spell Apprentice COMPLETE ✓
+    ↓
+Win first battle
+    ↓
+First Blood COMPLETE ✓
+    ↓
+All prerequisites met!
+    ↓
+Graphics Unlock Quest triggers
+    ↓
+[SYSTEM ALERT] Visual layer activates
+    ↓
+2D Canvas appears with sprite animations
+    ↓
+Continue playing with graphics + terminal
+```
+
+---
+
+## **Code Integration**
+
+### **GameEngine Integration**
+
+```javascript
+// Quest system automatically initialized
+class GameEngine {
+  constructor() {
+    this.questSystem = new QuestSystem();
+    this.onGraphicsUnlock = () =&gt; {};  // Callback
+  }
+  
+  // Automatically tracks actions
+  trackAction(action, value) {
+    this.questSystem.trackAction(action, value);
+    
+    // Check if graphics should unlock
+    if (this.questSystem.isGraphicsUnlocked() &amp;&amp; !this.gameState.graphicsUnlocked) {
+      this.unlockGraphics();
+    }
+  }
+  
+  // Fires when graphics unlock
+  unlockGraphics() {
+    this.gameState.graphicsUnlocked = true;
+    this.onGraphicsUnlock(true);  // Notify UI
+  }
+}
+```
+
+### **Command Handlers with Tracking**
+
+```javascript
+// In cmdDefine (automatically tracks)
+cmdDefine(args) {
+  this.gameState.defined[name] = value;
+  this.output(`Defined: ${name} = ${value}`, &quot;highlight&quot;);
+  this.trackAction(&quot;concept_defined&quot;, 1);  // ← Auto-track
+}
+
+// In endBattle (automatically tracks)
+endBattle(victory) {
+  if (victory) {
+    this.output(`Defeated ${enemy.name}!`, &quot;battle&quot;);
+    this.trackAction(&quot;battle_won&quot;, 1);  // ← Auto-track
+  }
+}
+```
+
+### **UI Callback Handler**
+
+```javascript
+function handleGraphicsUnlock(unlock) {
+  if (!unlock || graphicsEnabled) return;
+  
+  // Load sprite sheet and create graphics UI
+  spriteSheet = new Image();
+  spriteSheet.onload = () =&gt; {
+    graphicsUI = new GraphicsUI(gameEngine, spriteSheet);
+    document.getElementById(&quot;graphics-container&quot;).style.display = &quot;block&quot;;
+    graphicsEnabled = true;
+  };
+  spriteSheet.src = &quot;sprites-sheet.png&quot;;
+}
+```
+
+---
+
+## **Player Experience**
+
+### **Typical Playthrough**
+
+**Hour 1: Terminal Exploration**
+```
+&gt; help
+[COMMANDS]
+look    - Examine current location
+go      - Travel to a zone
+define  - Learn a new concept
+battle  - Enter combat
+...
+
+&gt; quests
+[ACTIVE QUESTS]
+  • Welcome to TECHNOMANCER (0/3)
+  
+&gt; help
+[Command complete]
+
+&gt; stats
+HP: 50/50 | MP: 20/20 | LV: 1
+
+&gt; quests
+[ACTIVE QUESTS]
+  • Welcome to TECHNOMANCER (2/3)
+```
+
+**Hour 2: Exploration &amp; Discovery**
+```
+&gt; go forest
+[You travel to Refactor Forest]
+Ancient trees made of nested code. Branches hum with logic.
+
+&gt; quests
+[ACTIVE QUESTS]
+  • Welcome to TECHNOMANCER (2/3)
+  • Explorer&#39;s Journey (2/3) ← New progress!
+  
+&gt; go city
+[You travel to Breakpoint City]
+
+&gt; quests
+[ACTIVE QUESTS]
+  • Welcome to TECHNOMANCER (3/3) ✓
+  • Explorer&#39;s Journey (3/3) ✓
+[Quest Complete] Welcome to TECHNOMANCER!
+[Quest Complete] Explorer&#39;s Journey!
+```
+
+**Hour 3: Combat &amp; Magic**
+```
+&gt; battle goblin
+⚔ A Goblin appears!
+HP: 30
+
+&gt; attack
+You attack for 12 damage!
+[Enemy HP: 18]
+
+&gt; attack
+You attack for 8 damage!
+[Defeated Goblin!]
+[Quest Complete] First Blood!
+
+&gt; quests
+[ACTIVE QUESTS]
+  • Spell Apprentice (1/3)
+  • Data Collector (0/3)
+  
+Graphics Unlock Requirements: 3/4 complete
+```
+
+**Hour 4: The Reveal**
+```
+&gt; define consciousness awareness of self
+Defined: consciousness = awareness of self
+[Progress] Data Collector: 1/3 definitions
+
+&gt; define algorithm step-by-step procedure
+[Progress] Data Collector: 2/3 definitions
+
+...
+
+&gt; define intelligence thinking capability
+[Progress] Data Collector: 10/3 definitions
+[Quest Complete] Data Collector!
+
+[SYSTEM ALERT]
+A new layer of reality materializes...
+The visual rendering system is now ONLINE.
+Graphics mode has been UNLOCKED.
+
+&#127918; [GRAPHICS ENABLED]
+A 2D sprite canvas appears above the terminal!
+```
+
+**After Unlock: Hybrid Mode**
+```
+[Text Terminal Above]
+&gt; battle robot
+⚔ A Robot appears!
+HP: 40
+
+[Graphics Canvas Below]
+Player sprite visible on left
+Enemy sprite (robot) visible on right
+Health bars animated with red fill
+
+&gt; attack
+[Text] You attack for 15 damage!
+[Graphics] Slash animation + hit flash effect
+```
+
+---
+
+## **Design Philosophy**
+
+### **Why This Approach?**
+
+✅ **Organic Discovery** - Graphics aren&#39;t handed out, they&#39;re earned
+✅ **Narrative Integration** - Unlock feels like in-game achievement
+✅ **Progressive Complexity** - Terminal → Graphics is a natural evolution
+✅ **Accessibility** - Text-only mode works perfectly fine
+✅ **Magic Moment** - The reveal is genuinely cool/surprising
+✅ **Replayability** - New players always discover the unlock
+
+### **The Magic**
+
+The graphics unlock works best because:
+1. **Player doesn&#39;t know it&#39;s coming** - Surprise moment
+2. **It feels earned** - Multiple hours of gameplay
+3. **It transforms the experience** - Same game, new layer
+4. **It rewards exploration** - Completing early quests
+5. **Terminal never goes away** - Logs everything for replay
+
+---
+
+## **Future Expansions**
+
+### **Additional Unlocks**
+
+```javascript
+// Could add more progression rewards:
+
+advanced_crafting_unlock
+├─ Master spells (cast 25 spells)
+├─ Craft advanced spell combinations
+└─ Unlock &quot;spell fusion&quot; mechanic
+
+advanced_battle_unlock
+├─ Win 10 battles
+├─ Discover all enemy types
+└─ Unlock &quot;power attacks&quot;
+
+lore_unlock
+├─ Gather all terminals
+├─ Unlock full story mode
+└─ New zones appear
+
+multiplayer_unlock
+├─ Complete main story
+├─ Network code transmit feature unlocks
+└─ PvP battles enabled
+```
+
+---
+
+## **Commands Summary**
+
+### **Quest Commands**
+```bash
+quests                    # Show active quests &amp; progress
+quest start &lt;id&gt;         # Start a new quest
+quest abandon &lt;id&gt;       # Abandon a quest
+```
+
+### **Regular Commands (Quest-Tracked)**
+```bash
+help                     # Tutorial quest progress
+look                     # Tutorial quest progress
+stats                    # Tutorial quest progress
+go &lt;zone&gt;               # Explorer quest progress
+define &lt;name&gt; &lt;value&gt;   # Data collector + tutorial
+battle &lt;enemy&gt;          # First victory quest
+attack                  # Battle tracking
+```
+
+### **Check Progress**
+```bash
+quests                  # See all progress
+```
+
+---
+
+## **Files Created**
+
+- `quest-system.js` - Core quest engine (195 lines)
+- Updated `GameEngine.js` - Added quest integration + commands
+- Updated `index.html` - Added graphics unlock callback
+- This guide!
+
+---
+
+## **The Vision**
+
+Players discover that this &quot;simple terminal game&quot; has a hidden layer. By playing naturally and completing quests, they unlock the visual rendering system. The graphics aren&#39;t required—but they transform an already engaging text game into something truly special.
+
+**It&#39;s the magic of progressive revelation.** &#127918;✨
+
+---
+
+**Type `quests` in-game to start your journey!**
+    </pre>
+</body>
+</html>

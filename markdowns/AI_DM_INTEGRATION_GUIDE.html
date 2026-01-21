@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI_DM_INTEGRATION_GUIDE</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0e27;
+            color: #00ff41;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #00ffff;
+            border-bottom: 1px solid #00ffff33;
+            padding-bottom: 0.3em;
+        }
+        code {
+            background: #1a1e3a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #ff00ff;
+        }
+        pre {
+            background: #1a1e3a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid #00ffff;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #00ff41;
+        }
+        a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        blockquote {
+            border-left: 4px solid #00ffff;
+            padding-left: 20px;
+            margin-left: 0;
+            color: #00ffff99;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #00ffff33;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #1a1e3a;
+            color: #00ffff;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #00ffff33;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <pre># AI-DM INTEGRATION GUIDE
+
+**Version:** Multi-Agent Coordinator with Persistent NPC Memory  
+**Date:** January 19, 2026  
+**Status:** Ready for GameEngine integration
+
+---
+
+## &#127919; SYSTEM OVERVIEW
+
+The AI DM Integration provides:
+
+1. **Persistent NPC Memory** with semantic compression
+2. **Multi-Provider Support** (Claude, Ollama, LM Studio, NVIDIA-ready)
+3. **Central Dispatcher** (invisible routing)
+4. **Human-like Memory Decay** (short/medium/long-term tiers)
+5. **Choice Consequence Tracking** (events affect future interactions)
+6. **Connectivity Quest** (hidden API setup)
+7. **Dual Storage** (localStorage + IndexedDB)
+
+---
+
+## &#128190; MEMORY SYSTEM
+
+### Three Memory Tiers
+
+```
+SHORT-TERM (Current Session + Last 2)
+├─ Verbatim conversation history
+├─ Recent choices with full context
+└─ Expires after 3 sessions
+
+MEDIUM-TERM (Compressed, Sessions 3-10)
+├─ Semantic summaries of old interactions
+├─ &quot;You were helpful to me before&quot;
+├─ Details blur, gist remains
+└─ Expires after 10 sessions
+
+LONG-TERM (Permanent)
+├─ ONLY major events saved
+├─ Quest completions
+├─ Betrayals, alliances, defeats
+├─ &quot;You saved my tribe&quot; - NEVER forgotten
+└─ Never expires
+```
+
+### Big Events (Auto-Tagged)
+
+```javascript
+const bigEventTypes = [
+  &quot;boss_battle&quot;,           // Major combat
+  &quot;player_defeated&quot;,       // Player died
+  &quot;treasure_acquired&quot;,     // Epic loot
+  &quot;epic_item_found&quot;,       // Legendary item
+  &quot;quest_completed&quot;,       // Quest finished
+  &quot;npc_quest_completed&quot;,   // NPC side quest
+  &quot;betrayal&quot;,              // Player betrayed NPC
+  &quot;insult&quot;,                // Player insulted NPC
+  &quot;theft&quot;,                 // Player stole from NPC
+  &quot;moral_choice&quot;,          // Significant choice
+  &quot;alliance_formed&quot;,       // New ally
+  &quot;enemy_made&quot;,            // New enemy
+  &quot;player_saved_npc&quot;,      // Hero moment
+  &quot;player_sacrificed_for_npc&quot; // Huge character moment
+];
+```
+
+---
+
+## &#127922; USAGE PATTERNS
+
+### Pattern 1: Initialize System
+
+```javascript
+// On game boot
+await AIDMIntegration.initialize();
+
+// Returns:
+{
+  initialized: true,
+  provider: &quot;ollama&quot;,  // or &quot;claude&quot;, &quot;lm-studio&quot;, &quot;offline&quot;
+  localModelFound: &quot;ollama&quot;,
+  npcCount: 5,
+  totalEvents: 42,
+  currentSession: 7
+}
+```
+
+### Pattern 2: NPC Interaction with Memory Recall
+
+```javascript
+// Player encounters an NPC
+const goblinLeaderId = &quot;npc_goblin_leader&quot;;
+
+// System recalls NPC&#39;s memory of player
+const memory = AIDMIntegration.recallMemory(goblinLeaderId);
+
+// Result:
+{
+  npcName: &quot;Gruk&quot;,
+  relationshipStatus: &quot;ally&quot;,
+  lastInteraction: &quot;You gave me a floppy disk upgrade&quot;,
+  summary: &quot;We have a strong bond of trust. Last time we met, you gave me a floppy disk. We formed an alliance.&quot;,
+  keyEvents: [
+    { type: &quot;alliance_formed&quot;, data: &quot;Pact signed&quot; },
+    { type: &quot;treasure_acquired&quot;, data: &quot;Shared loot&quot; }
+  ],
+  preferences: {
+    likedBy: [&quot;clever hacks&quot;, &quot;technology&quot;, &quot;loyalty&quot;],
+    dislikes: [],
+    hobbies: [&quot;terminal upgrading&quot;]
+  }
+}
+```
+
+### Pattern 3: Record Event (Auto-Tagged)
+
+```javascript
+// Big event: Player completes NPC&#39;s quest
+AIDMIntegration.recordEvent(goblinLeaderId, &quot;quest_completed&quot;, {
+  npcName: &quot;Gruk&quot;,
+  playerChoice: &quot;heroic_sacrifice&quot;,
+  outcome: &quot;NPC saved, new terminal unlocked&quot;,
+  forceImportant: false // Auto-tags as big event
+});
+
+// Result: Gruk will NEVER forget this
+// Memory saved to long-term, available forever
+```
+
+### Pattern 4: Player-Initiated Memory
+
+```javascript
+// Player says: &quot;Remember, I like sneaky hacking&quot;
+AIDMIntegration.playerSaysRemember(goblinLeaderId, &quot;sneaky hacking&quot;);
+
+// Gruk now remembers this preference
+// Next interaction: &quot;I recall you prefer... the subtle approach&quot;
+```
+
+### Pattern 5: AI-Committed Memory
+
+```javascript
+// AI DM decides something is important
+AIDMIntegration.aiCommitsToMemory(
+  npcId,
+  &quot;Player hummed an ancient song - Gruk recognized it as his mother&#39;s lullaby&quot;,
+  &quot;important&quot;
+);
+
+// This detail saved to long-term memory
+// May affect future emotional responses
+```
+
+### Pattern 6: Central Dispatcher (Invisible)
+
+```javascript
+// Player: &quot;I try to negotiate with the Goblins&quot;
+
+// Behind scenes, dispatcher routes:
+const result = await AIDMIntegration.dispatch({
+  playerAction: &quot;I try to negotiate with the Goblins&quot;,
+  npcId: &quot;npc_goblin_leader&quot;,
+  location: &quot;imp_warren&quot;,
+  actionType: &quot;npc_interaction&quot;
+});
+
+// Result:
+{
+  npcResponse: &quot;Gruk&#39;s eyes narrow. &#39;You return... and alone? Bold, Technomancer.&#39;&quot;,
+  nextActions: [&quot;attack&quot;, &quot;talk&quot;, &quot;flee&quot;]
+}
+
+// Player never sees the routing, just the response
+```
+
+### Pattern 7: Memory Decay (Between Sessions)
+
+```javascript
+// After session ends, apply decay
+AIDMIntegration.decayMemory();
+
+// Automatically:
+// 1. Compresses short-term to medium-term (if &gt; 3 sessions old)
+// 2. Fades medium-term details (if &gt; 10 sessions old)
+// 3. Preserves long-term forever
+
+// Session 1: Player helps Gruk
+// → Saved verbatim in short-term
+
+// Session 4: Player returns
+// → Old interaction compressed to summary
+// → Gruk remembers: &quot;You&#39;ve been helpful&quot;
+// → Details fade, gist remains
+
+// Session 15: Player betrays Gruk
+// → New big event in long-term
+// → Gruk remembers: &quot;You saved me before, but you betrayed me. I won&#39;t forget.&quot;
+```
+
+### Pattern 8: Connectivity Quest (Hidden Setup)
+
+```javascript
+// First time player accesses a terminal:
+const quest = AIDMIntegration.getConnectivityQuest();
+
+// Result:
+{
+  id: &quot;dial_out&quot;,
+  name: &quot;DIAL OUT&quot;,
+  steps: [
+    { id: &quot;detect&quot;, action: &quot;auto_detect_local&quot; },
+    { id: &quot;api_setup&quot;, action: &quot;api_setup_prompt&quot; },
+    { id: &quot;test&quot;, action: &quot;test_connection&quot; }
+  ]
+}
+
+// Flow:
+// 1. &quot;Scanning for local quantum tunnel...&quot;
+//    → Auto-detects Ollama/LM Studio
+//    → IF found: &quot;✓ Local quantum tunnel established&quot;
+//    → IF not: Prompts for cloud setup
+
+// 2. If cloud setup: Hidden input for API key
+//    → Never shows key in clear text
+//    → Validates connection
+//    → Saves securely
+
+// 3. Test connection
+//    → &quot;Cloud backend synced. Expanded content available.&quot;
+
+// Player never sees &quot;configure API key&quot;
+// Just: &quot;Establishing connection... Done!&quot;
+```
+
+---
+
+## &#128295; INTEGRATION CHECKLIST
+
+### GameEngine.js Modifications
+
+- [ ] Import ai-dm-integration.js
+- [ ] Call `await AIDMIntegration.initialize()` in `initGame()`
+- [ ] Store current NPC interactions in `gameState.currentNPC`
+- [ ] On NPC encounter, call `AIDMIntegration.recallMemory(npcId)`
+- [ ] Display recalled memory as NPC greeting
+- [ ] On big events (quest complete, defeat), call `AIDMIntegration.recordEvent()`
+- [ ] Hook `dispatch()` for all NPC interactions
+- [ ] Implement Connectivity Quest as first terminal
+
+### NPC Integration
+
+```javascript
+// In cmdInteractWithNPC(npcId):
+const memory = AIDMIntegration.recallMemory(npcId);
+
+// Display greeting based on memory
+if (memory.relationshipStatus === &quot;trusted&quot;) {
+  output(`${memory.npcName}: &quot;${memory.summary}&quot;`);
+} else if (memory.relationshipStatus === &quot;enemy&quot;) {
+  output(`${memory.npcName}: &quot;You! I haven&#39;t forgotten...&quot;`);
+}
+
+// Get NPC response
+const response = await AIDMIntegration.dispatch({
+  playerAction: input,
+  npcId: npcId,
+  location: gameState.zone,
+  actionType: &quot;npc_interaction&quot;
+});
+
+output(response.npcResponse);
+```
+
+### Event Recording
+
+```javascript
+// On quest completion:
+AIDMIntegration.recordEvent(npcId, &quot;quest_completed&quot;, {
+  npcName: npc.name,
+  playerChoice: playerAction,
+  outcome: &quot;quest_completed&quot;,
+  reward: questReward
+});
+
+// On defeat:
+AIDMIntegration.recordEvent(npcId, &quot;player_defeated&quot;, {
+  npcName: npc.name,
+  playerChoice: &quot;defeated&quot;,
+  outcome: &quot;fled_to_hub&quot;
+});
+
+// On betrayal:
+AIDMIntegration.recordEvent(npcId, &quot;betrayal&quot;, {
+  npcName: npc.name,
+  playerChoice: &quot;stole_item&quot;,
+  outcome: &quot;relationship_damaged&quot;,
+  forceImportant: true
+});
+```
+
+---
+
+## &#128202; MEMORY EXAMPLE WALKTHROUGH
+
+```
+SESSION 1:
+  Player: &quot;I want to help you&quot;
+  Gruk: &quot;I need a power upgrade for my terminal&quot;
+  Player: Gives floppy disk
+  
+  → Recorded: SHORT-TERM (verbatim)
+  → Gruk&#39;s memory: &quot;Technomancer gave me floppy disk. Helpful.&quot;
+
+SESSION 2:
+  Player: Helps Gruk defeat miniboss
+  
+  → Recorded: SHORT-TERM (new event)
+  → Gruk&#39;s memory: &quot;Fought together. Growing bond.&quot;
+
+SESSION 3:
+  Player: Other adventures
+  
+  → Both old events still in SHORT-TERM (verbatim)
+  → Gruk remembers exact details
+
+SESSION 4:
+  Player: Returns to Gruk
+  
+  → Memory decay triggers
+  → Session 1-2 events COMPRESS to summary:
+    &quot;This Technomancer has been consistently helpful. Multiple positive interactions.&quot;
+  → Moved to MEDIUM-TERM
+  
+  Gruk: &quot;You&#39;ve been a good friend to me, Technomancer.&quot;
+  
+  [Details fade, gist remains - just like remembering an old friend]
+
+SESSION 15:
+  Player: Steals Gruk&#39;s prized terminal part
+  
+  → BIG EVENT - goes to LONG-TERM
+  → Never expires, never fades
+  
+  Gruk: &quot;You were my friend. But you took from me. I won&#39;t forget this.&quot;
+
+SESSION 25:
+  Player: Returns to Gruk
+  
+  → SHORT-TERM: Empty (many sessions passed)
+  → MEDIUM-TERM: Vague summaries (helpful friend)
+  → LONG-TERM: Betrayal (still fresh in memory)
+  
+  Gruk: &quot;You return... after all this time. I remember when we were allies...
+         and I remember when you betrayed me. Why should I trust you again?&quot;
+  
+  [Human-like memory: faded details + lasting emotional scars]
+```
+
+---
+
+## &#128640; NEXT STEPS
+
+1. **Integrate into GameEngine.js**
+   - Add AI DM initialization
+   - Hook NPC interactions
+   - Record events
+
+2. **Test Memory Recall**
+   - Meet NPC, record events
+   - Leave session
+   - Return and verify memory works
+
+3. **Test Connectivity Quest**
+   - First terminal interaction
+   - Verify API setup is hidden
+   - Confirm local model detection
+
+4. **Implement Dispatcher**
+   - Route NPC interactions
+   - Route terminal challenges
+   - Route encounters
+
+5. **Build Provider Integration**
+   - Implement callLocalModel()
+   - Implement callClaude()
+   - Implement callOfflineMode()
+
+---
+
+**Document:** AI_DM_INTEGRATION_GUIDE.md  
+**Created:** January 19, 2026  
+**Status:** Ready for implementation
+    </pre>
+</body>
+</html>

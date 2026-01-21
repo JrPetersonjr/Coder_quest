@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NARRATIVE_INTEGRATION_GUIDE</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0e27;
+            color: #00ff41;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #00ffff;
+            border-bottom: 1px solid #00ffff33;
+            padding-bottom: 0.3em;
+        }
+        code {
+            background: #1a1e3a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #ff00ff;
+        }
+        pre {
+            background: #1a1e3a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid #00ffff;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #00ff41;
+        }
+        a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        blockquote {
+            border-left: 4px solid #00ffff;
+            padding-left: 20px;
+            margin-left: 0;
+            color: #00ffff99;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #00ffff33;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #1a1e3a;
+            color: #00ffff;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #00ffff33;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <pre>## CONNECTING DYNAMIC NARRATIVE TO EXISTING SYSTEMS
+
+### Quick Reference - What Triggers What
+
+```
+PLAYER ACTION → NARRATIVE EVENT → AI EMAIL → GAMEPLAY CONSEQUENCE
+```
+
+---
+
+## Integration Checklist
+
+### 1. Intro System Integration ✅ Ready
+**File:** intro-system.js
+
+**Location to add:**
+```javascript
+// After character creation completes
+onCharacterComplete(gameState) {
+  // Existing code...
+  
+  // NEW: Start narrative
+  DynamicNarrative.narrativeState.milestones.character_created = true;
+  
+  // Generate first email
+  (async () =&gt; {
+    const email = await DynamicNarrative.generateEmail(
+      gameState,
+      &quot;identity_fragment&quot;
+    );
+    
+    // Display in Cast Console or terminal
+    appendLine(&quot;&quot;, &quot;system&quot;);
+    appendLine(&quot;═══════════════════════════════════════&quot;, &quot;highlight&quot;);
+    appendLine(&quot;&#128232; NEW MESSAGE&quot;, &quot;system&quot;);
+    appendLine(&quot;═══════════════════════════════════════&quot;, &quot;highlight&quot;);
+    appendLine(&quot;From: &quot; + email.from, &quot;text&quot;);
+    appendLine(&quot;Subject: &quot; + email.subject, &quot;text&quot;);
+    appendLine(&quot;&quot;, &quot;system&quot;);
+    appendLine(email.body, &quot;text&quot;);
+    appendLine(&quot;&quot;, &quot;system&quot;);
+  })();
+}
+```
+
+---
+
+### 2. Battle System Integration ✅ Ready
+**File:** battle-core.js
+
+**Location to add boss encounters:**
+```javascript
+// In battle initialization
+async startBattle(target, gameState, appendLine) {
+  // Check if target is a boss
+  const possibleBoss = BossEncounters.getBossForZone(
+    gameState.currentZone,
+    gameState
+  );
+  
+  if (possibleBoss) {
+    // Trigger boss narrative first
+    await BossEncounters.triggerBossNarrative(possibleBoss, appendLine);
+    
+    // Register encounter
+    DynamicNarrative.registerBossEncounter(
+      possibleBoss.id,
+      possibleBoss.name,
+      possibleBoss.tier
+    );
+  }
+  
+  // Then proceed with battle...
+}
+
+// When battle ends in victory
+async endBattle(boss, gameState, appendLine) {
+  // Register boss defeat
+  if (boss) {
+    DynamicNarrative.registerBossDefeat(boss.id);
+  }
+  
+  // Check milestones
+  const triggers = DynamicNarrative.checkMilestones(gameState);
+  
+  // Generate post-battle emails
+  for (let trigger of triggers) {
+    const email = await DynamicNarrative.generateEmail(
+      gameState,
+      trigger.emailType
+    );
+    
+    // Display email to player
+    displayEmail(email, appendLine);
+  }
+}
+```
+
+---
+
+### 3. Zone System Integration ✅ Ready
+**File:** zone-transitions.js
+
+**Location to add terminal restoration:**
+```javascript
+// When player completes zone puzzle/restores terminal
+async completeZonePuzzle(zoneId, gameState, appendLine) {
+  // Existing victory logic...
+  
+  // NEW: Register terminal restoration
+  const wasRestored = DynamicNarrative.registerTerminalRestoration(zoneId);
+  
+  if (wasRestored) {
+    // Corruption decreased
+    const newCorruption = DynamicNarrative.narrativeState.corruptionLevel;
+    
+    appendLine(&quot;&quot;, &quot;system&quot;);
+    appendLine(&quot;&#128295; TERMINAL RESTORED&quot;, &quot;highlight&quot;);
+    appendLine(`Corruption: ${newCorruption}%`, &quot;text&quot;);
+    appendLine(&quot;&quot;, &quot;system&quot;);
+    
+    // Generate restoration email
+    const email = await DynamicNarrative.generateEmail(
+      gameState,
+      &quot;restoration&quot;
+    );
+    
+    displayEmail(email, appendLine);
+    
+    // Check if world is fully healed
+    if (newCorruption &lt;= 0) {
+      triggerGameEnding(gameState, appendLine);
+    }
+  }
+}
+```
+
+---
+
+### 4. Encounters System Integration ✅ Ready
+**File:** encounters.js
+
+**Location to add NPC meetings:**
+```javascript
+// When player meets an NPC
+onNPCEncounter(npcId, npcName, gameState, appendLine) {
+  const isFirstMeeting = DynamicNarrative.registerNPCMeeting(
+    npcId,
+    npcName
+  );
+  
+  if (isFirstMeeting) {
+    appendLine(`✦ You meet ${npcName}`, &quot;highlight&quot;);
+    
+    // Generate introduction email from NPC
+    (async () =&gt; {
+      const email = await DynamicNarrative.generateEmail(
+        gameState,
+        &quot;mystery&quot; // NPCs reach out as &quot;mystery&quot;
+      );
+      
+      appendLine(&quot;&quot;, &quot;system&quot;);
+      appendLine(`&#128232; ${npcName} sends:`, &quot;text&quot;);
+      appendLine(email.body, &quot;text&quot;);
+      appendLine(&quot;&quot;, &quot;system&quot;);
+    })();
+  }
+}
+```
+
+---
+
+### 5. Terminal System Integration ✅ Ready
+**File:** ancient-terminals.js
+
+**Location to add terminal narrative context:**
+```javascript
+// In email minigame initiation
+initiateEmailGame(appendLine) {
+  // Existing code...
+  
+  // NEW: Check for generated emails first
+  const milestones = DynamicNarrative.checkMilestones(window.gameEngine?.gameState);
+  
+  if (milestones.length &gt; 0 &amp;&amp; Math.random() &gt; 0.5) {
+    // 50% chance to get milestone email instead of zone document
+    (async () =&gt; {
+      const trigger = milestones[0];
+      const email = await DynamicNarrative.generateEmail(
+        window.gameEngine?.gameState,
+        trigger.emailType
+      );
+      
+      TerminalDocuments.displayEmail(email);
+    })();
+  } else {
+    // Fall back to static zone documents
+    const zoneId = this.current.zone || &quot;hub&quot;;
+    const zoneDocs = TerminalDocuments.getZoneDocuments(zoneId);
+    
+    if (zoneDocs &amp;&amp; zoneDocs.length &gt; 0) {
+      const doc = zoneDocs[Math.floor(Math.random() * zoneDocs.length)];
+      TerminalDocuments.displayDocument(doc.id, appendLine);
+    }
+  }
+}
+```
+
+---
+
+### 6. Quest System Integration ✅ Ready
+**File:** quest-system.js
+
+**Location to add narrative triggers:**
+```javascript
+// When quest completes
+completeQuest(questId) {
+  // Existing code...
+  
+  // NEW: Check if this unlocks narrative milestone
+  if (questId === &quot;first_victory&quot;) {
+    DynamicNarrative.narrativeState.milestones.first_boss = true;
+  }
+  
+  if (questId === &quot;explorer_journey&quot;) {
+    // Multiple zones visited
+    const terminals = Object.values(DynamicNarrative.narrativeState.terminalsRestored)
+      .filter(Boolean).length;
+    
+    if (terminals &gt;= 3) {
+      DynamicNarrative.narrativeState.milestones.fully_realized = true;
+    }
+  }
+}
+```
+
+---
+
+### 7. Cast Console Integration ✅ Ready
+**File:** cast-console-ui.js
+
+**Location to display narrative state:**
+```javascript
+// Add narrative status to Cast Console
+
+// In updateStatsPanel() or new updateNarrativePanel()
+updateNarrativePanel: function() {
+  const state = DynamicNarrative.narrativeState;
+  const panel = document.getElementById(&quot;narrative-panel&quot;);
+  
+  if (!panel) return;
+  
+  let html = `
+    &lt;div class=&quot;narrative-info&quot;&gt;
+      &lt;div class=&quot;narrative-title&quot;&gt;Status&lt;/div&gt;
+      
+      &lt;div class=&quot;narrative-item&quot;&gt;
+        &lt;span class=&quot;label&quot;&gt;Identity:&lt;/span&gt;
+        &lt;span class=&quot;value&quot;&gt;${state.playerIdentity.discovered ? 
+          state.playerIdentity.realName : &#39;UNKNOWN&#39;}&lt;/span&gt;
+      &lt;/div&gt;
+      
+      &lt;div class=&quot;narrative-item&quot;&gt;
+        &lt;span class=&quot;label&quot;&gt;Role:&lt;/span&gt;
+        &lt;span class=&quot;value&quot;&gt;${state.playerIdentity.role || &#39;???&#39;}&lt;/span&gt;
+      &lt;/div&gt;
+      
+      &lt;div class=&quot;narrative-item&quot;&gt;
+        &lt;span class=&quot;label&quot;&gt;Corruption:&lt;/span&gt;
+        &lt;span class=&quot;value&quot;&gt;${state.corruptionLevel}%&lt;/span&gt;
+      &lt;/div&gt;
+      
+      &lt;div class=&quot;narrative-item&quot;&gt;
+        &lt;span class=&quot;label&quot;&gt;Terminals:&lt;/span&gt;
+        &lt;span class=&quot;value&quot;&gt;${
+          Object.values(state.terminalsRestored).filter(Boolean).length
+        }/5&lt;/span&gt;
+      &lt;/div&gt;
+      
+      &lt;div class=&quot;narrative-item&quot;&gt;
+        &lt;span class=&quot;label&quot;&gt;Bosses:&lt;/span&gt;
+        &lt;span class=&quot;value&quot;&gt;${
+          Object.values(state.bosses).filter(b =&gt; b.defeated).length
+        } defeated&lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  `;
+  
+  panel.innerHTML = html;
+}
+
+// Call this when narrative state changes
+onNarrativeStateChange: function() {
+  this.updateNarrativePanel();
+}
+```
+
+---
+
+## Data Flow Examples
+
+### Example 1: First Boss Defeated
+```
+Player wins battle vs Syntax Imp Queen
+    ↓
+battle-core.js: endBattle() called
+    ↓
+dynamic-narrative.js: registerBossDefeat(&quot;syntax_imp_queen&quot;)
+    ↓
+checkMilestones() returns [{type: &quot;first_boss&quot;, emailType: &quot;mentor&quot;}]
+    ↓
+generateEmail(gameState, &quot;mentor&quot;)
+    ↓
+AI generates: &quot;Dr. Kessler sends: &#39;You&#39;re stronger than we thought...&#39;&quot;
+    ↓
+displayEmail() shows to player
+    ↓
+NPC relationship increased, questbook updates
+```
+
+### Example 2: Terminal Restored
+```
+Player solves Forest puzzle, restores hub terminal
+    ↓
+zone-transitions.js: completeZonePuzzle(&quot;forest&quot;)
+    ↓
+dynamic-narrative.js: registerTerminalRestoration(&quot;forest&quot;)
+    ↓
+corruptionLevel: 100 → 85 (down 15%)
+    ↓
+generateEmail(gameState, &quot;restoration&quot;)
+    ↓
+AI generates: &quot;The forest hums with renewed energy...&quot;
+    ↓
+World responds: Forest enemies weaker, new NPCs appear
+```
+
+### Example 3: Halfway Awakening (Level 5+)
+```
+Player reaches Level 5
+    ↓
+Any game action triggers checkMilestones()
+    ↓
+milestone.halfway_awake triggered
+    ↓
+playerIdentity.role = &quot;Code Weaver&quot; (derived from stats)
+    ↓
+generateEmail(gameState, &quot;discovery&quot;)
+    ↓
+AI generates: &quot;You remember now. You were built for this...&quot;
+    ↓
+Player learns they&#39;re not just human - they&#39;re a system tool
+    ↓
+New abilities unlock, story deepens
+```
+
+---
+
+## Milestone Sequence (Complete Arc)
+
+| Level | Event | Milestone | Email Type | Impact |
+|-------|-------|-----------|-----------|--------|
+| 1 | Char created | character_created | identity_fragment | First hint |
+| 1-4 | First zone | first_terminal | restoration | World responds |
+| 2-5 | Miniboss | first_boss | mentor | Get guide |
+| 5 | Reach level | halfway_awake | discovery | Learn role |
+| 6-12 | Explore | first_npc | mystery | Meet allies |
+| 10 | Subboss | second_boss | mentor | Relationship grows |
+| 15 | 3+ terminals | fully_realized | identity_fragment | Learn true name |
+| 15 | Demiboss | third_boss | discovery | Who are you really? |
+| 18+ | Corruption 0% | final_boss | final_boss_intro | THE RECURSION |
+| 20+ | Victory | corruption_purged | ending | Game conclusion |
+
+---
+
+## Testing Narrative Integration
+
+### Debug Commands to Add
+```javascript
+// In command-handlers.js
+
+cmdDebugNarrative(args, appendLine) {
+  const cmd = args[0];
+  
+  if (cmd === &quot;state&quot;) {
+    appendLine(&quot;Narrative State:&quot;, &quot;system&quot;);
+    appendLine(JSON.stringify(DynamicNarrative.narrativeState, null, 2), &quot;log&quot;);
+  }
+  
+  if (cmd === &quot;trigger&quot;) {
+    const type = args[1] || &quot;discovery&quot;;
+    DynamicNarrative.generateEmail(window.gameEngine.gameState, type)
+      .then(email =&gt; {
+        TerminalDocuments.displayEmail(email);
+      });
+  }
+  
+  if (cmd === &quot;milestone&quot;) {
+    const milestone = args[1];
+    DynamicNarrative.narrativeState.milestones[milestone] = true;
+    appendLine(`Milestone ${milestone} triggered`, &quot;highlight&quot;);
+  }
+  
+  if (cmd === &quot;boss&quot;) {
+    const bosses = BossEncounters.getProgression();
+    appendLine(&quot;Boss Progression:&quot;, &quot;system&quot;);
+    bosses.forEach((b, i) =&gt; {
+      appendLine(`${i+1}. ${b.name} (${b.tier}) - ${b.zone}`, &quot;log&quot;);
+    });
+  }
+}
+```
+
+---
+
+## Save/Load Persistence
+
+### Saving Narrative
+```javascript
+// In save-system.js
+saveGame() {
+  const save = {
+    gameState: this.gameState,
+    narrative: DynamicNarrative.save(), // ← Add this
+    quests: this.questSystem.save(),
+    // ... other saves
+  };
+  
+  return save;
+}
+```
+
+### Loading Narrative
+```javascript
+// In save-system.js
+loadGame(save) {
+  this.gameState = save.gameState;
+  
+  // Restore narrative
+  if (save.narrative) {
+    DynamicNarrative.load(save.narrative); // ← Add this
+  }
+  
+  // ... load other systems
+}
+```
+
+---
+
+## Performance Notes
+
+✅ **AI Generation is Async** - Won&#39;t block gameplay
+✅ **Fallbacks Included** - Game works if AI API down
+✅ **Caching Possible** - Generated emails can be cached per milestone
+✅ **Minimal State** - Only tracks necessary narrative data
+✅ **No External Assets** - Pure text-based system
+
+---
+
+## Next Implementation Priority
+
+1. **High Priority:**
+   - [ ] Add boss integration to battle-core.js
+   - [ ] Add terminal restoration to zone-transitions.js
+   - [ ] Add NPC system to encounters.js
+
+2. **Medium Priority:**
+   - [ ] Add narrative display to cast-console-ui
+   - [ ] Add debug commands
+   - [ ] Add multiple endings
+
+3. **Polish:**
+   - [ ] Email visual formatting
+   - [ ] Corrupted text rendering
+   - [ ] Achievement system
+   - [ ] New Game+ integration
+
+---
+
+This architecture creates an adaptive narrative that **feels personal** because it references the player&#39;s actual discoveries, defeats, and progression. Every email feels earned and contextual.
+    </pre>
+</body>
+</html>

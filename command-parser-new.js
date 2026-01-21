@@ -243,7 +243,12 @@ window.CommandParser = {
     this.logToConsole(`[CAST] Casting: ${spellName}`, "spell");
     this.logToConsole("✦ Channeling arcane energies...", "highlight");
     
-    // TODO: Hook into actual spell system
+    // Wire to actual spell system via GameEngine
+    if (window.gameEngine) {
+      window.gameEngine.castSpell([spellName]);
+    } else {
+      this.logToConsole("⚠ Spell system not initialized", "error");
+    }
   },
 
   cmdUse: function(argString, args) {
@@ -253,7 +258,38 @@ window.CommandParser = {
     }
 
     this.logToConsole(`[USE] Using: ${argString}`, "text");
-    // TODO: Hook into inventory system
+    
+    // Wire to inventory system
+    if (window.gameEngine && window.gameEngine.gameState) {
+      const inventory = window.gameEngine.gameState.inventory || [];
+      const itemName = argString.toLowerCase();
+      const item = inventory.find(i => i.name.toLowerCase() === itemName);
+      
+      if (!item) {
+        this.logToConsole(`You don't have '${argString}' in your inventory`, "error");
+        return;
+      }
+      
+      // Use item (basic implementation - expand based on item types)
+      if (item.type === 'consumable') {
+        if (item.effect === 'heal') {
+          const healed = Math.min(item.value || 20, window.gameEngine.gameState.maxHp - window.gameEngine.gameState.hp);
+          window.gameEngine.gameState.hp += healed;
+          this.logToConsole(`Used ${item.name}! Restored ${healed} HP`, "highlight");
+        } else if (item.effect === 'mana') {
+          const restored = Math.min(item.value || 20, window.gameEngine.gameState.maxMp - window.gameEngine.gameState.mp);
+          window.gameEngine.gameState.mp += restored;
+          this.logToConsole(`Used ${item.name}! Restored ${restored} MANA`, "highlight");
+        }
+        // Remove consumable from inventory
+        const index = inventory.indexOf(item);
+        inventory.splice(index, 1);
+      } else {
+        this.logToConsole(`${item.name} cannot be used this way`, "error");
+      }
+    } else {
+      this.logToConsole("⚠ Game engine not initialized", "error");
+    }
   },
 
   cmdTalk: function(argString, args) {
@@ -263,7 +299,54 @@ window.CommandParser = {
     }
 
     this.logToConsole(`[NPC] Talking to: ${argString}`, "text");
-    // TODO: Hook into dialogue system
+    
+    // Wire to NPC dialogue system
+    if (window.gameEngine && window.gameEngine.gameState) {
+      const npcName = argString.toLowerCase();
+      const zone = window.gameEngine.gameState.zone;
+      
+      // Check for NPCs in current zone
+      const npcs = {
+        'hub': ['archivist', 'gatekeeper', 'terminal-sage'],
+        'forest': ['forest-spirit', 'code-hermit'],
+        'city': ['street-vendor', 'data-broker', 'security-ai'],
+        'wasteland': ['scavenger', 'old-programmer'],
+        'cosmic': ['void-entity', 'quantum-observer']
+      };
+      
+      const availableNPCs = npcs[zone] || [];
+      
+      if (!availableNPCs.includes(npcName)) {
+        this.logToConsole(`There's no one named '${argString}' here`, "error");
+        this.logToConsole(`NPCs in this zone: ${availableNPCs.join(', ') || 'none'}`, "hint");
+        return;
+      }
+      
+      // Basic NPC dialogue (can be expanded with AI DM integration)
+      const dialogues = {
+        'archivist': "The archives hold many secrets. Speak 'read' to access documents.",
+        'gatekeeper': "To pass the gate, you must prove your worth. Type 'battle' to begin.",
+        'terminal-sage': "The ancient terminals speak to those who listen. Use 'terminal' command.",
+        'forest-spirit': "The code flows through these trees. Seek balance in your spells.",
+        'code-hermit': "I've seen patterns you wouldn't believe. Would you like a hint?",
+        'street-vendor': "Data for sale! I have items that might interest you.",
+        'data-broker': "Information is currency here. What do you seek?",
+        'security-ai': "HALT. State your purpose in this sector.",
+        'scavenger': "Found some old tech in the ruins. Want to trade?",
+        'old-programmer': "Back in my day, we coded with punch cards...",
+        'void-entity': "...the void acknowledges your presence...",
+        'quantum-observer': "Your observation changes the outcome. Fascinating."
+      };
+      
+      this.logToConsole(`${argString}: "${dialogues[npcName] || 'I have nothing to say.'}"`, "npc");
+      
+      // If AI DM is available, could generate dynamic dialogue here
+      if (window.AIDM && window.AIDM.isConnected()) {
+        this.logToConsole("[Type 'ask <question>' for deeper conversation]", "hint");
+      }
+    } else {
+      this.logToConsole("⚠ Game engine not initialized", "error");
+    }
   },
 
   cmdClear: function() {

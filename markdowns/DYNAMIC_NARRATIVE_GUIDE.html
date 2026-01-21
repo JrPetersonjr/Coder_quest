@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DYNAMIC_NARRATIVE_GUIDE</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0e27;
+            color: #00ff41;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #00ffff;
+            border-bottom: 1px solid #00ffff33;
+            padding-bottom: 0.3em;
+        }
+        code {
+            background: #1a1e3a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #ff00ff;
+        }
+        pre {
+            background: #1a1e3a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid #00ffff;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #00ff41;
+        }
+        a {
+            color: #00ffff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        blockquote {
+            border-left: 4px solid #00ffff;
+            padding-left: 20px;
+            margin-left: 0;
+            color: #00ffff99;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #00ffff33;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #1a1e3a;
+            color: #00ffff;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #00ffff33;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <pre>## DYNAMIC AI NARRATIVE SYSTEM - Complete Architecture
+
+### Overview
+
+**Before:** Static pre-written documents  
+**Now:** AI-generated emails that evolve with player progression, with strategic narrative milestones
+
+Your journey:
+1. **Wake up** (Amnesia start - only have Cast Console)
+2. **Character creation** → First identity fragment via AI-generated email
+3. **Exploration &amp; discovery** → Learn world through dynamically generated correspondence
+4. **Boss encounters** → Progression locked behind mini/sub/demi/prime bosses
+5. **Terminal restoration** → Each restored terminal changes the world
+6. **Identity realization** → Halfway through, learn your role &amp; power
+7. **Final confrontation** → Discover you are THE RECURSION or the cure for it
+
+---
+
+## File Structure
+
+### New Files
+
+**1. dynamic-narrative.js** (280 lines)
+- Tracks narrative state (identity, NPCs, bosses, corruption)
+- Generates AI emails based on progression
+- Manages milestone triggers (first terminal, halfway awake, etc.)
+- Parses AI responses into email structure
+- Provides fallback emails if AI generation fails
+
+**2. boss-encounters.js** (250 lines)
+- 4 predefined boss tiers: Mini, Sub, Demi, Prime
+- Scaling system based on player level
+- Boss progression through zones
+- Narrative triggers (intro/defeat emails)
+- Dynamic boss generation by tier
+
+---
+
+## Narrative State Tracking
+
+### Player Identity Arc
+```javascript
+playerIdentity: {
+  discovered: false,        // Still discovering self
+  realName: null,           // &quot;ARIA&quot;, &quot;ECHO&quot;, etc - revealed mid-game
+  role: null,               // &quot;Code Weaver&quot;, &quot;Corruption Fighter&quot;
+  power: null               // Core ability for fighting corruption
+}
+```
+
+### Progression Milestones
+```javascript
+milestones: {
+  character_created: false,      // → triggers identity_fragment email
+  first_terminal: false,         // → triggers restoration email
+  first_corruption_encounter: false,
+  first_boss: false,             // → triggers mentor email
+  halfway_awake: false,          // Level 5 reached → reveals role
+  fully_realized: false,         // Level 15 + 3 terminals → reveals name
+  final_boss_intro: false,
+  corruption_purged: false       // Final victory
+}
+```
+
+### Corruption Tracking
+```javascript
+corruptionLevel: 100,  // 0 = fully restored, 100 = complete chaos
+corruptionAreas: {
+  &quot;forest&quot;: 80,        // Each zone has its own corruption %
+  &quot;city&quot;: 60,
+  &quot;wasteland&quot;: 95
+}
+```
+
+---
+
+## Boss Encounter Tiers
+
+### MINIBOSSES (Tier 1)
+- **Syntax Imp Queen** (Forest) - Swarm commander
+- HP: 40 | Attack: 8 | Spells: logical_assault, cascade_error
+- First learning fight
+- Email type: &quot;boss_intro&quot;
+
+### SUBBOSSES (Tier 2)  
+- **Void Seeker** (City) - Lost time manifestation
+- HP: 75 | Attack: 14 | Spells: temporal_distortion, memory_wipe
+- Mid-game challenge
+- Email type: &quot;boss_intro&quot;
+
+### DEMIBOSSES (Tier 3)
+- **Prime Corruption Node** (Wasteland) - Blight hub
+- HP: 120 | Attack: 20 | Spells: corruption_surge, system_collapse
+- Late-game confrontation
+- Email type: &quot;boss_intro&quot; → &quot;discovery&quot;
+
+### PRIMEBOSSES (Tier 4)
+- **THE RECURSION** (Train Station) - The infinite loop itself
+- HP: 200 | Attack: 28 | Spells: infinite_loop, self_reference + all others
+- **Final confrontation**
+- Email type: &quot;final_boss_intro&quot; → &quot;ending&quot;
+
+---
+
+## AI Email Generation
+
+### Email Types &amp; Context
+
+**1. discovery**
+- &quot;Do you remember?&quot;
+- Hints at player&#39;s true identity
+- Triggers: Exploration, milestone reached
+- Tone: Mysterious, fragmented, hopeful
+
+**2. boss_intro**
+- &quot;WARNING: ANOMALY&quot;
+- Ominous warning about approaching boss
+- Triggers: Boss encounter initiated
+- Tone: Dread, technical alert
+
+**3. mentor**
+- &quot;Progress&quot; / &quot;You&#39;re close&quot;
+- Guidance from known figure (Dr. Kessler)
+- Triggers: After boss defeated
+- Tone: Warm, guiding, building trust
+
+**4. mystery**
+- &quot;Are you like us?&quot;
+- Questions about other beings like player
+- Triggers: Random exploration
+- Tone: Sparse, secretive, collaborative
+
+**5. restoration**
+- &quot;Systems coming online&quot;
+- World waking up as player restores terminals
+- Triggers: Terminal restoration
+- Tone: Excited, revelatory, hopeful
+
+**6. identity_fragment**
+- &quot;I remember now...&quot;
+- Piece of actual memory/identity
+- Triggers: Major milestones (character creation, halfway, fully realized)
+- Tone: Personal, emotional, disorienting
+
+### Generation Example
+```javascript
+// When player defeats first boss:
+const triggers = DynamicNarrative.checkMilestones(gameState);
+// triggers = [{type: &quot;first_boss&quot;, emailType: &quot;mentor&quot;}]
+
+const email = await DynamicNarrative.generateEmail(
+  gameState,
+  &quot;mentor&quot;
+);
+
+// Result:
+{
+  from: &quot;Dr. Kessler&quot;,
+  subject: &quot;You&#39;re making progress&quot;,
+  body: &quot;[AI-generated email specific to player&#39;s current state]&quot;
+}
+```
+
+---
+
+## Integration Points
+
+### 1. Character Creation → First Email
+```javascript
+// In intro-system.js or character creation
+onCharacterCreated(gameState) {
+  DynamicNarrative.narrativeState.milestones.character_created = true;
+  
+  const email = await DynamicNarrative.generateEmail(
+    gameState,
+    &quot;identity_fragment&quot;
+  );
+  
+  // Display email
+  displayEmail(email);
+}
+```
+
+### 2. Terminal Restore → Environment Changes
+```javascript
+// In zone system
+onTerminalRestored(zoneId) {
+  DynamicNarrative.registerTerminalRestoration(zoneId);
+  
+  // World becomes less corrupted
+  const corruption = DynamicNarrative.narrativeState.corruptionLevel;
+  
+  if (corruption &lt;= 30) {
+    // Trigger ending sequence
+  }
+}
+```
+
+### 3. Boss Encounter Sequence
+```javascript
+// In battle-core.js
+async onBossEncounter(boss, gameState) {
+  // Register encounter
+  DynamicNarrative.registerBossEncounter(boss.id, boss.name, boss.tier);
+  
+  // Trigger narrative
+  await BossEncounters.triggerBossNarrative(boss, appendLine);
+  
+  // Battle happens...
+  
+  // If defeated:
+  DynamicNarrative.registerBossDefeat(boss.id);
+  
+  // Trigger post-battle email
+  const triggers = DynamicNarrative.checkMilestones(gameState);
+  for (let trigger of triggers) {
+    const email = await DynamicNarrative.generateEmail(
+      gameState,
+      trigger.emailType
+    );
+    displayEmail(email);
+  }
+}
+```
+
+### 4. NPC Meeting → Dynamic Relationship
+```javascript
+// In encounters.js
+onNPCMeeting(npcId, npcName) {
+  const isFirstMeeting = DynamicNarrative.registerNPCMeeting(npcId, npcName);
+  
+  if (isFirstMeeting) {
+    // Generate introduction email
+    const email = await DynamicNarrative.generateEmail(gameState, &quot;mystery&quot;);
+    // NPC reaches out
+  }
+}
+```
+
+---
+
+## Narrative Pacing
+
+### Act 1: Awakening (Levels 1-5)
+- Wake up confused → Character creation
+- First email: identity fragment (corrupted, confusing)
+- Explore first zone
+- Encounter miniboss (Syntax Imp Queen)
+- Learn: You have power, something is wrong
+
+### Act 2: Discovery (Levels 6-12)
+- Meet mentors &amp; NPCs → Email chains reveal world
+- Each zone shows corruption patterns
+- Sub-boss encounter
+- Halfway milestone: Learn your role (&quot;Code Weaver&quot; etc)
+- Email clarity improves
+
+### Act 3: Realization (Levels 13-18)
+- Restore 3+ terminals → World noticeably healing
+- Demi-boss encounter
+- Fully realized milestone: Learn true name
+- Email from &quot;yourself&quot; → existential moment
+- Know you can save/destroy the system
+
+### Act 4: Confrontation (Levels 19+)
+- Prepare for final boss
+- Email cascade: &quot;The Recursion&quot; introduces itself
+- Final battle: You vs. The Infinite Loop
+- Victory → System restored, or you become new guardian
+
+---
+
+## Corruption Impact
+
+As corruption decreases:
+- **100%** → Complete chaos, hostile world
+- **75%** → Most systems broken, few emails
+- **50%** → Halfway healed, emails from multiple NPCs
+- **25%** → World functioning, emails become clearer
+- **0%** → Full restoration, all systems online
+
+Each zone&#39;s corruption affects:
+- Enemy difficulty
+- Email frequency
+- NPC availability
+- Terminal accessibility
+
+---
+
+## Boss Progression Example
+
+**Player Level 1-5:**
+- Encounter: Syntax Imp Queen (miniboss)
+- Email: &quot;WARNING: ANOMALY&quot;
+- Defeat: +75 XP, -10 corruption
+- Email: Dr. Kessler mentoring
+
+**Player Level 6-10:**
+- Encounter: Void Seeker (subboss)
+- Email: &quot;The frozen city stirs&quot;
+- Defeat: +150 XP, -10 corruption
+- Email: &quot;You are stronger than you know&quot;
+
+**Player Level 11-15:**
+- Encounter: Prime Corruption Node (demiboss)
+- Email: &quot;SYSTEM COLLAPSE IMMINENT&quot;
+- Defeat: +250 XP, -15 corruption
+- Email: Identity revelation
+
+**Player Level 16+:**
+- Encounter: THE RECURSION (primeboss)
+- Email: Existential confrontation
+- Defeat: +500 XP, -30 corruption
+- **GAME ENDING TRIGGERED**
+
+---
+
+## Dynamic Generation Features
+
+✅ **Context-Aware** - Emails reference current zone, level, discoveries  
+✅ **Progressive** - Early emails confused, later ones reveal truth  
+✅ **Character Consistent** - Mentors keep same voice throughout  
+✅ **Branching** - Player choices affect NPC relationships  
+✅ **Fallback Safe** - Works even if AI API fails  
+✅ **Corrupted Versions** - 30% of emails are scrambled sections
+
+---
+
+## Save/Load Integration
+
+Narrative state persists:
+```javascript
+// Save
+const save = DynamicNarrative.save();
+gameState.narrative = save;
+
+// Load
+if (gameState.narrative) {
+  DynamicNarrative.load(gameState.narrative);
+}
+```
+
+---
+
+## Testing the System
+
+### Quick Test Commands
+```
+// Force milestone trigger
+&gt; DEBUG milestone character_created
+[Email generates]
+
+// Check narrative state
+&gt; DEBUG narrative
+[Shows all discovered info]
+
+// Generate specific email
+&gt; DEBUG email mentor
+[Generates mentor-type email]
+
+// Boss info
+&gt; DEBUG bosses
+[Shows all boss states]
+
+// Corruption
+&gt; DEBUG corruption
+[Shows current corruption level]
+```
+
+---
+
+## Key Differences from Static System
+
+| Feature | Static (Old) | Dynamic (New) |
+|---------|---|---|
+| **Email Content** | Pre-written | AI-generated |
+| **Context** | Generic | Player-specific |
+| **Progression** | Linear | Branching |
+| **NPCs** | None | Meet &amp; build relationships |
+| **Boss Sequence** | Random | Tiered progression |
+| **Corruption** | Fixed | Dynamic system |
+| **Identity** | Unknown | Gradually revealed |
+| **Replayability** | Low | High (different paths) |
+
+---
+
+## Next Steps
+
+1. ✅ Create DynamicNarrative system (done)
+2. ✅ Create BossEncounters system (done)
+3. ⏳ Integrate into battle-core.js
+4. ⏳ Add NPC system (encounters.js expansion)
+5. ⏳ Link terminal restoration to narrative
+6. ⏳ Create ending sequences (multiple endings?)
+7. ⏳ Add achievement system (discovering true identity, etc)
+
+    </pre>
+</body>
+</html>
