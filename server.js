@@ -16,7 +16,7 @@ app.use(express.json());
 
 // Configuration
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
-const CLAUDE_MODEL = 'claude-3-5-haiku-20241022';
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20250514';  // Updated to latest model
 const PORT = process.env.PORT || 3000;
 
 // ============================================================
@@ -99,10 +99,19 @@ app.post('/api/generate', async (req, res) => {
 
   } catch (error) {
     console.error('[ERROR] Generation failed:', error.message);
+    console.error('[ERROR] Full error:', error.response?.data || error);
     
     if (error.response?.status === 401) {
       return res.status(401).json({ 
         error: 'Authentication failed - check CLAUDE_API_KEY'
+      });
+    }
+
+    if (error.response?.status === 404) {
+      return res.status(404).json({ 
+        error: 'Model not found or API endpoint invalid',
+        model: CLAUDE_MODEL,
+        hint: 'Check if model name is valid or API key has access to this model'
       });
     }
 
@@ -115,7 +124,8 @@ app.post('/api/generate', async (req, res) => {
 
     res.status(500).json({
       error: 'Generation failed',
-      message: error.message
+      message: error.message,
+      details: error.response?.data?.error || null
     });
   }
 });

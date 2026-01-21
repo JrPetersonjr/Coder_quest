@@ -63,8 +63,8 @@ window.AIConfig = {
     localModelUrl: "http://localhost:1234/v1/chat/completions",  // LM Studio
     // ollamaUrl: "http://localhost:11434/api/generate",  // DISABLED - cloud-only operation
     
-    // CLAUDE HAIKU CONFIG (GitHub Copilot API)
-    claudeModel: "claude-3-5-haiku-20241022",  // Latest Haiku model
+    // CLAUDE CONFIG (Anthropic API)
+    claudeModel: "claude-sonnet-4-20250514",  // Current model (configurable via backend)
     anthropicBaseUrl: "https://api.anthropic.com",  // Anthropic API endpoint
     
     // BACKEND SERVER CONFIG (For secure online deployment)
