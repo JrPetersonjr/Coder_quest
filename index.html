@@ -1190,6 +1190,9 @@
   <!-- NEW: Logging system for multiple log channels -->
   <script src="logging-system.js"></script>
   
+  <!-- NEW: Dice UI for visual dice roller -->
+  <script src="dice-ui.js"></script>
+  
   <!-- NEW: Window manager for draggable, resizable UI -->
   <script src="window-manager.js"></script>
   
@@ -1288,6 +1291,13 @@
         LoggingSystem.cast("Cast Console initialized", "BOOT", "#00ff00");
         LoggingSystem.tech("Technonomicon ready", "BOOT", "#88ff00");
         LoggingSystem.oracle("Oracle online", "BOOT", "#aa77ff");
+      }
+      
+      // Initialize dice UI
+      console.log("[Boot] Initializing dice UI...");
+      if (window.DiceUI && window.DiceSystem && window.LoggingSystem) {
+        DiceUI.initialize(window.DiceSystem, window.LoggingSystem);
+        console.log("[Boot] ✓ Dice UI ready");
       }
       
       // Initialize AI DM integration
