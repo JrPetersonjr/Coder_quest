@@ -1,0 +1,453 @@
+# AI SUMMON RITUAL SYSTEM - Integration Guide
+**Version 1.0** | Companion summoning with AI personality generation and persistent memory
+
+---
+
+## SYSTEM OVERVIEW
+
+**AI Summon Rituals** enable players to call forth companion allies through magical rituals:
+- **Summon code bit** combined with elements creates unique allies
+- **AI personality generation** creates consistent, memorable companions
+- **Persistent memory** through NPC memory system (allies remember previous encounters)
+- **Ritual failure** → Dramatic NPCs emerge (story content)
+- **Level scaling** → Allies grow with player
+- **Party dynamics** → Multiple summons create team synergy
+
+### Core Philosophy
+> "Your allies aren't disposable summons—they're characters with personalities, preferences, and memories. They grow with you and remember what happened between you."
+
+---
+
+## QUICK START INTEGRATION
+
+### 1. Load the System
+
+```javascript
+// In GameEngine.js initialization (via integration-bootstrap.js):
+gameEngine.summonRituals = new AISummonRitualsystem(
+  gameEngine.spellTinkering,
+  aiDMIntegration,
+  diceSystem
+);
+```
+
+### 2. Hook into Combat
+
+```javascript
+// When player casts summon ritual:
+const result = gameEngine.summonRituals.attemptSummon(
+  ['fire'],           // elements
+  ['summon'],         // code bits (must include 'summon')
+  gameState.character
+);
+
+if (result.success) {
+  const ally = result.ally;
+  // Add ally to active party
+  gameState.activeAllies.push(ally);
+  
+  // Ally fights in battle
+  // When battle ends:
+  gameEngine.summonRituals.updateAllyStats(ally.id, damageDealt, damageReceived, victory);
+}
+```
+
+### 3. Display Ally Information
+
+```javascript
+// Show all active allies
+const allies = gameEngine.summonRituals.listAllies();
+allies.forEach(ally => {
+  console.log(`${ally.name} (${ally.temperament})`);
+});
+
+// Get detailed stats
+const stats = gameEngine.summonRituals.getAllyStats(allyId);
+```
+
+### 4. Handle Ritual Failures
+
+```javascript
+const result = gameEngine.summonRituals.attemptSummon(elements, codeBits, character);
+
+if (!result.success && result.failedAlly) {
+  // Critical failure generated an NPC/enemy
+  const aberration = result.failedAlly;
+  // Spawn as encounter
+  gameEngine.cmdBattle([aberration.name]);
+}
+```
+
+---
+
+## USAGE PATTERNS
+
+### Pattern 1: Basic Summon
+
+**Scenario**: Player learns fire + summon = fire spirit ally
+
+```javascript
+const result = gameEngine.summonRituals.attemptSummon(['fire'], ['summon'], player);
+
+if (result.success) {
+  const ally = result.ally;
+  console.log(`${ally.name} appears!`);
+  console.log(`Temperament: ${ally.temperament}`);
+  console.log(`Combat Style: ${ally.combatStyle}`);
+  console.log(`Loyalty: ${ally.relationship.loyalty}%`);
+}
+```
+
+### Pattern 2: Combo Ritual
+
+**Scenario**: Player combines chaos + fire + summon + damage for aggressive ally
+
+```javascript
+const result = gameEngine.summonRituals.attemptSummon(
+  ['fire', 'chaos'],
+  ['summon', 'damage'],
+  player
+);
+
+if (result.success) {
+  console.log(`${result.ally.name} (tier ${result.ally.tier}) joins!`);
+  console.log(`Attack: ${result.ally.attack}`);
+  
+  // More complex rituals = more powerful allies
+  // But also higher data costs
+}
+```
+
+### Pattern 3: God Roll Discovery
+
+**Scenario**: Player tries unknown ritual, gets critical roll (20)
+
+```javascript
+const result = gameEngine.summonRituals.attemptSummon(
+  ['liminality', 'obsession'],
+  ['summon', 'transmute'],
+  player
+);
+
+if (result.success && result.rollQuality === 'critical') {
+  console.log(`🌟 NEW RITUAL DISCOVERED: ${result.ally.name}`);
+  console.log(`This ally can now be summoned again!`);
+  
+  // Ritual permanently added to registry
+  // Create unique relationship with this ally
+}
+```
+
+### Pattern 4: Ritual Failure → Story
+
+**Scenario**: Low roll on attempted summon creates dramatic enemy
+
+```javascript
+const result = gameEngine.summonRituals.attemptSummon(
+  ['chaos', 'entropy'],
+  ['summon'],
+  player
+);
+
+if (!result.success && result.failedAlly) {
+  const aberration = result.failedAlly;
+  console.log(`⚠️ RITUAL FAILED!`);
+  console.log(`${aberration.name} emerges instead!`);
+  console.log(`Level: ${aberration.level} (stronger than normal enemy)`);
+  
+  // Memory: "Accidentally summoned by [player name]"
+  // AI DM can reference this later
+}
+```
+
+### Pattern 5: Ally in Combat
+
+**Scenario**: Ally fights alongside player during encounter
+
+```javascript
+// Battle loop:
+// Player attacks
+// Ally attacks (automatically)
+const allyDamage = ally.attack + dice.rollD6();
+enemy.hp -= allyDamage;
+
+// Enemy attacks
+// Player/Ally both defend
+
+// After victory:
+gameEngine.summonRituals.updateAllyStats(
+  ally.id,
+  damageDealt,      // how much ally dealt
+  damageReceived,   // how much ally took
+  true              // victory
+);
+
+// Ally gains loyalty, remembers fight
+```
+
+### Pattern 6: Ephemeral vs Persistent
+
+**Scenario**: Success but not god roll = ephemeral ally that fades
+
+```javascript
+const result = gameEngine.summonRituals.attemptSummon(elements, codeBits, player);
+
+if (result.isEphemeral) {
+  console.log(`${result.ally.name} manifests briefly...`);
+  console.log(`They will fade after this battle.`);
+  
+  // After battle:
+  gameEngine.summonRituals.dismissAlly(ally.id);
+} else {
+  console.log(`${result.ally.name} is permanently summoned!`);
+  // Stays active indefinitely
+}
+```
+
+### Pattern 7: Multiple Summons (Party)
+
+**Scenario**: Player has 3 active allies
+
+```javascript
+const activeAllies = gameEngine.summonRituals.getActiveAllies();
+console.log(`Party size: ${activeAllies.length}`);
+
+activeAllies.forEach(ally => {
+  // All fight in combat
+  // Personality mix creates dynamic encounters
+  // NPC memory: each ally remembers other party members
+  
+  // Query NPC memory
+  const memory = aiDMIntegration.recallMemory(ally.id);
+  console.log(`${ally.name} recalls: ${memory}`);
+});
+```
+
+### Pattern 8: Save/Load Party
+
+**Scenario**: Player saves game with active allies
+
+```javascript
+// SAVE:
+const saveData = {
+  alliesData: gameEngine.summonRituals.exportAllies(),
+  timestamp: Date.now(),
+};
+localStorage.setItem('party_save', JSON.stringify(saveData));
+
+// LOAD:
+const saveData = JSON.parse(localStorage.getItem('party_save'));
+gameEngine.summonRituals.importAllies(saveData.alliesData);
+
+// All allies restored with personalities + memories intact
+```
+
+---
+
+## RITUAL REGISTRY
+
+### Tier 1 Basic Rituals (Single Element + Summon)
+
+| Ritual | Element | Style | Effect |
+|--------|---------|-------|--------|
+| Lesser Flame Ally | fire | Aggressive | Damage dealer |
+| Stone Sentinel | earth | Defensive | Tank/shield |
+| Wind Courier | wind | Evasive | Speed/mobility |
+| Water Healer | water | Supportive | Healing/restoration |
+
+### Tier 2 Advanced Rituals (Combo + Summon)
+
+| Ritual | Elements | Style | Effect |
+|--------|----------|-------|--------|
+| Inferno Wyrm | fire + chaos | Wild/destructive | High damage, unpredictable |
+| Entropy Weaver | entropy + chaos | Draining | Steals enemy resources |
+
+### Tier 3 Epic Rituals (Esoteric + Summon, God Roll Required)
+
+| Ritual | Elements | Style | Effect |
+|--------|----------|-------|--------|
+| Limerance Dancer | limerance + heart | Charismatic | Charm/attraction effects |
+| Liminality Gate | liminality | Reality-bending | Boundary manipulation |
+| Philosopher's Avatar | philosopher's stone | Ultimate | Supreme power |
+
+---
+
+## PERSONALITY SYSTEM
+
+### Archetypes Generated
+
+```
+- fire_spirit: passionate, eager, aggressive
+- earth_guardian: reliable, steadfast, defensive
+- wind_elemental: playful, unpredictable, evasive
+- water_spirit: nurturing, calm, supportive
+- fire_wyrm: wild, destructive, chaotic
+- entropy_being: hungry, devouring, draining
+- limerance_being: seductive, magnetic, charming
+- liminality_guardian: enigmatic, boundary-aware, mysterious
+```
+
+### Personality Profile
+
+```javascript
+{
+  archetype: "fire_spirit",
+  temperament: "aggressive",    // combat approach
+  traits: ["passionate"],        // behavioral traits
+  combatStyle: "offensive",      // offensive/defensive/balanced
+  
+  // Relationship tracking
+  loyalty: 85,                  // trust/attachment
+  compatibility: 92,            // synergy with player
+  memories: [                   // what they remember
+    "Fought alongside you in victory",
+    "Saved you from defeat",
+    "Watched you fail ritual"
+  ]
+}
+```
+
+---
+
+## DATA COSTS
+
+### Data Requirements
+
+| Ritual Type | Base Cost | Modifier |
+|-------------|-----------|----------|
+| Tier 1 (single element) | 250 | 1x |
+| Tier 2 (combo element) | 400 | 1x |
+| Tier 3 (esoteric/epic) | 500-600 | god roll only |
+
+### Example Costs
+
+```
+fire + summon = 250 data (basic)
+fire + chaos + summon = 400 data (advanced)
+liminality + summon + transmute = 600 data (EPIC, god roll)
+```
+
+---
+
+## LEVEL SCALING
+
+### Ally Power Growth
+
+```javascript
+const baseStat = character.level × 2 + ritual.tier × 5;
+const allyHP = baseStat × statBonus;  // statBonus = 1.0 to 1.5 based on roll quality
+
+// Examples:
+// Level 5 player, basic ritual, medium roll: ally ~25 HP
+// Level 5 player, basic ritual, god roll: ally ~37 HP (feels strong!)
+// Level 20 player, epic ritual, god roll: ally ~120 HP (powerful party member)
+```
+
+### Roll Quality Multipliers
+
+- **critical** (god roll, 18+): 1.5x stats
+- **high** (15-17): 1.2x stats
+- **medium** (10-14): 1.0x stats
+- **low** (< 10): Ritual fails
+
+---
+
+## NPC MEMORY INTEGRATION
+
+### Allies Remember
+
+When ally is summoned, AI DM records:
+- Who summoned them (player name)
+- How the summoning went (roll quality)
+- Ritual elements used
+- Date/time of summoning
+
+```javascript
+aiDMIntegration.recordEvent(ally.id, 'summoned', {
+  summoner: character.name,
+  elements: ['fire'],
+  ritual: 'Lesser Flame Ally',
+  quality: 'critical',
+});
+```
+
+### Ally Recalls Player
+
+When ally fights next to player:
+- Remembers previous encounters
+- References shared victories
+- Builds relationship loyalty
+
+```javascript
+const memory = aiDMIntegration.recallMemory(ally.id);
+// "I remember when you summoned me during that chaos... 
+//  We defeated that wyrm together. I trust you."
+```
+
+### Failed Rituals as Story
+
+When ritual fails catastrophically:
+- Creates temporary NPC/enemy
+- AI DM records the failure
+- Can reference later: "I remember when you tried to summon me and failed..."
+
+---
+
+## INTEGRATION CHECKLIST
+
+- [ ] Add `summonRituals` instance to `gameState` in integration-bootstrap.js
+- [ ] Hook `attemptSummon()` into `/summon` command
+- [ ] Hook `listAllies()` into `/allies` command
+- [ ] Add ally stats to player HUD during combat
+- [ ] Hook `updateAllyStats()` into combat resolution
+- [ ] Handle ephemeral ally dismissal after battle
+- [ ] Connect to NPC memory system for ally personalities
+- [ ] Connect failed rituals to encounter spawning
+- [ ] Add UI display for active party members
+- [ ] Add save/load hooks for party persistence
+- [ ] Test ally combat calculations (damage/defense)
+- [ ] Test god roll discovery (new rituals added)
+- [ ] Verify loyalty system (increases on victory)
+- [ ] Test ritual failure dramatic NPCs
+- [ ] Integrate with quest system (summon rituals as quest rewards)
+
+---
+
+## DEBUGGING COMMANDS
+
+```javascript
+// Force successful summon
+const result = gameEngine.summonRituals.attemptSummon(['fire'], ['summon'], player);
+
+// List all active allies
+const allies = gameEngine.summonRituals.getActiveAllies();
+
+// Get ally stats
+const stats = gameEngine.summonRituals.getAllyStats(allyId);
+
+// Dismiss specific ally
+gameEngine.summonRituals.dismissAlly(allyId);
+
+// Export party
+const partyData = gameEngine.summonRituals.exportAllies();
+
+// See summon history
+console.log(gameEngine.summonRituals.summonHistory);
+```
+
+---
+
+## PHILOSOPHY
+
+> **Allies Aren't Tools**
+> 
+> They're characters with personalities, preferences, and memories. A fire spirit summoned with a god roll behaves differently than one summoned with a standard roll. They remember victories alongside you, and failed rituals create dramatic story beats.
+> 
+> **Party Dynamics**
+> 
+> Multiple simultaneous summons create team composition strategies. A defensive stone sentinel + aggressive fire wyrm + supportive water healer creates emergent gameplay where players think about who to summon, not just "should I summon?"
+> 
+> **Failure is Content**
+> 
+> When rituals fail, it creates memorable NPCs that can haunt the player or become allies later. The chaos system turns every failed spell into a potential story.
+

@@ -1,0 +1,7 @@
+{
+    "lmStudioCopilot.allowFileModifications": true,
+    "lmStudioCopilot.realTimeWatch": true,
+    "lmStudioCopilot.serverUrl": "http://10.81.53.190:1234",
+    "lmStudioCopilot.terminalProtection": true,
+    "lmStudioCopilot.theme": "dark"
+}

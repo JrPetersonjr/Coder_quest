@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TECHNOMANCER: Quest for the Code</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: #0a0a0a;
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      color: #00ff00;
+      padding: 40px 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    /* CRT Monitor Bezel */
+    .crt-frame {
+      background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+      border: 30px solid;
+      border-color: #6a6a6a #2a2a2a #2a2a2a #6a6a6a;
+      border-radius: 15px;
+      box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.2), 
+        inset 0 -1px 0 rgba(0,0,0,0.8),
+        0 15px 50px rgba(0,0,0,0.9);
+      max-width: 800px;
+      width: 100%;
+      padding: 20px;
+    }
+    
+    /* CRT Screen Glass */
+    .crt-inner {
+      background: #000;
+      border: 4px solid #1a3a1a;
+      border-radius: 2px;
+      padding: 20px;
+      box-shadow: 
+        inset 0 0 30px rgba(0,0,0,0.9),
+        inset 0 2px 5px rgba(0, 255, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* CRT Scanline Effect */
+    .crt-inner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.3),
+        rgba(0, 0, 0, 0.3) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    /* CRT Glow Effect */
+    .crt-inner::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(0, 255, 0, 0.05) 0%,
+        transparent 70%
+      );
+      pointer-events: none;
+      z-index: 99;
+    }
+    
+    .container { width: 100%; position: relative; z-index: 1; }
+    
+    h1 {
+      color: #00ff00;
+      text-align: center;
+      margin-bottom: 15px;
+      text-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+      font-size: 1.8em;
+      letter-spacing: 3px;
+      font-weight: bold;
+    }
+    
+    /* Boot Screen - Full CRT Green */
+    .boot-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-family: 'Courier Prime', monospace;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
+    }
+    
+    .boot-screen::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0.2) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+    }
+    
+    .boot-screen.hidden { display: none; }
+    
+    .boot-content {
+      color: #00ff00;
+      font-size: 1.1em;
+      text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 10;
+    }
+    
+    .boot-bar {
+      width: 320px;
+      height: 24px;
+      border: 2px solid #00ff00;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+    }
+    
+    .boot-fill {
+      height: 100%;
+      background: #00ff00;
+      width: 0%;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 1);
+    }
+    
+    .boot-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #000;
+      font-weight: bold;
+      z-index: 10;
+      font-size: 0.9em;
+      letter-spacing: 1px;
+    }
+    
+    .game-area {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      margin-bottom: 15px;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.15);
+    }
+    
+    .room-header {
+      color: #00ff00;
+      font-size: 1.1em;
+      margin-bottom: 10px;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    
+    #output {
+      background: #000;
+      border: 1px solid #00ff00;
+      padding: 10px;
+      height: 240px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      font-size: 0.85em;
+      line-height: 1.4;
+      color: #00ff00;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+      box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.1);
+    }
+    
+    .line { 
+      margin-bottom: 3px; 
+      color: #00ff00;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.2);
+    }
+    .line.error { 
+      color: #ff4444;
+      text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+    }
+    .line.system { 
+      color: #ffaa00;
+      text-shadow: 0 0 5px rgba(255, 170, 0, 0.4);
+    }
+    .line.command { 
+      color: #00ff00; 
+      font-weight: bold;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    }
+    .line.battle { 
+      color: #ff5555;
+      text-shadow: 0 0 5px rgba(255, 85, 85, 0.5);
+    }
+    .line.spell { 
+      color: #aa77ff; 
+      font-weight: bold;
+      text-shadow: 0 0 5px rgba(170, 119, 255, 0.5);
+    }
+    .line.puzzle { 
+      color: #ffff00;
+      text-shadow: 0 0 5px rgba(255, 255, 0, 0.5);
+    }
+    .line.highlight { 
+      color: #00ff00; 
+      font-weight: bold;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+    }
+    .line.hint { 
+      color: #88ff00; 
+      font-style: italic;
+      text-shadow: 0 0 3px rgba(136, 255, 0, 0.4);
+    }
+    .line.ascii { 
+      font-family: 'Courier Prime', monospace; 
+      white-space: pre; 
+      color: #00ff00;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+    }
+    
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    #input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #00ff00;
+      color: #00ff00;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.9em;
+      outline: none;
+      padding: 4px 0;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.3);
+    }
+    
+    #input::placeholder { 
+      color: #00ff00; 
+      opacity: 0.4;
+      text-shadow: none;
+    }
+    
+    button {
+      background: #00ff00;
+      color: #000;
+      border: 2px solid #00ff00;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: bold;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.85em;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+    }
+    
+    button:hover { 
+      background: #00dd00;
+      border-color: #00dd00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+    }
+    
+    button:active { 
+      background: #00aa00;
+      box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.6);
+    }
+    
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { 
+      background: #00ff00; 
+      border-radius: 2px;
+      box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    }
+    
+    /* Window Manager Styles */
+    .wm-window {
+      position: absolute;
+      background: #000;
+      border: 2px solid #2fb43a;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px #000a, 0 0 0 2px #2fb43a44;
+      z-index: 1000;
+      min-width: 180px;
+      min-height: 100px;
+      overflow: hidden;
+      resize: both;
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.2s;
+    }
+    .wm-window:active, .wm-window:focus {
+      box-shadow: 0 0 0 3px #2fb43a, 0 4px 24px #000a;
+    }
+    .wm-titlebar {
+      background: #222;
+      color: #2fb43a;
+      font-weight: bold;
+      padding: 6px 12px;
+      cursor: move;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2fb43a44;
+    }
+    .wm-close {
+      color: #ff6e6e;
+      font-size: 1.2em;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    .wm-content {
+      flex: 1;
+      padding: 12px;
+      overflow: auto;
+      font-size: 0.95em;
+      color: #a8a882;
+    }
+    .wm-resize {
+      position: absolute;
+      right: 0; bottom: 0;
+      width: 18px; height: 18px;
+      background: url('data:image/svg+xml;utf8,<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M0,18 L18,0" stroke="%232fb43a" stroke-width="2"/></svg>') no-repeat right bottom;
+      cursor: se-resize;
+      z-index: 10;
+    }
+    .dock-top { top: 0 !important; left: 50% !important; transform: translateX(-50%); }
+    .dock-bottom { bottom: 0 !important; left: 50% !important; transform: translateX(-50%); }
+    
+    .rune-btn {
+      background: #181818;
+      border: 2px solid #2fb43a;
+      border-radius: 8px;
+      color: #2fb43a;
+      font-size: 2em;
+      width: 64px;
+      height: 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 4px;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px #000a;
+    }
+    .rune-btn:hover {
+      background: #222;
+      box-shadow: 0 0 0 2px #2fb43a, 0 2px 8px #000a;
+    }
+
+    /* ========== CAST CONSOLE UI LAYOUT ========== */
+    
+    .cast-console-wrapper {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 2px;
+      background: #00ff00;
+      padding: 2px;
+    }
+
+    /* Top-Left: Cast Console Terminal */
+    .cast-terminal {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      grid-column: 1;
+      grid-row: 1;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+    }
+
+    .cast-terminal-header {
+      color: #00ff00;
+      font-size: 0.9em;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+      letter-spacing: 1px;
+    }
+
+    .cast-terminal-output {
+      flex: 1;
+      background: #000;
+      border: 1px solid #00ff00;
+      padding: 8px;
+      overflow-y: auto;
+      font-size: 0.8em;
+      line-height: 1.3;
+      margin-bottom: 8px;
+      box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.05);
+    }
+
+    .cast-terminal-input {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .cast-terminal-input input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #00ff00;
+      color: #00ff00;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.85em;
+      outline: none;
+      padding: 2px 0;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.2);
+    }
+
+    .cast-terminal-input button {
+      padding: 4px 8px;
+      font-size: 0.75em;
+    }
+
+    /* Bottom-Left: Cast Console Log */
+    .cast-log {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      grid-column: 1;
+      grid-row: 2;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+    }
+
+    .cast-log-header {
+      color: #00ff00;
+      font-size: 0.9em;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    }
+
+    .cast-log-content {
+      background: #0a0a0a;
+      border: 1px solid #00ff00;
+      padding: 8px;
+      height: 150px;
+      overflow-y: auto;
+      font-size: 0.75em;
+      line-height: 1.2;
+      color: #00ff00;
+    }
+
+    .cast-log-line {
+      margin-bottom: 2px;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.2);
+    }
+
+    /* Top-Right: Stats Panel */
+    .stats-panel {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      grid-column: 2;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+    }
+
+    .stats-header {
+      color: #00ff00;
+      font-size: 0.9em;
+      font-weight: bold;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+      letter-spacing: 1px;
+    }
+
+    .stat-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-label {
+      color: #88ff00;
+      font-size: 0.75em;
+      text-shadow: 0 0 3px rgba(136, 255, 0, 0.3);
+    }
+
+    .stat-value {
+      background: #0a0a0a;
+      border: 1px solid #00ff00;
+      height: 16px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .stat-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ff00 0%, #88ff00 50%, #00ff00 100%);
+      box-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+      transition: width 0.3s ease;
+    }
+
+    .stat-text {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #000;
+      font-size: 0.7em;
+      font-weight: bold;
+      line-height: 16px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Quests & Objectives */
+    .quests-panel {
+      background: #0a0a0a;
+      border: 1px solid #00ff00;
+      padding: 8px;
+      border-top: none;
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.75em;
+    }
+
+    .quest-item {
+      margin-bottom: 8px;
+      padding: 6px;
+      border-left: 2px solid #88ff00;
+      color: #88ff00;
+    }
+
+    .quest-title {
+      font-weight: bold;
+      color: #00ff00;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.3);
+    }
+
+    .quest-objective {
+      font-size: 0.85em;
+      margin-top: 2px;
+      color: #88ff00;
+      opacity: 0.8;
+    }
+
+    /* ========== TECHNONOMICON SECTION ========== */
+
+    .technonomicon {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .technonomicon-header {
+      color: #00ff00;
+      font-size: 0.95em;
+      font-weight: bold;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.7);
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    .technonomicon-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid #00ff00;
+      padding-bottom: 8px;
+    }
+
+    .technonomicon-tab {
+      flex: 1;
+      padding: 4px 6px;
+      background: transparent;
+      border: 1px solid #00ff00;
+      color: #88ff00;
+      font-size: 0.7em;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .technonomicon-tab:hover,
+    .technonomicon-tab.active {
+      background: #00ff00;
+      color: #000;
+    }
+
+    .technonomicon-content {
+      flex: 1;
+      background: #0a0a0a;
+      border: 1px solid #00ff00;
+      padding: 8px;
+      overflow-y: auto;
+      font-size: 0.8em;
+      line-height: 1.3;
+    }
+
+    /* ========== CRYSTAL BALL SECTION ========== */
+
+    .crystal-ball {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    .crystal-ball-header {
+      color: #00ff00;
+      font-size: 0.95em;
+      font-weight: bold;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.7);
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    .crystal-ball-display {
+      flex: 1;
+      background: #0a0a0a;
+      border: 2px solid #00ff00;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 200px;
+      box-shadow: inset 0 0 30px rgba(0, 255, 0, 0.2), 0 0 20px rgba(0, 255, 0, 0.3);
+    }
+
+    .crystal-ball-display::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      height: 90%;
+      border: 1px solid #00ff00;
+      border-radius: 50%;
+      opacity: 0.5;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+
+    .crystal-ball-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      color: #88ff00;
+      font-size: 0.9em;
+      font-style: italic;
+      padding: 20px;
+      text-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+    }
+
+    .crystal-ball-input {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .crystal-ball-input input {
+      background: transparent;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.85em;
+      padding: 6px;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.2);
+    }
+
+    .crystal-ball-input button {
+      padding: 6px 12px;
+      font-size: 0.8em;
+    }
+
+    /* ========== RESPONSIVE ========== */
+
+    @media (max-width: 1200px) {
+      .cast-console-wrapper {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto auto;
+      }
+
+      .cast-terminal {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .cast-log {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .stats-panel {
+        grid-column: 1;
+        grid-row: 3;
+      }
+
+      .technonomicon {
+        grid-column: 1;
+        grid-row: 4;
+      }
+
+      .crystal-ball {
+        grid-column: 1;
+        grid-row: 5;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Boot Screen -->
+
+  <!-- Cinematic Intro Overlay -->
+  <div id="intro-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+    <div id="room-text" style="font-size: 1.3em; color: #2fb43a; margin-bottom: 18px;">You wake up in an empty room...</div>
+    <div id="boot-log" style="font-size: 13px; color: #00ff41; text-align: left; width: 320px; margin-top: 20px;"></div>
+  </div>
+  <script>
+  // --- INTRO SEQUENCE (from Coder Quest Alpha) ---
+  const log = document.getElementById('output');
+  const input = document.getElementById('console-input');
+  const bootLog = document.getElementById('boot-log');
+  const introScreen = document.getElementById('intro-screen');
+  let audioCtx;
+  let save = JSON.parse(localStorage.getItem('cq_v5')) || {
+    step: 'BOOT', name: '', class: '', ai_unlocked: false, ip: '', hp: 100, quiz: []
+  };
+
+  function playTone(freq, duration, type = "square", vol = 0.1) {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+  const knock = () => { playTone(100, 0.1, "sine", 0.5); };
+  const playTheme = () => {
+    const notes = [440, 493, 523, 587, 440, 523, 493];
+    notes.forEach((f, i) => setTimeout(() => playTone(f, 0.4), i * 500));
+  };
+
+  async function runBoot() {
+    await new Promise(r => setTimeout(r, 1000));
+    knock(); setTimeout(knock, 300);
+    document.getElementById('room-text').innerText = "*Knock Knock*";
+    await new Promise(r => setTimeout(r, 1500));
+    playTheme();
+    const messages = [
+      "Initializing CastConsole...", "Detecting Neural Interface...", 
+      "Bypassing Security Gates...", "Memory Partition Found: [CORRUPT]",
+      "Identity Protocol: ACTIVE", "Mounting OS..."
+    ];
+    for (let msg of messages) {
+      bootLog.innerHTML += `> ${msg}<br>`;
+      await new Promise(r => setTimeout(r, 800));
+    }
+    await new Promise(r => setTimeout(r, 1000));
+    introScreen.style.opacity = '0';
+    setTimeout(() => { introScreen.style.display = 'none'; startSequence(); }, 1000);
+  }
+
+  function print(msg, className = "") {
+    const div = document.createElement('div');
+    div.className = className;
+    div.innerHTML = msg;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function startSequence() {
+    print("<span class='highlight'>[SYSTEM]: Identity Data Missing.</span>");
+    print("The console screen blinks. Two options remain:");
+    print("1. [Forgot Identity] - Run psych-eval protocol.");
+    print("2. [Select Config] - Restore from Technomancer/Data Knight pre-builds.");
+  }
+
+  async function handleInput(cmd) {
+    const raw = cmd.toLowerCase();
+    if (save.step === 'BOOT') {
+      if (raw.includes('forgot')) {
+        save.step = 'QUIZ_1';
+        print("> Running Psych-Eval...");
+        print("Question 1: In a failing system, do you fix the code or defend the server?");
+      } else if (raw.includes('config')) {
+        save.step = 'CLASS_SELECT';
+        print("Choose: [Technomancer] or [Data Knight]");
+      }
+    } 
+    else if (save.step === 'QUIZ_1') {
+      save.quiz.push(raw);
+      save.step = 'QUIZ_2';
+      print("Question 2: Do you prefer a [Blade] of light or a [Key] to all doors?");
+    }
+    else if (save.step === 'QUIZ_2') {
+      save.quiz.push(raw);
+      save.step = 'QUIZ_3';
+      print("Final Question: Is the Void [Home] or a [Prison]?");
+    }
+    else if (save.step === 'QUIZ_3') {
+      save.quiz.push(raw);
+      save.class = save.quiz[0].includes('code') ? 'Technomancer' : 'Data Knight';
+      save.step = 'RECALL_NAME';
+      print(`Evaluation Complete. You are a <span class='highlight'>${save.class}</span>.`);
+      print("Do you remember your name now?");
+    }
+    else if (save.step === 'RECALL_NAME' || save.step === 'CLASS_SELECT') {
+      if (save.step === 'CLASS_SELECT') save.class = raw.includes('techno') ? 'Technomancer' : 'Data Knight';
+      save.name = cmd;
+      save.step = 'SUMMON_DICE';
+      print(`Welcome back, <span class='highlight'>${save.name}</span>.`);
+      print("Finalize connection by typing: <span class='highlight'>'summon dice'</span>");
+    }
+    else if (save.step === 'SUMMON_DICE' && raw === 'summon dice') {
+      print("🎲 Dice Summoned. Enter Local IP to Invoke DM (e.g., http://10.81.53.190:1234)");
+      save.step = 'SET_IP';
+    }
+    else if (save.step === 'SET_IP' && raw.startsWith('http')) {
+      save.ip = cmd;
+      save.ai_unlocked = true;
+      save.step = 'PLAY';
+      print("REALITY BRIDGED. The DM is listening.");
+    }
+    else if (save.ai_unlocked) {
+      const res = await fetch(`${save.ip}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: "system", content: `You are the DM for ${save.name}, a ${save.class}.` }, { role: "user", content: cmd }]
+        })
+      }).then(r => r.json()).catch(() => ({choices: [{message: {content: "The connection flickers..."}}]}));
+      print(res.choices[0].message.content);
+    }
+    localStorage.setItem('cq_v5', JSON.stringify(save));
+  }
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      handleInput(input.value);
+      input.value = '';
+    }
+  });
+
+  window.onclick = () => { if(!audioCtx) runBoot(); };
+  </script>
+
+  <!-- CRT Monitor Frame -->
+  <div class="crt-frame">
+    <div class="crt-inner">
+      <div class="container">
+        <h1>[ TECHNOMANCER ]</h1>
+        
+        <!-- Graphics Container (optional canvas layer) -->
+        <div id="graphics-container" style="margin-bottom: 15px; display: none;">
+          <!-- Canvas will be inserted here by GraphicsUI.js -->
+        </div>
+        
+        <!-- CAST CONSOLE UI GRID LAYOUT -->
+        <div class="cast-console-wrapper">
+          
+          <!-- TOP-LEFT: Cast Console Terminal -->
+          <div class="cast-terminal">
+            <div class="cast-terminal-header">[ CAST CONSOLE - TERMINAL ]</div>
+            <div class="cast-terminal-output" id="output"></div>
+            <div class="cast-terminal-input">
+              <span style="color: #00ff00;">></span>
+              <input type="text" id="console-input" autofocus autocomplete="off" placeholder="Type 'help' to begin">
+              <button id="send-btn">Send</button>
+            </div>
+          </div>
+
+          <!-- BOTTOM-LEFT: Cast Console Log -->
+          <div class="cast-log">
+            <div class="cast-log-header">[ CAST CONSOLE - LOG ]</div>
+            <div class="cast-log-content" id="cast-log-content">
+              <!-- Log entries will be populated here -->
+            </div>
+          </div>
+
+          <!-- TOP-RIGHT: Stats Panel + Quests -->
+          <div class="stats-panel">
+            <!-- Stats Header -->
+            <div class="stats-header">[ CHARACTER STATUS ]</div>
+            
+            <!-- HP Bar -->
+            <div class="stat-bar">
+              <div class="stat-label">HP</div>
+              <div class="stat-value">
+                <div class="stat-fill" id="stat-hp" style="width: 100%;"></div>
+                <div class="stat-text" id="stat-hp-text">100/100</div>
+              </div>
+            </div>
+
+            <!-- MANA Bar -->
+            <div class="stat-bar">
+              <div class="stat-label">MANA</div>
+              <div class="stat-value">
+                <div class="stat-fill" id="stat-mana" style="width: 100%; background: linear-gradient(90deg, #aa77ff 0%, #cc99ff 50%, #aa77ff 100%);"></div>
+                <div class="stat-text" id="stat-mana-text">20/20</div>
+              </div>
+            </div>
+
+            <!-- DATA Bar -->
+            <div class="stat-bar">
+              <div class="stat-label">DATA</div>
+              <div class="stat-value">
+                <div class="stat-fill" id="stat-data" style="width: 100%; background: linear-gradient(90deg, #ffaa00 0%, #ffcc44 50%, #ffaa00 100%);"></div>
+                <div class="stat-text" id="stat-data-text">100/100</div>
+              </div>
+            </div>
+
+            <!-- Quests & Objectives -->
+            <div class="stats-header" style="margin-top: 8px;">[ QUESTS & OBJECTIVES ]</div>
+            <div class="quests-panel" id="quests-panel">
+              <!-- Quest items will be populated here -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- BOTTOM SECTION: Technonomicon + Crystal Ball -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 2px;">
+          
+          <!-- TECHNONOMICON -->
+          <div class="technonomicon">
+            <div class="technonomicon-header">⬢ TECHNONOMICON ⬢</div>
+            <div class="technonomicon-tabs">
+              <button class="technonomicon-tab active" data-tab="spells">SPELLS</button>
+              <button class="technonomicon-tab" data-tab="skills">SKILLS</button>
+              <button class="technonomicon-tab" data-tab="dice">🎲 DICE</button>
+            </div>
+            <div class="technonomicon-content" id="technonomicon-content">
+              <!-- Content will be populated by tabs -->
+            </div>
+          </div>
+
+          <!-- CRYSTAL BALL -->
+          <div class="crystal-ball">
+            <div class="crystal-ball-header">◆ CRYSTAL BALL ◆</div>
+            <div class="crystal-ball-display" id="crystal-ball-display">
+              <div class="crystal-ball-content" id="crystal-ball-content">
+                Ready for DM interaction...
+              </div>
+            </div>
+            <div class="crystal-ball-input">
+              <input type="text" id="crystal-ball-input" placeholder="Ask the DM...">
+              <button id="crystal-ball-btn">Consult Oracle</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- External Scripts -->
+  <script src="storage-polyfill.js"></script>
+  
+  <!-- NEW: Audio system -->
+  <script src="fx-audio.js"></script>
+  
+  <!-- NEW: Animation system -->
+  <script src="animation-system.js"></script>
+  
+  <!-- NEW: Quest system -->
+  <script src="quest-system.js"></script>
+  
+  <!-- NEW: Save system -->
+  <script src="save-system.js"></script>
+  
+  <!-- NEW: Sprite resources (pixel art asset library) -->
+  <script src="sprites-resources.js"></script>
+  
+  <!-- NEW: AI Integration System -->
+  <script src="ai-config.js"></script>
+  
+  <!-- NEW: Core engine (no DOM dependencies) -->
+  <!-- NEW: Core engine (no DOM dependencies) -->
+  <script src="GameEngine.js"></script>
+  
+  <!-- NEW: UI adapter layer -->
+  <script src="GameUI.js"></script>
+  
+  <!-- NEW: Cast Console UI (multipart layout) -->
+  <script src="cast-console-ui.js"></script>
+  
+  <!-- NEW: Graphics layer (canvas rendering) -->
+  <script src="GraphicsUI.js"></script>
+  
+  <!-- NEW: Zone transitions (Phase 4 polish) -->
+  <script src="zone-transitions.js"></script>
+  
+  <!-- NEW: Battle animations (Phase 4 polish) -->
+  <script src="battle-animations.js"></script>
+  
+  <!-- NEW: Integration tests (Phase 4 verification) -->
+  <script src="integration-tests.js"></script>
+  
+  <!-- NEW: Tutorial system (Phase 5 guided intro) -->
+  <script src="tutorial-system.js"></script>
+  
+  <!-- NEW: Command handlers (tutorial, system, debug commands) -->
+  <script src="command-handlers.js"></script>
+  
+  <!-- NEW: Intro system (character awakening & creation) -->
+  <script src="intro-system.js"></script>
+  
+  <!-- Data & Utility Systems -->
+  <script src="dice.js"></script>
+  <script src="ai-dm-integration.js"></script>
+  <script src="spell-tinkering.js"></script>
+  <script src="ai-summon-ritual.js"></script>
+  <script src="terminal-documents.js"></script>
+  <script src="dynamic-narrative.js"></script>
+  <script src="boss-encounters.js"></script>
+  <script src="spells-data.js"></script>
+  <script src="spell-crafting.js"></script>
+  <script src="zone-data.js"></script>
+  <script src="enemies-battle.js"></script>
+  <script src="terminals-data.js"></script>
+  <script src="ancient-terminals.js"></script>
+  <script src="encounters.js"></script>
+  <script src="battle-core.js"></script>
+  <script src="fx.js"></script>
+  <script src="zones-puzzles.js"></script>
+  <script src="updater.js"></script>
+  
+  <!-- Integration bootstrap (ties all systems together) -->
+  <script src="integration-bootstrap.js"></script>
+  
+  <!-- NEW: Window manager for draggable, resizable UI -->
+  <script src="window-manager.js"></script>
+  
+  <!-- Inline initialization script -->
+  <script>
+    let gameEngine;
+    let gameUI;
+    let graphicsUI;
+    let graphicsEnabled = false;
+    let spriteSheet = null;
+
+    // Initialize the new modular system
+    async function initGame() {
+      // Hide boot screen immediately
+      const bootScreen = document.getElementById("boot-screen");
+      if (bootScreen) {
+        bootScreen.classList.add("hidden");
+      }
+      
+      // Initialize AI system first (optional, gracefully falls back)
+      console.log("[Boot] Initializing AI system...");
+      try {
+        // AI system is optional - game works without it
+        const aiReady = await AIConfig.initialize();
+        if (aiReady) {
+          console.log("[Boot] ✓ AI system ready:", AIConfig.getStatus().activeProvider);
+        } else {
+          console.log("[Boot] ⚠ AI system using fallback content");
+        }
+      } catch (e) {
+        console.warn("[Boot] ⚠ AI initialization non-critical error (ignored):", e.message);
+      }
+
+      // Create the pure game engine with callback for graphics unlock
+      gameEngine = new GameEngine({
+        onGraphicsUnlock: handleGraphicsUnlock
+      });
+
+      // Try to restore auto-save (with safety check)
+      let hasAutoSave = false;
+      if (gameEngine.saveSystem && typeof gameEngine.saveSystem.loadAutoSave === 'function') {
+        hasAutoSave = gameEngine.saveSystem.loadAutoSave();
+      }
+      
+      // Create the UI layer that connects to DOM
+      gameUI = new GameUI(gameEngine);
+      
+      // Setup zone transitions (Phase 4 polish)
+      initializeZoneTransitions(gameEngine);
+      
+      // Setup battle animations (Phase 4 polish)
+      initializeBattleAnimations(gameEngine);
+      
+      // Setup tutorial system (Phase 5)
+      initializeTutorial(gameEngine);
+      
+      // Setup command handlers (tutorial, system, debug)
+      CommandHandlers.initialize(gameEngine);
+      
+      // Initialize AI DM integration
+      console.log("[Boot] Initializing AI DM integration...");
+      // AIDMIntegration is an object (singleton), not a class
+      if (!window.AIDMIntegration.state.initialized) {
+        window.AIDMIntegration.initialize(gameEngine.gameState);
+      }
+      
+      // Bootstrap all integrations (pass DiceSystem singleton + aiDMIntegration)
+      console.log("[Boot] Bootstrapping system integrations...");
+      IntegrationBootstrap.initialize(gameEngine, window.DiceSystem, window.AIDMIntegration);
+      
+      // Hook into engine's onGraphicsUnlock for graphics layer
+      gameEngine.onGraphicsUnlock = handleGraphicsUnlock;
+
+      // Run intro sequence (character awakening & creation)
+      console.log("[Boot] Running intro sequence...");
+      if (!gameEngine.gameState.introComplete) {
+        await IntroSystem.run(gameEngine);
+      } else {
+        console.log("[Boot] Intro already completed");
+      }
+
+      // Show welcome message
+      if (hasAutoSave) {
+        gameEngine.output("[ TECHNOMANCER: QUEST FOR THE CODE ]", "system");
+        gameEngine.output("Auto-save restored. Welcome back!", "hint");
+      } else {
+        gameEngine.output("[ TECHNOMANCER: QUEST FOR THE CODE ]", "system");
+        gameEngine.output("Welcome back, Technomancer.", "system");
+        gameEngine.output("Type 'help' for commands.", "system");
+        gameEngine.output("Type 'quests' to see active quests.", "hint");
+      }
+      gameEngine.output("", "system");
+
+      // Focus input
+      gameUI.focus();
+      
+      // Set up periodic auto-save every 2 minutes
+      setInterval(() => {
+        gameEngine.saveSystem.autoSave();
+        console.log("[Auto-save] Game saved");
+      }, 120000);
+    }
+
+    // Handle graphics unlock event
+    function handleGraphicsUnlock(unlock) {
+      if (!unlock || graphicsEnabled) return;
+      
+      // Graphics unlock animation/effect
+      const graphicsContainer = document.getElementById("graphics-container");
+      
+      if (spriteSheet) {
+        // If sprite sheet is loaded, create graphics UI
+        graphicsUI = new GraphicsUI(gameEngine, spriteSheet);
+        graphicsContainer.style.display = "block";
+        graphicsEnabled = true;
+        console.log("[Graphics] Graphics UI enabled!");
+      } else {
+        // Load sprite sheet on demand
+        spriteSheet = new Image();
+        spriteSheet.onload = () => {
+          graphicsUI = new GraphicsUI(gameEngine, spriteSheet);
+          graphicsContainer.style.display = "block";
+          graphicsEnabled = true;
+          console.log("[Graphics] Graphics UI enabled!");
+        };
+        spriteSheet.onerror = () => {
+          console.warn("[Graphics] Failed to load sprite sheet");
+          gameEngine.output("Graphics layer failed to initialize.", "error");
+        };
+        // For now, just show canvas even without sprite sheet
+        spriteSheet.src = "sprites-sheet.png"; // Will be provided later
+        graphicsUI = new GraphicsUI(gameEngine, spriteSheet);
+        graphicsContainer.style.display = "block";
+        graphicsEnabled = true;
+      }
+    }
+
+    // --- Technonomicon Runes/Buttons UI ---
+    function renderTechnonomiconContent() {
+      return `
+        <div style="display: flex; justify-content: space-around; align-items: center; gap: 16px;">
+          <button class="rune-btn" onclick="WindowManager.openInventory()">🜁<br><span style='font-size:0.7em'>Inventory</span></button>
+          <button class="rune-btn" onclick="WindowManager.openHoloDice()">🎲<br><span style='font-size:0.7em'>HoloDice</span></button>
+          <button class="rune-btn" onclick="WindowManager.openCRT('Terminal opened!')">🖳<br><span style='font-size:0.7em'>Terminal</span></button>
+        </div>
+        <div style="margin-top:12px; text-align:center; color:#2fb43a; font-size:1.1em;">TECHNONOMICON</div>
+      `;
+    }
+    // On DOMContentLoaded, open Technonomicon at bottom
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.WindowManager) {
+        WindowManager.openTechnonomicon(renderTechnonomiconContent());
+      }
+    });
+    
+    // Start when page loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initGame);
+    } else {
+      initGame();
+    }
+  </script>
+</body>
+</html>
