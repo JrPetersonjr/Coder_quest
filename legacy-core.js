@@ -1,3 +1,17 @@
+// ============================================================
+// LEGACY-CORE.JS
+// DEPRECATED - DO NOT USE FOR NEW FEATURES
+// 
+// This file contains legacy game state and class definitions.
+// The active class system is in intro-system.js with:
+//   - TECHNOMANCER: Code mastery, spell focus
+//   - CRYPTID: Stealth, security bypass
+//   - ARCHITECT: Structure, building systems
+//
+// Legacy classes (cryptologist, parser, programmer, human, theauditor)
+// are retained for backwards compatibility with old saves only.
+// ============================================================
+
 // ===== GAME STATE =====
 const gameState = {
   stage: "boot",

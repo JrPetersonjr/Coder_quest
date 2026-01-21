@@ -278,6 +278,251 @@ window.CastZones = {
         unlockReq: "city:neon-debug_solved"
       }
     }
+  },
+
+  // ============================================================
+  // [ZONE_WASTELAND] - Data Wasteland (fourth zone)
+  // ============================================================
+  wasteland: {
+    id: "wasteland",
+    name: "Data Wasteland",
+    desc: "Corrupted memory stretches endlessly. Deleted files wander as ghosts.",
+    banner: [
+      "   ~~~   ~~~   ~~~",
+      "  ~   ~ ~   ~ ~   ~",
+      " ╔═══════════════════╗",
+      " ║ CORRUPTED SECTOR ║",
+      " ╚═══════════════════╝",
+      "   ~   ~ ~   ~ ~   ~"
+    ],
+    puzzles: ["wasteland_recovery"],
+    terminals: [],
+    music: "data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==",
+    hints: [
+      "Data fragments drift on the wind.",
+      "Some files can be recovered.",
+      "The deeper you go, the more corrupted reality becomes."
+    ],
+
+    // ============================================================
+    // [SUBZONES_WASTELAND] - Dynamic instances within Wasteland
+    // ============================================================
+    subzones: {
+      wasteland_ruins: {
+        id: "wasteland_ruins",
+        name: "Corrupted Ruins",
+        desc: "Crumbling data structures. Ghost processes wander aimlessly.",
+        banner: [
+          "   ╔═══╗   ╔═══╗",
+          "   ║░░░║   ║░░░║",
+          "   ╚═╦═╝   ╚═╦═╝",
+          "     ║       ║",
+          "  ═══╩═══════╩═══"
+        ],
+        enemies: ["memory-ghost", "corrupted-file"],
+        terminals: ["wasteland:recovery-node"],
+        puzzles: ["wasteland_recovery"],
+        exits: { wasteland_crater: "north", city_underground: "south" },
+        lore: "Echoes of deleted programs. They remember being alive."
+      },
+
+      wasteland_crater: {
+        id: "wasteland_crater",
+        name: "Deletion Crater",
+        desc: "A massive void where entire systems were purged. Nothing should exist here.",
+        banner: [
+          "      ╲     ╱",
+          "       ╲   ╱",
+          "    ────╲ ╱────",
+          "   ╱     V     ╲",
+          "  ╱   VOID   ╲",
+          " ╱             ╲"
+        ],
+        enemies: ["null-wraith", "memory-ghost"],
+        terminals: ["wasteland:void-terminal"],
+        puzzles: [],
+        exits: { wasteland_abyss: "down", wasteland_ruins: "south" },
+        lore: "The deepest deletion. Something stirs in the void.",
+        unlockReq: "wasteland_recovery_solved"
+      },
+
+      wasteland_abyss: {
+        id: "wasteland_abyss",
+        name: "The Abyss",
+        desc: "Pure entropy. Reality unravels at the edges. A boss lurks here.",
+        banner: [
+          "   ════════════",
+          "   ║ THE ║",
+          "   ║ ABYSS ║",
+          "   ║ ????? ║",
+          "   ════════════"
+        ],
+        enemies: ["abyss-sentinel"],
+        terminals: [],
+        puzzles: [],
+        exits: { wasteland_crater: "up" },
+        lore: "Where deleted data goes to die. Or be reborn.",
+        bossZone: true,
+        boss: "abyss_sentinel"
+      }
+    }
+  },
+
+  // ============================================================
+  // [ZONE_COSMIC] - Cosmic Void (fifth zone - endgame)
+  // ============================================================
+  cosmic: {
+    id: "cosmic",
+    name: "Cosmic Void",
+    desc: "Beyond the firewall. Stars are server nodes. Reality is mutable.",
+    banner: [
+      "    ✦       ✦       ✦",
+      "  ✦   ✦   ✦   ✦   ✦",
+      "    ✦ COSMIC VOID ✦",
+      "  ✦   ✦   ✦   ✦   ✦",
+      "    ✦       ✦       ✦"
+    ],
+    puzzles: ["cosmic_alignment"],
+    terminals: [],
+    music: "data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==",
+    hints: [
+      "The stars align to ancient patterns.",
+      "Only a true Technomancer can navigate the void.",
+      "The final gateway awaits."
+    ],
+
+    // ============================================================
+    // [SUBZONES_COSMIC] - Dynamic instances within Cosmic
+    // ============================================================
+    subzones: {
+      cosmic_rift: {
+        id: "cosmic_rift",
+        name: "Quantum Rift",
+        desc: "A tear in reality. Multiple timelines converge and diverge.",
+        banner: [
+          "    ╱╲  ╱╲  ╱╲",
+          "   ╱  ╲╱  ╲╱  ╲",
+          "  ╱    RIFT    ╲",
+          "  ╲    ════    ╱",
+          "   ╲  ╱╲  ╱╲  ╱",
+          "    ╲╱  ╲╱  ╲╱"
+        ],
+        enemies: ["void-entity", "quantum-spectre"],
+        terminals: ["cosmic:timeline-anchor"],
+        puzzles: ["cosmic_alignment"],
+        exits: { cosmic_core: "north", wasteland_abyss: "south" },
+        lore: "Where possibility becomes probability. Choose carefully."
+      },
+
+      cosmic_core: {
+        id: "cosmic_core",
+        name: "The Core",
+        desc: "The center of everything. The source code of reality pulses here.",
+        banner: [
+          "       ◆",
+          "      ◆◆◆",
+          "     ◆◆◆◆◆",
+          "    ◆ CORE ◆",
+          "     ◆◆◆◆◆",
+          "      ◆◆◆"
+        ],
+        enemies: [],
+        terminals: ["cosmic:source-terminal"],
+        puzzles: [],
+        exits: { cosmic_throne: "north", cosmic_rift: "south" },
+        lore: "The origin. Where all code begins and ends.",
+        unlockReq: "cosmic_alignment_solved"
+      },
+
+      cosmic_throne: {
+        id: "cosmic_throne",
+        name: "Throne of The Auditor",
+        desc: "The final destination. The Auditor awaits. The fate of the simulation hangs in balance.",
+        banner: [
+          "   ╔═══════════╗",
+          "   ║ THRONE OF ║",
+          "   ║THE AUDITOR║",
+          "   ╚═══════════╝",
+          "       ╬╬╬",
+          "      ╬╬╬╬╬"
+        ],
+        enemies: [],
+        terminals: [],
+        puzzles: [],
+        exits: { cosmic_core: "south" },
+        lore: "The end. Or the beginning. The Auditor will decide.",
+        bossZone: true,
+        boss: "the_auditor"
+      }
+    }
+  },
+
+  // ============================================================
+  // [ZONE_TRAIN_STATION] - Hidden zone (Easter egg / DLC hook)
+  // ============================================================
+  train_station: {
+    id: "train_station",
+    name: "Ghost Train Station",
+    desc: "A forgotten terminal. Trains that carry lost data pass through rarely.",
+    banner: [
+      "  ═══════════════════",
+      "  ║ GHOST STATION ║",
+      "  ║   PLATFORM 0  ║",
+      "  ║   ═══════════ ║",
+      "  ║ ▶▶▶▶▶▶▶▶▶▶▶▶ ║",
+      "  ═══════════════════"
+    ],
+    puzzles: [],
+    terminals: ["train:departure-board"],
+    music: "data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==",
+    hints: [
+      "The train only stops for those who remember.",
+      "Some say the trains carry memories between worlds.",
+      "Platform 0 doesn't exist on any map."
+    ],
+
+    // ============================================================
+    // [SUBZONES_TRAIN] - Train station areas
+    // ============================================================
+    subzones: {
+      train_platform: {
+        id: "train_platform",
+        name: "Platform Zero",
+        desc: "An impossible platform. The departure board shows destinations that don't exist.",
+        banner: [
+          "  ╔═══════════════╗",
+          "  ║ PLATFORM 0   ║",
+          "  ║ ▶ NOWHERE    ║",
+          "  ║ ▶ SOMEWHERE  ║",
+          "  ║ ▶ ELSEWHERE  ║",
+          "  ╚═══════════════╝"
+        ],
+        enemies: [],
+        terminals: ["train:departure-board"],
+        puzzles: [],
+        exits: { train_tunnels: "down" },
+        lore: "Waiting for a train that never comes. Or always has."
+      },
+
+      train_tunnels: {
+        id: "train_tunnels",
+        name: "Ghost Tunnels",
+        desc: "Dark passages where lost data echoes. Trains rumble in the distance.",
+        banner: [
+          "  ═══════════════════",
+          "  ║▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓║",
+          "  ║▓▓ TUNNELS ▓▓║",
+          "  ║▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓║",
+          "  ═══════════════════"
+        ],
+        enemies: ["memory-ghost"],
+        terminals: [],
+        puzzles: [],
+        exits: { train_platform: "up" },
+        lore: "Where do the tracks lead? No one remembers.",
+        secretZone: true
+      }
+    }
   }
 };
 
@@ -327,6 +572,50 @@ window.CastPuzzles = {
     reward: {
       exp: 50,
       unlocks: "city_gate"
+    }
+  },
+
+  // ============================================================
+  // [PUZZLE_WASTELAND_RECOVERY] - Data recovery (third puzzle)
+  // ============================================================
+  wasteland_recovery: {
+    id: "wasteland_recovery",
+    zone: "wasteland",
+    description: "Corrupted memory fragments scatter in the wind. Piece them together.",
+    inscription: "RECOVER WHAT WAS LOST",
+    check: (code) => {
+      return code.toLowerCase().includes("restore") || 
+             code.toLowerCase().includes("recover") ||
+             code.toLowerCase().includes("backup") ||
+             code.toLowerCase().includes("repair");
+    },
+    successText: "The fragments coalesce! A path to the Deletion Crater opens.",
+    failureHint: "Data needs restoration. Try: solve wasteland_recovery restore(backup)",
+    reward: {
+      exp: 75,
+      unlocks: "wasteland_crater"
+    }
+  },
+
+  // ============================================================
+  // [PUZZLE_COSMIC_ALIGNMENT] - Star alignment (fourth puzzle)
+  // ============================================================
+  cosmic_alignment: {
+    id: "cosmic_alignment",
+    zone: "cosmic",
+    description: "The stars form a pattern. Align them to open the gateway.",
+    inscription: "ALIGN THE CELESTIAL CODE",
+    check: (code) => {
+      return code.toLowerCase().includes("align") || 
+             code.toLowerCase().includes("pattern") ||
+             code.toLowerCase().includes("stars") ||
+             code.toLowerCase().includes("cosmic");
+    },
+    successText: "The stars align! Reality bends. The Core awaits.",
+    failureHint: "The cosmos demands order. Try: solve cosmic_alignment align(stars)",
+    reward: {
+      exp: 100,
+      unlocks: "cosmic_core"
     }
   }
 };

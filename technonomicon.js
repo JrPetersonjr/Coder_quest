@@ -9,11 +9,12 @@
 //   - Integrated with game systems
 //
 // PAGES:
-//   1. SKILL TREE - Character progression
-//   2. CHARACTER - Stats and development
-//   3. SPELLS - Available magical abilities
-//   4. RECIPES - Tinker crafting formulas
-//   5. FAILURES - Log of failed experiments
+//   1. CHARACTER - Stats and character info
+//   2. SKILL TREE - Character progression
+//   3. SPELLS - Available magical abilities & code
+//   4. RECIPES - Tinker crafting formulas (success/fail)
+//   5. MAP - Zone navigation
+//   6. QUESTS - Quest log and objectives
 // ============================================================
 
 window.Technonomicon = {
@@ -21,8 +22,8 @@ window.Technonomicon = {
   // ============================================================
   // [STATE]
   // ============================================================
-  currentPage: "spells",
-  pages: ["skills", "character", "spells", "recipes", "failures"],
+  currentPage: "character",
+  pages: ["character", "skills", "spells", "recipes", "map", "quests"],
   gameEngine: null,
   loggingSystem: null,
   paneId: "technonomicon",
@@ -52,8 +53,15 @@ window.Technonomicon = {
       flex-direction: column;
       height: 100%;
       background: #000;
+      background-image: linear-gradient(135deg, rgba(0, 255, 0, 0.08) 0%, rgba(0, 255, 0, 0.02) 60%, rgba(0, 255, 0, 0.06) 100%), var(--technonomicon-front-img);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-blend-mode: screen;
       color: #00ff00;
       font-family: 'Courier Prime', monospace;
+      position: relative;
+      overflow: hidden;
     `;
 
     // Create circuitry background
@@ -79,7 +87,7 @@ window.Technonomicon = {
       z-index: 10;
     `;
 
-    const tabNames = ["SKILLS", "CHARACTER", "SPELLS", "RECIPES", "FAILURES"];
+    const tabNames = ["CHARACTER", "SKILLS", "SPELLS", "RECIPES", "MAP", "QUESTS"];
     const tabValues = this.pages;
 
     tabNames.forEach((name, i) => {
@@ -115,7 +123,10 @@ window.Technonomicon = {
       overflow-y: auto;
       padding: 12px;
       position: relative;
-      background: linear-gradient(135deg, #000a00 0%, #001a00 100%);
+      background: linear-gradient(135deg, #000a00 0%, #001a00 100%), var(--technonomicon-back-img);
+      background-size: cover;
+      background-position: center;
+      background-blend-mode: multiply;
       border: 1px solid #00ff00;
     `;
 
@@ -139,7 +150,7 @@ window.Technonomicon = {
       content: content
     });
 
-    this.renderPage("spells");
+    this.renderPage("character");
     console.log("[Technonomicon] Spellbook created");
   },
 
@@ -152,30 +163,52 @@ window.Technonomicon = {
     const ctx = canvas.getContext("2d");
     
     ctx.strokeStyle = "#00ff00";
-    ctx.lineWidth = 0.5;
+    ctx.fillStyle = "#00ff00";
+    ctx.lineWidth = 1;
 
-    // Draw circuit paths
-    for (let i = 0; i < 20; i++) {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
-      const size = 30 + Math.random() * 80;
+    // Draw circuit grid
+    for (let x = 0; x < canvas.width; x += 40) {
+      for (let y = 0; y < canvas.height; y += 40) {
+        // Node circles
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Crosshairs
+        ctx.beginPath();
+        ctx.moveTo(x - 8, y);
+        ctx.lineTo(x + 8, y);
+        ctx.moveTo(x, y - 8);
+        ctx.lineTo(x, y + 8);
+        ctx.stroke();
+      }
+    }
 
-      // Circles
+    // Add connecting traces between random nodes
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.3;
+    for (let i = 0; i < 30; i++) {
+      const x1 = Math.floor(Math.random() * 20) * 40;
+      const y1 = Math.floor(Math.random() * 15) * 40;
+      const x2 = x1 + (Math.random() > 0.5 ? 40 : 0);
+      const y2 = y1 + (Math.random() > 0.5 ? 40 : 0);
+      
       ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Connected lines
-      ctx.beginPath();
-      ctx.moveTo(x - size, y);
-      ctx.lineTo(x + size, y);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(x, y - size);
-      ctx.lineTo(x, y + size);
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
       ctx.stroke();
     }
+    ctx.globalAlpha = 1;
+
+    // Resize handler for responsive canvas
+    window.addEventListener('resize', () => {
+      const pane = PaneManager.panes[this.paneId];
+      if (pane) {
+        canvas.width = pane.width;
+        canvas.height = pane.height;
+        this.generateCircuitPattern(canvas);
+      }
+    });
   },
 
   // ============================================================
@@ -206,17 +239,23 @@ window.Technonomicon = {
     pageDiv.innerHTML = "";
 
     switch (page) {
-      case "skills":
-        this.renderSkillTree(pageDiv);
-        break;
       case "character":
         this.renderCharDevelopment(pageDiv);
+        break;
+      case "skills":
+        this.renderSkillTree(pageDiv);
         break;
       case "spells":
         this.renderSpells(pageDiv);
         break;
       case "recipes":
         this.renderRecipes(pageDiv);
+        break;
+      case "map":
+        this.renderMap(pageDiv);
+        break;
+      case "quests":
+        this.renderQuests(pageDiv);
         break;
       case "failures":
         this.renderFailures(pageDiv);
@@ -358,6 +397,84 @@ window.Technonomicon = {
         </div>
       </div>
     `;
+    container.innerHTML = html;
+  },
+
+  renderMap: function(container) {
+    const currentZone = this.gameEngine?.gameState?.zone || "hub";
+    const zones = window.CastZones || {};
+    
+    let html = `
+      <div style="color: #00ffff; font-weight: bold; margin-bottom: 12px;">[ ZONE MAP ]</div>
+      <div style="border: 2px solid #00ff00; padding: 12px; background: #0a0a0a;">
+        <div style="text-align: center; margin-bottom: 16px;">
+          <div style="color: #ffaa00; font-weight: bold; font-size: 1.1em;">Current Location: ${currentZone.toUpperCase()}</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+    `;
+    
+    const zoneList = ['hub', 'forest', 'city', 'wasteland', 'cosmic'];
+    zoneList.forEach(zoneId => {
+      const zone = zones[zoneId];
+      const isCurrentZone = zoneId === currentZone;
+      const style = isCurrentZone ? 'color: #ffaa00; font-weight: bold;' : 'color: #00ff00;';
+      const marker = isCurrentZone ? '➤ ' : '○ ';
+      
+      html += `
+        <div style="border: 1px solid #00ff0033; padding: 6px; ${style}">
+          ${marker}${zone?.name || zoneId.toUpperCase()}
+        </div>
+      `;
+    });
+    
+    html += `
+        </div>
+        <div style="margin-top: 12px; color: #88ff00; font-size: 0.85em;">
+          Type 'go [zone]' to travel between locations
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+  },
+
+  renderQuests: function(container) {
+    const activeQuests = this.gameEngine?.questSystem?.getActiveQuests() || [];
+    const completedQuests = this.gameEngine?.questSystem?.getCompletedQuests() || [];
+    
+    let html = `
+      <div style="color: #ffaa00; font-weight: bold; margin-bottom: 12px;">[ QUEST LOG ]</div>
+    `;
+    
+    if (activeQuests.length > 0) {
+      html += `<div style="color: #00ffff; font-weight: bold; margin-bottom: 8px;">Active Quests:</div>`;
+      activeQuests.forEach(quest => {
+        const progress = quest.progress || 0;
+        const maxProgress = quest.maxProgress || 1;
+        const percent = Math.floor((progress / maxProgress) * 100);
+        
+        html += `
+          <div style="border-bottom: 1px solid #00ff0022; padding: 6px 0; margin: 6px 0;">
+            <div style="color: #00ff00; font-weight: bold;">► ${quest.name}</div>
+            <div style="color: #88ff00; font-size: 0.85em;">${quest.description || ""}</div>
+            <div style="color: #ffaa00; font-size: 0.8em;">Progress: ${progress}/${maxProgress} (${percent}%)</div>
+          </div>
+        `;
+      });
+    } else {
+      html += `<div style="color: #888; font-style: italic; margin-bottom: 12px;">No active quests</div>`;
+    }
+    
+    if (completedQuests.length > 0) {
+      html += `<div style="color: #00ffff; font-weight: bold; margin: 16px 0 8px 0;">Completed Quests:</div>`;
+      completedQuests.slice(0, 5).forEach(quest => {
+        html += `
+          <div style="color: #00ff00; padding: 4px 0;">
+            ✓ ${quest.name}
+          </div>
+        `;
+      });
+    }
+    
     container.innerHTML = html;
   }
 

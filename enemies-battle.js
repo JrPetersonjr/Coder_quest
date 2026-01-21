@@ -340,7 +340,7 @@ window.CastEnemies = {
 window.WeaknessMap = {
   logic: { multiplier: 1.5, spells: ["debug", "analyze", "parse"] },
   definition: { multiplier: 1.5, spells: ["define", "inspect"] },
-  repair: { multiplier: 1.5, spells: ["restore", "cleanse"] },
+  repair: { multiplier: 1.5, spells: ["restoration", "cleanse"] },
   trace: { multiplier: 1.5, spells: ["trace", "decrypt"] },
   break: { multiplier: 1.5, spells: ["break", "terminate"] },
   purify: { multiplier: 1.5, spells: ["purify", "exorcism"] },

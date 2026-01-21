@@ -37,7 +37,103 @@ window.CastConsoleUI = {
     this.updateStatsPanel();
     this.setupEventListeners();
 
+    // Dock terminal + status into pane windows for drag/resize/snap
+    if (window.PaneManager) {
+      this.dockToPanes();
+    }
+
     console.log("[CastConsoleUI] Initialized");
+  },
+
+  // ============================================================
+  // [DOCKING] - Move terminal + status into PaneManager windows
+  // ============================================================
+  dockToPanes: function() {
+    if (!window.PaneManager) return;
+    // Ensure PaneManager is initialized
+    if (!PaneManager.container && typeof PaneManager.initialize === 'function') {
+      PaneManager.initialize();
+    }
+
+    // Cast Console Terminal
+    const terminal = document.querySelector(".cast-terminal");
+    if (terminal && !terminal.dataset.dockedPane) {
+      terminal.dataset.dockedPane = "true";
+      terminal.style.width = "100%";
+      terminal.style.height = "100%";
+      terminal.style.maxHeight = "none";
+      terminal.style.position = "relative";
+
+      PaneManager.createPane({
+        id: "cast-console-pane",
+        title: "[ CAST CONSOLE ]",
+        x: 40,
+        y: 40,
+        width: 900,
+        height: 520,
+        minimizable: true,
+        closeable: false,
+        content: terminal
+      });
+    }
+
+    // Character Status (existing stats panel)
+    const statsPanel = document.querySelector(".stats-panel");
+    if (statsPanel && !statsPanel.dataset.dockedPane) {
+      statsPanel.dataset.dockedPane = "true";
+      statsPanel.style.width = "100%";
+      statsPanel.style.height = "100%";
+      statsPanel.style.position = "relative";
+
+      const screenWidth = window.innerWidth;
+      PaneManager.createPane({
+        id: "status-pane",
+        title: "[ CHARACTER STATUS ]",
+        x: Math.max(60, screenWidth - 340),
+        y: 40,
+        width: 320,
+        height: 460,
+        minimizable: true,
+        closeable: false,
+        content: statsPanel
+      });
+    }
+
+    // Crystal Ball (DM interface)
+    this.dockCrystalBallPane();
+  },
+
+  /**
+   * Dock the Crystal Ball into a PaneManager window
+   */
+  dockCrystalBallPane: function() {
+    if (!window.PaneManager) return;
+
+    const crystalBall = document.querySelector(".crystal-ball");
+    if (crystalBall && !crystalBall.dataset.dockedPane) {
+      crystalBall.dataset.dockedPane = "true";
+      crystalBall.style.display = "flex";
+      crystalBall.style.width = "100%";
+      crystalBall.style.height = "100%";
+      crystalBall.style.position = "relative";
+
+      // Position Crystal Ball in the nested stack
+      const baseX = 120;
+      const baseY = 100;
+      const stackOffset = 25;
+
+      PaneManager.createPane({
+        id: "crystal-ball-pane",
+        title: "✦ ORACLE ✦",
+        x: baseX + stackOffset * 3,
+        y: baseY + stackOffset * 3,
+        width: 400,
+        height: 520,
+        minimizable: true,
+        closeable: false,
+        content: crystalBall
+      });
+    }
   },
 
   // ============================================================
@@ -270,12 +366,22 @@ window.CastConsoleUI = {
   // [CRYSTAL BALL] - DM Interaction
   // ============================================================
 
+  // Voice recognition state
+  voiceRecognition: null,
+  isListening: false,
+  isOraclePopped: false,
+
   /**
    * Setup Crystal Ball interaction
    */
   setupCrystalBall: function() {
     const input = document.getElementById("crystal-ball-input");
     const btn = document.getElementById("crystal-ball-btn");
+
+    if (!input || !btn) {
+      console.warn("[CastConsoleUI] Crystal Ball elements not found - skipping setup");
+      return;
+    }
 
     btn.addEventListener("click", () => {
       this.consultOracle();
@@ -286,6 +392,160 @@ window.CastConsoleUI = {
         this.consultOracle();
       }
     });
+
+    // Setup voice and popout if in Electron
+    this.setupOracleElectronFeatures();
+  },
+
+  /**
+   * Setup Electron-only features (voice, popout)
+   */
+  setupOracleElectronFeatures: function() {
+    const controls = document.getElementById("oracle-controls");
+    const voiceBtn = document.getElementById("oracle-voice-btn");
+    const popoutBtn = document.getElementById("oracle-popout-btn");
+
+    // Only show controls in Electron
+    if (window.electronAPI?.isElectron) {
+      if (controls) controls.style.display = "flex";
+
+      // Setup voice recognition
+      if (voiceBtn) {
+        this.initVoiceRecognition();
+        voiceBtn.addEventListener("click", () => this.toggleVoice());
+      }
+
+      // Setup popout
+      if (popoutBtn) {
+        popoutBtn.addEventListener("click", () => this.toggleOraclePopout());
+      }
+
+      // Listen for Oracle responses from popout window
+      window.electronAPI.onOracleResponse((data) => {
+        if (data.type === "query") {
+          // User sent query from popout - process it
+          document.getElementById("crystal-ball-input").value = data.text;
+          this.consultOracle();
+        } else if (data.type === "dock") {
+          // User clicked dock button
+          this.isOraclePopped = false;
+          if (popoutBtn) popoutBtn.textContent = "⬈";
+        }
+      });
+
+      // Listen for Oracle being docked
+      window.electronAPI.onOracleDocked(() => {
+        this.isOraclePopped = false;
+        if (popoutBtn) popoutBtn.textContent = "⬈";
+      });
+
+      console.log("[CastConsoleUI] Electron Oracle features initialized");
+    }
+  },
+
+  /**
+   * Initialize voice recognition
+   */
+  initVoiceRecognition: function() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      this.voiceRecognition = new SpeechRecognition();
+      this.voiceRecognition.continuous = false;
+      this.voiceRecognition.interimResults = true;
+      this.voiceRecognition.lang = 'en-US';
+
+      this.voiceRecognition.onstart = () => {
+        this.isListening = true;
+        const btn = document.getElementById("oracle-voice-btn");
+        if (btn) btn.classList.add("listening");
+        console.log("[Voice] Listening...");
+      };
+
+      this.voiceRecognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        
+        const input = document.getElementById("crystal-ball-input");
+        if (input) input.value = transcript;
+
+        // If final result, submit
+        if (event.results[0].isFinal) {
+          this.consultOracle();
+        }
+      };
+
+      this.voiceRecognition.onerror = (event) => {
+        console.error("[Voice] Error:", event.error);
+        this.stopVoice();
+      };
+
+      this.voiceRecognition.onend = () => {
+        this.stopVoice();
+      };
+
+      console.log("[CastConsoleUI] Voice recognition initialized");
+    } else {
+      console.warn("[CastConsoleUI] Speech recognition not supported");
+      const btn = document.getElementById("oracle-voice-btn");
+      if (btn) btn.style.display = "none";
+    }
+  },
+
+  /**
+   * Toggle voice recognition
+   */
+  toggleVoice: function() {
+    if (this.isListening) {
+      this.voiceRecognition.stop();
+    } else {
+      this.voiceRecognition.start();
+    }
+  },
+
+  /**
+   * Stop voice recognition
+   */
+  stopVoice: function() {
+    this.isListening = false;
+    const btn = document.getElementById("oracle-voice-btn");
+    if (btn) btn.classList.remove("listening");
+  },
+
+  /**
+   * Toggle Oracle popout window
+   */
+  toggleOraclePopout: async function() {
+    if (!window.electronAPI) return;
+
+    const popoutBtn = document.getElementById("oracle-popout-btn");
+
+    if (this.isOraclePopped) {
+      // Dock it back
+      await window.electronAPI.dockOracle();
+      this.isOraclePopped = false;
+      if (popoutBtn) popoutBtn.textContent = "⬈";
+    } else {
+      // Pop it out
+      const result = await window.electronAPI.popoutOracle();
+      if (result.success) {
+        this.isOraclePopped = true;
+        if (popoutBtn) popoutBtn.textContent = "⬋";
+      }
+    }
+  },
+
+  /**
+   * Send response to popout Oracle window
+   */
+  sendToOraclePopout: function(response) {
+    if (window.electronAPI && this.isOraclePopped) {
+      window.electronAPI.sendToOracle({
+        type: "response",
+        text: response,
+        speak: true
+      });
+    }
   },
 
   /**
@@ -293,6 +553,7 @@ window.CastConsoleUI = {
    */
   consultOracle: function() {
     const input = document.getElementById("crystal-ball-input");
+    const display = document.getElementById("crystal-ball-display");
     const message = input.value.trim();
 
     if (!message) return;
@@ -307,6 +568,12 @@ window.CastConsoleUI = {
     this.updateCrystalBallDisplay();
     input.value = "";
 
+    // Show connecting state while waiting for response
+    if (display) {
+      display.classList.remove("idle");
+      display.classList.add("connecting");
+    }
+
     // Send to DM integration
     if (window.AIDMIntegration && window.AIDMIntegration.consultDM) {
       window.AIDMIntegration.consultDM(message, (response) => {
@@ -314,7 +581,16 @@ window.CastConsoleUI = {
           type: "dm",
           text: response
         });
+        // Switch to active state briefly, then clear
+        if (display) {
+          display.classList.remove("connecting");
+          display.classList.add("active");
+          setTimeout(() => display.classList.remove("active"), 2000);
+        }
         this.updateCrystalBallDisplay();
+        
+        // Send to popout window if open
+        this.sendToOraclePopout(response);
       });
     } else {
       // Fallback response
@@ -323,7 +599,13 @@ window.CastConsoleUI = {
         type: "dm",
         text: response
       });
+      if (display) {
+        display.classList.remove("connecting");
+      }
       this.updateCrystalBallDisplay();
+      
+      // Send to popout window if open
+      this.sendToOraclePopout(response);
     }
   },
 
@@ -332,6 +614,7 @@ window.CastConsoleUI = {
    */
   updateCrystalBallDisplay: function() {
     const display = document.getElementById("crystal-ball-content");
+    if (!display) return;
     
     if (this.state.crystal_ball_messages.length === 0) {
       display.textContent = "Ready for DM interaction...";

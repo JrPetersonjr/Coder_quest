@@ -27,6 +27,8 @@ window.PaneManager = {
   activePane: null,
   zIndex: 1000,
   dragState: null,
+  gridSize: 20, // Snap-to-grid size in pixels
+  snapEnabled: true, // Enable/disable snap-to-grid
 
   // ============================================================
   // [INIT] - Initialize pane manager
@@ -39,16 +41,26 @@ window.PaneManager = {
     if (!container) {
       container = document.createElement("div");
       container.id = "windows-container";
-      container.style.cssText = `
-        position: relative;
-        width: 100%;
-        height: 100%;
-        background: #000;
-        border: 2px solid #00ff00;
-        overflow: hidden;
-      `;
       document.body.appendChild(container);
     }
+    
+    // Always apply fullscreen fixed styling with animated background
+    container.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      overflow: hidden;
+      z-index: 1;
+    `;
+    
+    // Add animated background canvas
+    this.addAnimatedBackground(container);
+    
+    // Add circuit board pattern overlay
+    this.addCircuitPattern(container);
     
     this.container = container;
     console.log("[PaneManager] Ready. Call createPane() to add windows");
@@ -82,22 +94,28 @@ window.PaneManager = {
       top: ${y}px;
       width: ${width}px;
       height: ${height}px;
-      background: #0a0a0a;
+      background: rgba(0, 0, 0, 0.95);
       border: 2px solid #00ff00;
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+      border-radius: 8px;
+      box-shadow: 
+        0 0 20px rgba(0, 255, 0, 0.3),
+        inset 0 0 20px rgba(0, 255, 0, 0.05);
       display: flex;
       flex-direction: column;
       z-index: ${this.zIndex++};
       user-select: none;
       font-family: 'Courier Prime', monospace;
+      backdrop-filter: blur(4px);
     `;
 
     // Create header
     const header = document.createElement("div");
     header.className = "pane-header";
     header.style.cssText = `
-      background: #000;
-      border-bottom: 1px solid #00ff00;
+      background: linear-gradient(180deg, #001a00 0%, #000a00 100%);
+      border-bottom: 2px solid #00ff00;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
       padding: 8px;
       display: flex;
       justify-content: space-between;
@@ -108,6 +126,7 @@ window.PaneManager = {
       font-weight: bold;
       letter-spacing: 1px;
       user-select: none;
+      box-shadow: 0 2px 8px rgba(0, 255, 0, 0.2);
     `;
 
     // Title
@@ -280,17 +299,34 @@ window.PaneManager = {
       const dx = e.clientX - state.startX;
       const dy = e.clientY - state.startY;
 
-      pane.element.style.left = (state.paneStartX + dx) + "px";
-      pane.element.style.top = (state.paneStartY + dy) + "px";
+      let newX = state.paneStartX + dx;
+      let newY = state.paneStartY + dy;
 
-      pane.x = state.paneStartX + dx;
-      pane.y = state.paneStartY + dy;
+      // Apply snap-to-grid
+      newX = this.snapToGrid(newX);
+      newY = this.snapToGrid(newY);
+
+      // Keep windows within viewport
+      const maxX = window.innerWidth - pane.element.offsetWidth;
+      const maxY = window.innerHeight - pane.element.offsetHeight;
+      newX = Math.max(0, Math.min(newX, maxX));
+      newY = Math.max(0, Math.min(newY, maxY));
+
+      pane.element.style.left = newX + "px";
+      pane.element.style.top = newY + "px";
+
+      pane.x = newX;
+      pane.y = newY;
     } else if (state.type === "resize") {
       const dw = e.clientX - state.startX;
       const dh = e.clientY - state.startY;
 
-      const newWidth = Math.max(200, state.paneStartWidth + dw);
-      const newHeight = Math.max(150, state.paneStartHeight + dh);
+      let newWidth = Math.max(200, state.paneStartWidth + dw);
+      let newHeight = Math.max(150, state.paneStartHeight + dh);
+
+      // Apply snap-to-grid for size
+      newWidth = this.snapToGrid(newWidth);
+      newHeight = this.snapToGrid(newHeight);
 
       pane.element.style.width = newWidth + "px";
       pane.element.style.height = newHeight + "px";
@@ -386,6 +422,157 @@ window.PaneManager = {
       }
       contentDiv.scrollTop = contentDiv.scrollHeight;
     }
+  },
+
+  // ============================================================
+  // [SNAP TO GRID] - Snap position to grid
+  // ============================================================
+  snapToGrid: function(value) {
+    if (!this.snapEnabled) return value;
+    return Math.round(value / this.gridSize) * this.gridSize;
+  },
+
+  // ============================================================
+  // [CIRCUIT PATTERN] - Add circuit board background
+  // ============================================================
+  // ============================================================
+  // [ANIMATED BACKGROUND] - Subtle flowing grid animation
+  // ============================================================
+  addAnimatedBackground: function(container) {
+    const canvas = document.createElement('canvas');
+    canvas.id = 'bg-animation';
+    canvas.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    `;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    container.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    let time = 0;
+    const gridSize = this.gridSize;
+
+    const animate = () => {
+      time += 0.005;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Flowing grid lines
+      ctx.strokeStyle = 'rgba(0, 255, 0, 0.04)';
+      ctx.lineWidth = 1;
+
+      // Horizontal lines with wave
+      for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width; x += 5) {
+          const wave = Math.sin((x + time * 50) * 0.01) * 2;
+          if (x === 0) ctx.moveTo(x, y + wave);
+          else ctx.lineTo(x, y + wave);
+        }
+        ctx.stroke();
+      }
+
+      // Vertical lines with pulse
+      for (let x = 0; x < canvas.width; x += gridSize) {
+        const pulse = Math.sin(time + x * 0.01) * 0.02 + 0.04;
+        ctx.strokeStyle = `rgba(0, 255, 0, ${pulse})`;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+
+      // Occasional data streams
+      if (Math.random() < 0.02) {
+        const streamX = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
+        for (let y = 0; y < canvas.height; y += 8) {
+          if (Math.random() < 0.3) {
+            ctx.fillRect(streamX - 1, y, 2, 4);
+          }
+        }
+      }
+
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  },
+
+  addCircuitPattern: function(container) {
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.08;
+      pointer-events: none;
+      z-index: 1;
+    `;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    container.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#00ff00';
+    ctx.lineWidth = 0.5;
+
+    // Draw circuit paths
+    for (let i = 0; i < 40; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const size = 20 + Math.random() * 60;
+
+      // Circuit nodes (circles)
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Connection lines (horizontal/vertical)
+      ctx.beginPath();
+      ctx.moveTo(x - size, y);
+      ctx.lineTo(x + size, y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x, y - size);
+      ctx.lineTo(x, y + size);
+      ctx.stroke();
+
+      // Small node dots
+      ctx.fillStyle = '#00ff00';
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Draw connecting traces
+    for (let i = 0; i < 20; i++) {
+      ctx.beginPath();
+      ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+      ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+      ctx.stroke();
+    }
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
   }
 
 };

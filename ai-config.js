@@ -210,6 +210,17 @@ window.AIConfig = {
   async initialize() {
     console.log("[AI] Initializing AI Config System...");
 
+    // Detect if running in Electron (direct API access, secure key storage)
+    this.state.isElectron = !!(window.electronAPI?.isElectron);
+    
+    if (this.state.isElectron) {
+      console.log("[AI] Running in Electron - direct Claude API enabled");
+      // In Electron, we can call Claude directly (no CORS)
+      this.config.useBackend = false;
+      // Load API key from secure Electron storage
+      await this.loadElectronApiKey();
+    }
+
     // Load saved configuration from localStorage
     this.loadConfig();
 
@@ -224,6 +235,23 @@ window.AIConfig = {
     console.log(`[AI] Available providers:`, this.state.availableProviders);
 
     return this.state.activeProvider !== null;
+  },
+
+  /**
+   * Load API key from Electron's secure storage
+   */
+  async loadElectronApiKey() {
+    if (!window.electronAPI) return;
+    
+    try {
+      const key = await window.electronAPI.getApiKey('anthropic');
+      if (key) {
+        this.config.apiKeys.anthropic = key;
+        console.log("[AI] Loaded Claude API key from secure storage");
+      }
+    } catch (e) {
+      console.warn("[AI] Failed to load API key from Electron storage:", e);
+    }
   },
 
   /**
@@ -669,10 +697,21 @@ window.AIConfig = {
 
   /**
    * Set API key (called by site admin in deployment)
+   * In Electron: stores securely in user data folder
+   * In Browser: stores in memory only (use backend for security)
    */
-  setAPIKey(provider, key) {
+  async setAPIKey(provider, key) {
     if (provider in this.config.apiKeys) {
       this.config.apiKeys[provider] = key;
+      
+      // If running in Electron, store securely
+      if (window.electronAPI?.setApiKey) {
+        const success = await window.electronAPI.setApiKey(provider, key);
+        if (success) {
+          console.log(`[AI] API key for ${provider} stored securely in Electron`);
+        }
+      }
+      
       console.log(`[AI] API key set for ${provider}`);
       this.saveConfig();
       return true;
@@ -697,7 +736,7 @@ window.AIConfig = {
     if (feature in this.config.aiFeatures) {
       this.config.aiFeatures[feature] = enabled;
       this.saveConfig();
-      console.log(`[AI] Feature '${feature}' ${enabled ? "enabled" : "disabled"}`);
+      console.log(`[AI] Feature '${feature}' ${enabled ? "enabled" : "disabled"}`);;
       return true;
     }
     return false;

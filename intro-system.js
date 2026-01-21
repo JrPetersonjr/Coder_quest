@@ -208,19 +208,47 @@ window.IntroSystem = {
   playIntroAnimation: async function(container) {
     console.log("[IntroSystem] Starting intro animation...");
     
-    // Clear container with CRT aesthetic
-    container.innerHTML = "";
-    container.style.background = "#000";
-    container.style.color = "#00ff00";
-    container.style.fontFamily = "'Courier Prime', monospace";
-    container.style.padding = "40px";
-    container.style.minHeight = "100vh";
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.justifyContent = "center";
-    container.style.alignItems = "center";
-    container.style.textShadow = "0 0 5px rgba(0, 255, 0, 0.3)";
-    container.style.lineHeight = "2";
+    // Create intro pane if PaneManager is available
+    if (window.PaneManager) {
+      const introPane = document.createElement("div");
+      introPane.id = "intro-animation";
+      introPane.style.cssText = `
+        background: #000;
+        color: #00ff00;
+        font-family: 'Courier Prime', monospace;
+        padding: 40px;
+        text-align: center;
+        overflow: hidden;
+      `;
+      
+      PaneManager.createPane({
+        id: "intro-pane",
+        title: "⬢ SYSTEM BOOT ⬢",
+        x: 100,
+        y: 100,
+        width: 800,
+        height: 500,
+        minimizable: false,
+        closeable: false,
+        content: introPane
+      });
+      
+      container = introPane;
+    } else {
+      // Fallback to body if no PaneManager
+      container.innerHTML = "";
+      container.style.background = "#000";
+      container.style.color = "#00ff00";
+      container.style.fontFamily = "'Courier Prime', monospace";
+      container.style.padding = "40px";
+      container.style.minHeight = "100vh";
+      container.style.display = "flex";
+      container.style.flexDirection = "column";
+      container.style.justifyContent = "center";
+      container.style.alignItems = "center";
+      container.style.textShadow = "0 0 5px rgba(0, 255, 0, 0.3)";
+      container.style.lineHeight = "2";
+    }
     
     // Play MIDI intro (request audio system)
     if (window.FXSystem && window.FXSystem.playMusicTrack) {
@@ -262,6 +290,11 @@ window.IntroSystem = {
         }
       </style>
     `;
+    
+    // Wait for click
+    await new Promise(resolve => {
+      container.addEventListener('click', resolve, { once: true });
+    });
     
     console.log("[IntroSystem] Intro animation complete");
   },
@@ -388,36 +421,45 @@ window.IntroSystem = {
       throw error;
     }
   },
-    }
-  },
 
   // ============================================================
   // [UI HELPERS] - Prompt and delay utilities
   // ============================================================
   
   /**
-   * Prompt user for input
+   * Prompt user for input - works with pane UI
    */
   promptQuestion: async function(gameEngine, question, type = "text", options = []) {
     console.log("[PromptQuestion] Question:", question, "Type:", type);
     
     return new Promise((resolve) => {
       try {
-        // Output the question
-        console.log("[PromptQuestion] Calling gameEngine.output for question");
+        // Output the question to game console
         gameEngine.output(question, "system");
         
-        // Get output container
-        const outputContainer = document.getElementById("game-output");
+        // Try to find intro pane or create input in existing pane
+        let outputContainer = document.querySelector("#intro-pane .pane-content");
+        
+        if (!outputContainer) {
+          // Fallback: try main game output or use browser prompt
+          outputContainer = document.getElementById("output") || document.querySelector(".pane-content");
+        }
+        
         console.log("[PromptQuestion] Output container found:", !!outputContainer);
         
         if (!outputContainer) {
-          console.error("[PromptQuestion] game-output container not found!");
+          console.error("[PromptQuestion] No suitable container found!");
           // Fallback: use browser prompt
           const answer = window.prompt(question, type === "choice" ? options[0] : "");
           resolve(answer || (type === "choice" ? options[0] : "Anonymous"));
           return;
         }
+        
+        // Add question text to container
+        const questionDiv = document.createElement("div");
+        questionDiv.style.cssText = "margin: 15px 0; color: #00ff00; font-family: monospace;";
+        questionDiv.textContent = question;
+        outputContainer.appendChild(questionDiv);
         
         // Create a wrapper div for the input line
         const lineDiv = document.createElement("div");
@@ -426,7 +468,7 @@ window.IntroSystem = {
         // Create prompt indicator
         const promptSpan = document.createElement("span");
         promptSpan.textContent = "> ";
-        promptSpan.style.cssText = "color: #00ff00; font-family: monospace;";
+        promptSpan.style.cssText = "color: #00ff00; font-family: monospace; font-size: 16px;";
         
         // Create input field
         const inputField = document.createElement("input");
@@ -550,10 +592,29 @@ window.IntroSystem = {
       this.state.completed = true;
       gameEngine.gameState.introComplete = true;
       
-      // 5. Start tutorial quest
+      // 5. Close intro pane if it exists
+      if (window.PaneManager && PaneManager.panes["intro-pane"]) {
+        PaneManager.closePane("intro-pane");
+      }
+      
+      // 6. Show character summary
+      gameEngine.output("", "system");
+      gameEngine.output("=".repeat(50), "system");
+      gameEngine.output("  CHARACTER CREATION COMPLETE", "highlight");
+      gameEngine.output("=".repeat(50), "system");
+      gameEngine.output(`Name: ${gameEngine.gameState.character.name}`, "system");
+      gameEngine.output(`Pronouns: ${gameEngine.gameState.character.pronouns}`, "system");
+      gameEngine.output(`Class: ${gameEngine.gameState.character.class.toUpperCase()}`, "system");
+      gameEngine.output(`HP: ${gameEngine.gameState.character.hp}/${gameEngine.gameState.character.maxHp}`, "system");
+      gameEngine.output(`MP: ${gameEngine.gameState.character.mp}/${gameEngine.gameState.character.maxMp}`, "system");
+      gameEngine.output("=".repeat(50), "system");
+      gameEngine.output("", "system");
+      
+      // 7. Start tutorial quest
       gameEngine.output("[ TUTORIAL QUEST UNLOCKED: 'First Steps' ]", "highlight");
-      gameEngine.output("Type /help to see available commands.", "hint");
-      gameEngine.output("Type /tutorial to begin your training.", "hint");
+      gameEngine.output("Type help to see available commands.", "hint");
+      gameEngine.output("Type tutorial to begin your training.", "hint");
+      gameEngine.output("Type debug character to see your full stats.", "hint");
       
       console.log("[IntroSystem] Intro sequence complete");
       

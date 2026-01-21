@@ -8,44 +8,55 @@
     @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --crt-frame-img: url('ASSETS/custom/crt-monitor.png');
+      --technonomicon-front-img: url('ASSETS/custom/technonomicon-front.png');
+      --technonomicon-back-img: url('ASSETS/custom/technonomicon-back.png');
+      --crystal-orb-img: url('ASSETS/custom/crystal-orb.png');
+      --static-noise-img: url('ASSETS/custom/static-noise.png');
+      --glitch-static-img: url('ASSETS/custom/glitch-static.png');
+      --oracle-frame-img: url('ASSETS/custom/oracle-frame.png');
+    }
     
     body {
       background: #0a0a0a;
       font-family: 'Courier Prime', 'Courier New', monospace;
       color: #00ff00;
-      padding: 40px 20px;
+      padding: 0;
+      margin: 0;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      width: 100vw;
+      overflow: hidden;
     }
     
-    /* CRT Monitor Bezel */
+    /* CRT Monitor Bezel - Fullscreen */
     .crt-frame {
       background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
-      border: 30px solid;
+      border: 20px solid;
       border-color: #6a6a6a #2a2a2a #2a2a2a #6a6a6a;
-      border-radius: 15px;
+      border-radius: 0;
       box-shadow: 
         inset 0 1px 0 rgba(255,255,255,0.2), 
         inset 0 -1px 0 rgba(0,0,0,0.8),
         0 15px 50px rgba(0,0,0,0.9);
-      max-width: 800px;
-      width: 100%;
+      width: 100vw;
+      height: 100vh;
       padding: 20px;
     }
     
-    /* CRT Screen Glass */
+    /* CRT Screen Glass - Fullscreen */
     .crt-inner {
       background: #000;
       border: 4px solid #1a3a1a;
-      border-radius: 2px;
+      border-radius: 0;
       padding: 20px;
       box-shadow: 
         inset 0 0 30px rgba(0,0,0,0.9),
         inset 0 2px 5px rgba(0, 255, 0, 0.05);
       position: relative;
       overflow: hidden;
+      width: 100%;
+      height: calc(100vh - 40px);
     }
     
     /* CRT Scanline Effect */
@@ -395,7 +406,7 @@
       grid-template-columns: 3fr 1fr;
       grid-template-rows: 1fr auto;
       gap: 2px;
-      background: #00ff00;
+      background: #001a00;
       padding: 2px;
       position: relative;
     }
@@ -601,12 +612,35 @@
     /* ========== TECHNONOMICON SECTION ========== */
 
     .technonomicon {
+      position: relative;
       background: #000;
+      background-image:
+        linear-gradient(135deg, rgba(0, 255, 0, 0.08) 0%, rgba(0, 255, 0, 0.02) 60%, rgba(0, 255, 0, 0.05) 100%),
+        var(--technonomicon-back-img);
+      background-size: cover;
+      background-position: center;
+      background-blend-mode: screen;
       border: 2px solid #00ff00;
       padding: 12px;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      overflow: hidden;
+    }
+
+    .technonomicon::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 20%, rgba(0, 255, 0, 0.12), transparent 45%),
+                  radial-gradient(ellipse at 80% 70%, rgba(0, 255, 0, 0.08), transparent 55%);
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .technonomicon > * {
+      position: relative;
+      z-index: 2;
     }
 
     .technonomicon-header {
@@ -656,61 +690,231 @@
     /* ========== CRYSTAL BALL SECTION ========== */
 
     .crystal-ball {
-      background: #000;
-      border: 2px solid #00ff00;
-      padding: 12px;
+      position: relative;
+      background: #0a0512;
+      background-image: var(--oracle-frame-img);
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #c9a227;
+      padding: 80px 60px 60px 60px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+      min-height: 480px;
+      overflow: hidden;
+      box-shadow: 
+        0 0 30px rgba(201, 162, 39, 0.3),
+        0 0 60px rgba(138, 43, 226, 0.2),
+        inset 0 0 40px rgba(0, 0, 0, 0.8);
+      border-radius: 8px;
+    }
+
+    .crystal-ball::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 30%, rgba(201, 162, 39, 0.08), rgba(138, 43, 226, 0.05) 50%, transparent 80%);
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    .crystal-ball > * {
       position: relative;
+      z-index: 2;
     }
 
     .crystal-ball-header {
-      color: #00ff00;
-      font-size: 0.95em;
+      color: #c9a227;
+      font-size: 1.1em;
       font-weight: bold;
-      text-shadow: 0 0 8px rgba(0, 255, 0, 0.7);
-      letter-spacing: 2px;
+      text-shadow: 0 0 12px rgba(201, 162, 39, 0.8), 0 0 20px rgba(138, 43, 226, 0.5);
+      letter-spacing: 3px;
       text-align: center;
+      text-transform: uppercase;
+      margin-top: -20px;
+      position: relative;
+    }
+
+    .oracle-controls {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 5px;
+    }
+
+    .oracle-ctrl-btn {
+      background: rgba(138, 43, 226, 0.3);
+      border: 1px solid rgba(201, 162, 39, 0.5);
+      color: #c9a227;
+      width: 28px;
+      height: 28px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .oracle-ctrl-btn:hover {
+      background: rgba(201, 162, 39, 0.4);
+      transform: scale(1.1);
+    }
+
+    .oracle-ctrl-btn.listening {
+      background: rgba(138, 43, 226, 0.6);
+      animation: voicePulse 1s ease-in-out infinite;
+    }
+
+    @keyframes voicePulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(138, 43, 226, 0.5); }
+      50% { box-shadow: 0 0 15px rgba(138, 43, 226, 0.9); }
     }
 
     .crystal-ball-display {
       flex: 1;
-      background: #0a0a0a;
-      border: 2px solid #00ff00;
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.95) 0%, rgba(200, 180, 255, 0.6) 30%, rgba(80, 40, 120, 0.4) 60%, transparent 75%);
+      background-size: 100% 100%;
+      background-position: center;
+      background-repeat: no-repeat;
+      border: 3px solid rgba(201, 162, 39, 0.6);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
       overflow: hidden;
-      min-height: 200px;
-      box-shadow: inset 0 0 30px rgba(0, 255, 0, 0.2), 0 0 20px rgba(0, 255, 0, 0.3);
+      min-height: 180px;
+      max-width: 220px;
+      margin: 0 auto;
+      box-shadow:
+        inset 0 0 50px rgba(138, 43, 226, 0.3),
+        inset 0 0 20px rgba(255, 255, 255, 0.4),
+        0 0 30px rgba(201, 162, 39, 0.4),
+        0 0 60px rgba(138, 43, 226, 0.3);
+      aspect-ratio: 1 / 1;
     }
 
-    .crystal-ball-display::before {
+    /* Static noise overlay for idle/loading state */
+    .crystal-ball-display.loading::before,
+    .crystal-ball-display.idle::before {
       content: '';
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 90%;
-      height: 90%;
-      border: 1px solid #00ff00;
+      inset: 0;
+      background: var(--static-noise-img);
+      background-size: 200px 200px;
+      opacity: 0.12;
+      mix-blend-mode: overlay;
+      animation: static-flicker 0.15s steps(4) infinite;
       border-radius: 50%;
-      opacity: 0.5;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+      z-index: 5;
+    }
+
+    @keyframes static-flicker {
+      0% { background-position: 0 0; }
+      25% { background-position: -50px -25px; }
+      50% { background-position: 25px -50px; }
+      75% { background-position: -25px 50px; }
+      100% { background-position: 50px 25px; }
+    }
+
+    /* Green glitch scanlines for connecting/transmission state */
+    .crystal-ball-display.connecting::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--glitch-static-img);
+      background-size: cover;
+      opacity: 0.35;
+      mix-blend-mode: screen;
+      animation: glitch-scroll 0.8s linear infinite, glitch-flicker 0.12s steps(2) infinite;
+      border-radius: 50%;
+      z-index: 6;
+    }
+
+    @keyframes glitch-scroll {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 100%; }
+    }
+
+    @keyframes glitch-flicker {
+      0% { opacity: 0.3; }
+      50% { opacity: 0.45; }
+      100% { opacity: 0.25; }
+    }
+
+    /* Active/receiving state - pulsing mystical glow */
+    .crystal-ball-display.active {
+      box-shadow:
+        inset 0 0 60px rgba(201, 162, 39, 0.4),
+        inset 0 0 30px rgba(255, 255, 255, 0.5),
+        0 0 40px rgba(201, 162, 39, 0.5),
+        0 0 80px rgba(138, 43, 226, 0.4);
+      animation: oracle-active 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes oracle-active {
+      0% { box-shadow: inset 0 0 50px rgba(0, 255, 180, 0.25), 0 0 25px rgba(0, 255, 150, 0.35); }
+      100% { box-shadow: inset 0 0 60px rgba(0, 255, 180, 0.4), 0 0 40px rgba(0, 255, 150, 0.5); }
+    }
+
+    .crystal-ball-display > .orb-highlight {
+      content: '';
+      position: absolute;
+      top: 8%;
+      left: 18%;
+      width: 30%;
+      height: 18%;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.6), transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(6px);
+      z-index: 3;
+    }
+
+    /* Mystical inner glow for orb */
+    .crystal-ball-display::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 60%, rgba(160, 200, 255, 0.15), transparent 50%),
+        radial-gradient(ellipse at 30% 30%, rgba(255, 255, 255, 0.08), transparent 40%);
+      mix-blend-mode: screen;
+      opacity: 0.9;
+      pointer-events: none;
+      border-radius: 50%;
+      animation: orb-pulse 6s ease-in-out infinite alternate;
+      z-index: 2;
+    }
+
+    @keyframes orb-pulse {
+      0% { opacity: 0.7; transform: scale(0.98); }
+      100% { opacity: 1; transform: scale(1.02); }
+    }
+
+    /* Keep scanlines for CRT areas if needed */
+    @keyframes scanlines {
+      0% { background-position: 0 0, 50% 50%; }
+      100% { background-position: 0 8px, 50% 48%; }
+    }
+
+    @keyframes crt-glow {
+      0% { opacity: 0.72; filter: drop-shadow(0 0 6px rgba(0, 255, 0, 0.2)); }
+      100% { opacity: 0.9; filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.28)); }
     }
 
     .crystal-ball-content {
       position: relative;
-      z-index: 2;
+      z-index: 10;
       text-align: center;
-      color: #88ff00;
+      color: #c8d8ff;
       font-size: 0.9em;
       font-style: italic;
       padding: 20px;
-      text-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+      text-shadow: 0 0 12px rgba(100, 140, 200, 0.7), 0 0 4px rgba(255, 255, 255, 0.4);
     }
 
     .crystal-ball-input {
@@ -720,18 +924,35 @@
     }
 
     .crystal-ball-input input {
-      background: transparent;
-      border: 1px solid #00ff00;
-      color: #00ff00;
+      background: rgba(10, 5, 20, 0.95);
+      border: 1px solid rgba(201, 162, 39, 0.5);
+      color: #e8d5a3;
       font-family: 'Courier Prime', monospace;
       font-size: 0.85em;
       padding: 6px;
-      text-shadow: 0 0 3px rgba(0, 255, 0, 0.2);
+      text-shadow: 0 0 8px rgba(201, 162, 39, 0.4);
+      border-radius: 4px;
+    }
+    
+    .crystal-ball-input input::placeholder {
+      color: rgba(201, 162, 39, 0.5);
     }
 
     .crystal-ball-input button {
       padding: 6px 12px;
       font-size: 0.8em;
+      background: linear-gradient(135deg, #c9a227 0%, #8b6914 100%);
+      border: none;
+      color: #0a0512;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    
+    .crystal-ball-input button:hover {
+      background: linear-gradient(135deg, #e8c547 0%, #c9a227 100%);
+      box-shadow: 0 0 15px rgba(201, 162, 39, 0.5);
     }
 
     /* ========== RESPONSIVE ========== */
@@ -1088,15 +1309,21 @@
 
           <!-- CRYSTAL BALL -->
           <div class="crystal-ball">
-            <div class="crystal-ball-header">◆ CRYSTAL BALL ◆</div>
+            <div class="crystal-ball-header">
+              ✦ CHANNELING THE COSMOS ✦
+              <div class="oracle-controls" id="oracle-controls" style="display:none;">
+                <button class="oracle-ctrl-btn" id="oracle-voice-btn" title="Voice Input">🎤</button>
+                <button class="oracle-ctrl-btn" id="oracle-popout-btn" title="Pop Out">⬈</button>
+              </div>
+            </div>
             <div class="crystal-ball-display" id="crystal-ball-display">
               <div class="crystal-ball-content" id="crystal-ball-content">
                 Ready for DM interaction...
               </div>
             </div>
             <div class="crystal-ball-input">
-              <input type="text" id="crystal-ball-input" placeholder="Ask the DM...">
-              <button id="crystal-ball-btn">Consult Oracle</button>
+              <input type="text" id="crystal-ball-input" placeholder="Ask the Oracle...">
+              <button id="crystal-ball-btn">✦ ASK</button>
             </div>
           </div>
 
@@ -1161,6 +1388,7 @@
   <script src="spell-tinkering.js"></script>
   <script src="ai-summon-ritual.js"></script>
   <script src="terminal-documents.js"></script>
+  <script src="terminal-lore.js"></script>
   <script src="dynamic-narrative.js"></script>
   <script src="boss-encounters.js"></script>
   <script src="spells-data.js"></script>
@@ -1343,12 +1571,29 @@
       // Hook into engine's onGraphicsUnlock for graphics layer
       gameEngine.onGraphicsUnlock = handleGraphicsUnlock;
 
+      // Check for force intro URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const forceIntro = urlParams.get('forceIntro') === 'true';
+      
+      if (forceIntro) {
+        console.log("[Boot] Force intro parameter detected - resetting intro state");
+        gameEngine.gameState.introComplete = false;
+        IntroSystem.reset();
+      }
+
       // Run intro sequence (character awakening & creation)
-      console.log("[Boot] Running intro sequence...");
-      if (!gameEngine.gameState.introComplete) {
+      console.log("[Boot] Checking intro state...");
+      console.log("[Boot] introComplete:", gameEngine.gameState.introComplete);
+      console.log("[Boot] Character name:", gameEngine.gameState.character?.name);
+      
+      if (!gameEngine.gameState.introComplete || forceIntro) {
+        console.log("[Boot] Running intro sequence...");
         await IntroSystem.run(gameEngine);
       } else {
-        console.log("[Boot] Intro already completed");
+        console.log("[Boot] Intro already completed, skipping");
+        gameEngine.output("=".repeat(50), "system");
+        gameEngine.output("  WELCOME BACK, " + (gameEngine.gameState.character?.name || "TECHNOMANCER").toUpperCase(), "system");
+        gameEngine.output("=".repeat(50), "system");
       }
 
       // Show welcome message

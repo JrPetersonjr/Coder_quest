@@ -45,43 +45,48 @@ window.LoggingSystem = {
   // [PANES] - Create log display panes
   // ============================================================
   setupPanes: function() {
-    // Cast log pane
+    // Base position for nested windows (stacked like a deck)
+    const baseX = 120;
+    const baseY = 100;
+    const stackOffset = 25; // Offset for each window in stack
+    
+    // Cast log pane (bottom of stack)
     this.logs.cast.paneId = "cast-log";
     PaneManager.createPane({
       id: "cast-log",
       title: "CAST LOG",
-      x: 50,
-      y: 50,
-      width: 500,
-      height: 300,
+      x: baseX,
+      y: baseY,
+      width: 480,
+      height: 320,
       minimizable: true,
       closeable: true,
       content: "<div id='cast-log-entries' style='font-family: monospace; color: #00ff00;'></div>"
     });
 
-    // Tech log pane
+    // Tech log pane (middle of stack)
     this.logs.tech.paneId = "tech-log";
     PaneManager.createPane({
       id: "tech-log",
       title: "TECHNONOMICON LOG",
-      x: 600,
-      y: 50,
-      width: 500,
-      height: 300,
+      x: baseX + stackOffset,
+      y: baseY + stackOffset,
+      width: 480,
+      height: 320,
       minimizable: true,
       closeable: true,
       content: "<div id='tech-log-entries' style='font-family: monospace; color: #00ff00;'></div>"
     });
 
-    // Oracle log pane
+    // Oracle log pane (top of stack)
     this.logs.oracle.paneId = "oracle-log";
     PaneManager.createPane({
       id: "oracle-log",
       title: "ORACLE LOG",
-      x: 1150,
-      y: 50,
-      width: 500,
-      height: 300,
+      x: baseX + stackOffset * 2,
+      y: baseY + stackOffset * 2,
+      width: 480,
+      height: 320,
       minimizable: true,
       closeable: true,
       content: "<div id='oracle-log-entries' style='font-family: monospace; color: #00ff00;'></div>"

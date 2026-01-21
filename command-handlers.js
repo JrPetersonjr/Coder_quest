@@ -299,6 +299,33 @@ window.CommandHandlers = {
         gameEngine.output(`✓ MP set to ${newMp}`, "system");
         break;
 
+      case "intro":
+        // Reset and restart intro sequence
+        gameEngine.gameState.introComplete = false;
+        if (window.IntroSystem) {
+          window.IntroSystem.reset();
+          gameEngine.output("✓ Intro reset. Refresh page to see intro sequence.", "system");
+        }
+        break;
+
+      case "character":
+        // Show character info
+        if (gameEngine.gameState.character) {
+          gameEngine.output("", "system");
+          gameEngine.output("=== CHARACTER INFO ===", "system");
+          gameEngine.output(`Name: ${gameEngine.gameState.character.name || "Unknown"}`, "hint");
+          gameEngine.output(`Class: ${gameEngine.gameState.character.class || "Unknown"}`, "hint");
+          gameEngine.output(`Pronouns: ${gameEngine.gameState.character.pronouns || "Unknown"}`, "hint");
+          gameEngine.output(`Level: ${gameEngine.gameState.character.level || 1}`, "hint");
+          gameEngine.output(`HP: ${gameEngine.gameState.character.hp}/${gameEngine.gameState.character.maxHp}`, "hint");
+          gameEngine.output(`MP: ${gameEngine.gameState.character.mp}/${gameEngine.gameState.character.maxMp}`, "hint");
+          gameEngine.output(`XP: ${gameEngine.gameState.character.experience || 0}`, "hint");
+          gameEngine.output("", "system");
+        } else {
+          gameEngine.output("Character not initialized", "error");
+        }
+        break;
+
       default:
         gameEngine.output("", "system");
         gameEngine.output("DEBUG COMMANDS (developer only):", "system");
@@ -308,6 +335,8 @@ window.CommandHandlers = {
         gameEngine.output("  debug level N   - Set level to N", "hint");
         gameEngine.output("  debug hp N      - Set HP to N", "hint");
         gameEngine.output("  debug mp N      - Set MP to N", "hint");
+        gameEngine.output("  debug intro     - Reset intro sequence", "hint");
+        gameEngine.output("  debug character - Show character details", "hint");
         gameEngine.output("", "system");
     }
   },

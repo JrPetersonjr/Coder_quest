@@ -106,6 +106,55 @@ const BossEncounters = {
         intro: "final_boss_intro",
         defeat: "ending"
       }
+    },
+
+    // ABYSS SENTINEL (Wasteland boss)
+    abyss_sentinel: {
+      id: "abyss_sentinel",
+      name: "ABYSS SENTINEL",
+      tier: "demi",
+      zone: "wasteland",
+      description: "Guardian of the deletion void. It has watched everything die here.",
+      hp: 150,
+      mana: 70,
+      attack: 22,
+      defense: 14,
+      spells: ["void_touch", "entropy_drain", "system_collapse", "memory_wipe"],
+      loot: {
+        xp: 300,
+        gold: 250,
+        item: "Void Core",
+        emails: ["everything_ends", "guardian_lament", "void_speaks"]
+      },
+      narrative: {
+        intro: "boss_intro",
+        defeat: "discovery"
+      }
+    },
+
+    // THE AUDITOR (Final boss - Cosmic Throne)
+    the_auditor: {
+      id: "the_auditor",
+      name: "THE AUDITOR",
+      tier: "prime",
+      zone: "cosmic",
+      description: "The one who watches all. The one who judges all. The end of all code.",
+      hp: 300,
+      mana: 150,
+      attack: 35,
+      defense: 20,
+      spells: ["absolute_inspection", "reality_audit", "infinite_loop", "self_reference", "cascade_error", "system_collapse", "temporal_distortion", "final_judgment"],
+      legendary: true,
+      loot: {
+        xp: 1000,
+        gold: 1000,
+        item: "Auditor's Seal",
+        emails: ["final_truth", "what_you_are", "the_choice"]
+      },
+      narrative: {
+        intro: "final_boss_intro",
+        defeat: "true_ending"
+      }
     }
   },
 

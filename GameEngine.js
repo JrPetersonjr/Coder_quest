@@ -30,6 +30,9 @@ class GameEngine {
     // Initialize quest system
     this.questSystem = new QuestSystem();
     
+    // Initialize save system
+    this.saveSystem = new SaveSystem(this);
+    
     // Initialize spell tinkering system (requires dice + AI DM)
     this.spellTinkering = null; // Set after dice/AI DM available
     
@@ -203,6 +206,23 @@ class GameEngine {
       case "data":
         this.cmdShowData();
         break;
+      case "terminal":
+        this.cmdTerminal(args);
+        break;
+      case "encounter":
+      case "choose":
+        this.cmdEncounterChoice(args);
+        break;
+      case "inventory":
+        this.cmdInventory();
+        break;
+      case "map":
+        this.cmdMap();
+        break;
+      case "boss":
+        this.cmdBoss();
+        break;
+        break;
       default:
         this.output("Unknown command. Type 'help' for commands.", "error");
     }
@@ -223,11 +243,13 @@ class GameEngine {
     this.output("MOVEMENT:", "highlight");
     this.output("  look - Examine current zone", "system");
     this.output("  go <zone> - Travel to zone", "system");
+    this.output("  map - Show world map", "system");
     this.output("", "system");
     this.output("COMBAT:", "highlight");
     this.output("  battle [enemy] - Start battle", "system");
     this.output("  attack - Attack in battle", "system");
     this.output("  run - Flee battle", "system");
+    this.output("  boss - Challenge zone boss", "system");
     this.output("", "system");
     this.output("SPELL CRAFTING:", "highlight");
     this.output("  cast <element> <codebit> - Craft and cast spell (e.g., 'cast fire damage')", "system");
@@ -238,9 +260,16 @@ class GameEngine {
     this.output("  summon <element> <summon> - Perform ritual (e.g., 'summon fire summon')", "system");
     this.output("  allies - List active party members", "system");
     this.output("", "system");
+    this.output("EXPLORATION:", "highlight");
+    this.output("  terminal [id] - Access ancient terminals", "system");
+    this.output("  encounter <choice> - Make encounter decision", "system");
+    this.output("  inventory - View your items", "system");
+    this.output("", "system");
     this.output("INFO:", "highlight");
     this.output("  stats - View character stats", "system");
     this.output("  quests - View active quests", "system");
+    this.output("  save <slot> - Save game (0-2)", "system");
+    this.output("  load <slot> - Load game (0-2)", "system");
     this.output("  help - This message", "system");
     this.output("", "system");
   }
@@ -925,6 +954,250 @@ class GameEngine {
    */
   getDefinitions() {
     return this.gameState.definitions || {};
+  }
+
+  // ============================================================
+  // [TERMINAL COMMAND] - Ancient Terminal Access
+  // ============================================================
+
+  /**
+   * Access an ancient terminal
+   * Usage: terminal [terminalId] or terminal (lists available)
+   */
+  cmdTerminal(args) {
+    // Check if AncientTerminal system is loaded
+    if (!window.AncientTerminal) {
+      this.output("Ancient terminal system not initialized.", "error");
+      return;
+    }
+
+    // If already in a terminal, handle terminal commands
+    if (window.AncientTerminal.active) {
+      this.output("Already in terminal. Type 'exit' to disconnect.", "hint");
+      return;
+    }
+
+    // Show the terminals window when accessing terminal system
+    if (window.UILayoutManager) {
+      UILayoutManager.showTerminalsWindow();
+    }
+
+    // List available terminals if no arg
+    if (args.length === 0) {
+      this.output("════════════════════════════════════", "system");
+      this.output("[ AVAILABLE TERMINALS ]", "system");
+      this.output("════════════════════════════════════", "system");
+      
+      // Get terminals for current zone
+      const zoneTerminals = Object.keys(window.CastTerminals || {}).filter(id => {
+        return id.startsWith(this.gameState.zone + ":");
+      });
+      
+      if (zoneTerminals.length === 0) {
+        this.output("No terminals detected in this zone.", "system");
+        this.output("", "system");
+        this.output("Try exploring other zones:", "hint");
+        this.output("  go forest | go city | go wasteland", "hint");
+      } else {
+        zoneTerminals.forEach(id => {
+          const terminal = window.CastTerminals[id];
+          this.output(`terminal ${id} - ${terminal.name}`, "hint");
+        });
+        this.output("", "system");
+        this.output("Usage: terminal <id>", "hint");
+      }
+      return;
+    }
+
+    // Open specific terminal
+    const terminalId = args.join(":");
+    window.AncientTerminal.open(terminalId, (text, type) => this.output(text, type));
+  }
+
+  // ============================================================
+  // [ENCOUNTER CHOICE] - Resolve Encounter Decisions
+  // ============================================================
+
+  /**
+   * Make a choice during an encounter
+   * Usage: encounter <choice> or choose <choice>
+   */
+  cmdEncounterChoice(args) {
+    // Check if encounter system is loaded
+    if (!window.EncounterSystem) {
+      this.output("Encounter system not initialized.", "error");
+      return;
+    }
+
+    // Check if there's an active encounter
+    if (!this.gameState.currentEncounter || !this.gameState.currentEncounter.active) {
+      this.output("No active encounter. Explore to find one!", "hint");
+      return;
+    }
+
+    // Need a choice argument
+    if (args.length === 0) {
+      this.output("What do you choose? Type 'encounter <choice>'", "system");
+      window.EncounterSystem.presentChoices(this.gameState.currentEncounter, (text, type) => this.output(text, type));
+      return;
+    }
+
+    const choice = args[0].toLowerCase();
+    
+    // Resolve the choice
+    window.EncounterSystem.resolveChoice(
+      this.gameState,
+      choice,
+      (text, type) => this.output(text, type),
+      (args) => this.cmdBattle(args),
+      (args) => this.cmdGo(args)
+    );
+  }
+
+  // ============================================================
+  // [INVENTORY COMMAND] - Show player inventory
+  // ============================================================
+
+  cmdInventory() {
+    this.output("════════════════════════════════════", "system");
+    this.output("[ INVENTORY ]", "system");
+    this.output("════════════════════════════════════", "system");
+    
+    const inventory = this.gameState.inventory || [];
+    
+    if (inventory.length === 0) {
+      this.output("Your pack is empty.", "system");
+      this.output("", "system");
+      this.output("Find items by:", "hint");
+      this.output("  - Defeating enemies", "hint");
+      this.output("  - Completing quests", "hint");
+      this.output("  - Exploring terminals", "hint");
+    } else {
+      inventory.forEach((item, index) => {
+        if (typeof item === 'string') {
+          this.output(`${index + 1}. ${item}`, "info");
+        } else {
+          this.output(`${index + 1}. ${item.name || item.id} ${item.quantity ? 'x' + item.quantity : ''}`, "info");
+          if (item.desc) {
+            this.output(`   ${item.desc}`, "system");
+          }
+        }
+      });
+      this.output("", "system");
+      this.output(`Total items: ${inventory.length}`, "system");
+    }
+  }
+
+  // ============================================================
+  // [MAP COMMAND] - Show zone overview
+  // ============================================================
+
+  cmdMap() {
+    this.output("════════════════════════════════════", "system");
+    this.output("[ WORLD MAP ]", "system");
+    this.output("════════════════════════════════════", "system");
+    this.output("", "system");
+    
+    const zones = {
+      hub: { name: "The Hub", desc: "Central nexus of all zones", subzones: ["hub_center", "hub_north", "hub_east", "hub_south", "hub_west"] },
+      forest: { name: "Digital Forest", desc: "Corrupted data wilderness", subzones: ["forest_clearing", "forest_deep", "forest_grove"] },
+      city: { name: "Neon City", desc: "Urban sprawl of light and shadow", subzones: ["city_streets", "city_alley", "city_plaza"] },
+      wasteland: { name: "Data Wasteland", desc: "Corrupted memory banks", subzones: ["wasteland_ruins", "wasteland_crater"] },
+      cosmic: { name: "Cosmic Void", desc: "Beyond the firewall", subzones: ["cosmic_rift", "cosmic_core"] }
+    };
+    
+    const currentZone = this.gameState.zone;
+    const visitedZones = this.gameState.visitedZones || [currentZone];
+    
+    for (const [id, zone] of Object.entries(zones)) {
+      const isCurrent = id === currentZone;
+      const isVisited = visitedZones.includes(id);
+      const marker = isCurrent ? "▶" : (isVisited ? "✓" : "?");
+      
+      this.output(`${marker} ${zone.name} (${id})`, isCurrent ? "highlight" : (isVisited ? "system" : "error"));
+      if (isVisited || isCurrent) {
+        this.output(`  ${zone.desc}`, "system");
+      }
+    }
+    
+    this.output("", "system");
+    this.output("Travel: go <zone>", "hint");
+    this.output("Example: go forest", "hint");
+  }
+
+  // ============================================================
+  // [BOSS COMMAND] - Trigger boss encounter in boss zones
+  // ============================================================
+
+  cmdBoss() {
+    // Check if BossEncounters system is loaded
+    if (!window.BossEncounters) {
+      this.output("Boss encounter system not initialized.", "error");
+      return;
+    }
+
+    // Check if in a boss zone
+    const currentSubzone = this.gameState.subzone || this.gameState.zone + "_center";
+    const zoneData = this.getZoneData(this.gameState.zone);
+    const subzoneData = zoneData?.subzones?.[currentSubzone];
+    
+    if (!subzoneData?.bossZone) {
+      this.output("════════════════════════════════════", "system");
+      this.output("[ NO BOSS HERE ]", "system");
+      this.output("════════════════════════════════════", "system");
+      this.output("", "system");
+      this.output("You sense no overwhelming presence in this area.", "system");
+      this.output("", "system");
+      this.output("Boss zones:", "hint");
+      this.output("  wasteland_abyss - The Abyss Sentinel", "hint");
+      this.output("  cosmic_throne - The Auditor", "hint");
+      this.output("  train_platform - The Recursion (secret)", "hint");
+      return;
+    }
+
+    // Get the boss for this zone
+    const bossId = subzoneData.boss;
+    const boss = window.BossEncounters.bosses[bossId];
+    
+    if (!boss) {
+      this.output("The boss presence has faded... for now.", "error");
+      return;
+    }
+
+    // Check if already defeated
+    if (this.gameState.defeatedBosses && this.gameState.defeatedBosses.includes(bossId)) {
+      this.output("════════════════════════════════════", "system");
+      this.output("[ BOSS DEFEATED ]", "system");
+      this.output("════════════════════════════════════", "system");
+      this.output("", "system");
+      this.output(`You have already defeated ${boss.name}.`, "system");
+      this.output("The echoes of that battle still linger here.", "hint");
+      return;
+    }
+
+    // Trigger boss encounter
+    this.output("", "system");
+    this.output("════════════════════════════════════════════", "battle");
+    this.output("⚔ BOSS ENCOUNTER ⚔", "battle");
+    this.output("════════════════════════════════════════════", "battle");
+    this.output("", "system");
+    this.output(`${boss.name} emerges!`, "battle");
+    this.output(`Tier: ${boss.tier.toUpperCase()}`, "system");
+    this.output(`${boss.description}`, "hint");
+    this.output("", "system");
+    this.output(`HP: ${boss.hp} | ATK: ${boss.attack} | DEF: ${boss.defense}`, "system");
+    this.output("", "system");
+    
+    // Set up boss battle
+    const scaledBoss = window.BossEncounters.scaleBossDifficulty(boss, this.gameState);
+    this.gameState.inBattle = true;
+    this.gameState.currentEnemy = {
+      ...scaledBoss,
+      isBoss: true
+    };
+    
+    this.output("Type 'attack' to strike or 'cast <spell>' to use magic!", "hint");
+    this.output("Type 'run' to attempt escape (bosses are hard to flee!)", "hint");
   }
 }
 

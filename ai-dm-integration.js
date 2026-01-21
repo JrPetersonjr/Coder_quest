@@ -736,6 +736,38 @@ window.AIDMIntegration = {
       totalEvents: this.state.eventLog.length,
       currentSession: this.state.currentSession
     };
+  },
+
+  // ============================================================
+  // [CRYSTAL_BALL_API] - Wiring for CastConsoleUI
+  // ============================================================
+
+  /**
+   * Handle Crystal Ball queries; ensures system is booted, then routes to AI DM.
+   * @param {string} question - Player freeform text
+   * @param {function} onResult - Callback with DM response (optional)
+   * @returns {Promise<string>} response text
+   */
+  async consultDM(question, onResult) {
+    try {
+      if (!this.state.initialized) {
+        await this.initialize();
+      }
+
+      const result = await this.callAIDM("oracle_query", { question });
+      const text = result?.text || "The oracle hums quietly, but offers no words.";
+
+      if (typeof onResult === "function") {
+        onResult(text);
+      }
+
+      return text;
+    } catch (err) {
+      console.warn("[AI-DM] consultDM failed:", err.message);
+      const fallback = "The connection flickers. The DM is unreachable right now.";
+      if (typeof onResult === "function") onResult(fallback);
+      return fallback;
+    }
   }
 };
 

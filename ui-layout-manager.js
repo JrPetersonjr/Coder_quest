@@ -27,11 +27,12 @@ window.UILayoutManager = {
     
     this.gameEngine = gameEngine;
     
-    // Create Ancient Terminals window
-    this.createAncientTerminalsWindow();
+    // DON'T create Ancient Terminals window by default
+    // It will be shown only when player accesses a terminal
+    // this.createAncientTerminalsWindow();
     
-    // Create Character Status Panel
-    if (window.CharacterStatusPanel) {
+    // Create Character Status Panel (only if not using docked stats panel)
+    if (window.CharacterStatusPanel && !(window.PaneManager && document.querySelector('.stats-panel'))) {
       CharacterStatusPanel.initialize(gameEngine);
     }
     
@@ -44,6 +45,24 @@ window.UILayoutManager = {
     }
     
     console.log("[UILayoutManager] Ready");
+  },
+  
+  // Show Ancient Terminals window (called when player uses 'terminal' command)
+  showTerminalsWindow: function() {
+    if (!this.terminalWindowId) {
+      this.createAncientTerminalsWindow();
+    } else {
+      const pane = document.getElementById(this.terminalWindowId);
+      if (pane) pane.style.display = 'flex';
+    }
+  },
+  
+  // Hide Ancient Terminals window
+  hideTerminalsWindow: function() {
+    if (this.terminalWindowId) {
+      const pane = document.getElementById(this.terminalWindowId);
+      if (pane) pane.style.display = 'none';
+    }
   },
 
   // ============================================================
