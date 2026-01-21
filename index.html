@@ -390,13 +390,25 @@
     
     .cast-console-wrapper {
       width: 100%;
-      height: 100%;
+      height: calc(100vh - 200px);
       display: grid;
       grid-template-columns: 3fr 1fr;
-      grid-template-rows: 1.3fr 0.7fr;
+      grid-template-rows: 1fr auto;
       gap: 2px;
       background: #00ff00;
       padding: 2px;
+      position: relative;
+    }
+
+    /* CENTER: Floating windows container */
+    .windows-container {
+      grid-column: 1;
+      grid-row: 1;
+      background: #000;
+      border: 2px solid #00ff00;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
     }
 
     /* Top-Left: Cast Console Terminal */
@@ -407,8 +419,9 @@
       display: flex;
       flex-direction: column;
       grid-column: 1;
-      grid-row: 1;
+      grid-row: 2;
       box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+      height: 200px;
     }
 
     .cast-terminal-header {
@@ -456,7 +469,7 @@
       font-size: 0.75em;
     }
 
-    /* Bottom-Left: Cast Console Log */
+    /* Bottom-Left: Inventory */
     .cast-log {
       background: #000;
       border: 2px solid #00ff00;
@@ -464,6 +477,7 @@
       grid-column: 1;
       grid-row: 2;
       box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+      display: none;
     }
 
     .cast-log-header {
@@ -501,6 +515,7 @@
       flex-direction: column;
       gap: 12px;
       box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+      overflow-y: auto;
     }
 
     .stats-header {
@@ -752,6 +767,68 @@
         grid-row: 5;
       }
     }
+
+    /* ========== FLOATING WINDOWS ========== */
+    
+    .floating-window {
+      position: absolute;
+      background: #000;
+      border: 2px solid #00ff00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      min-width: 300px;
+      min-height: 200px;
+      z-index: 100;
+      resize: both;
+      overflow: auto;
+      cursor: move;
+      user-select: none;
+    }
+
+    .floating-window.dragging {
+      opacity: 0.8;
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.7);
+    }
+
+    .floating-window-header {
+      background: #000;
+      border-bottom: 1px solid #00ff00;
+      padding: 8px;
+      color: #00ff00;
+      font-weight: bold;
+      font-size: 0.9em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+    }
+
+    .floating-window-header:active {
+      cursor: grabbing;
+    }
+
+    .floating-window-close {
+      background: none;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-size: 0.8em;
+      margin-left: auto;
+    }
+
+    .floating-window-close:hover {
+      background: #00ff00;
+      color: #000;
+    }
+
+    .floating-window-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      color: #00ff00;
+    }
   </style>
 </head>
 <body>
@@ -928,6 +1005,11 @@
         <!-- CAST CONSOLE UI GRID LAYOUT -->
         <div class="cast-console-wrapper">
           
+          <!-- CENTER: Floating Windows Area -->
+          <div class="windows-container" id="windows-container">
+            <!-- Game windows will be created here by WindowManager -->
+          </div>
+          
           <!-- TOP-LEFT: Cast Console Terminal -->
           <div class="cast-terminal">
             <div class="cast-terminal-header">[ CAST CONSOLE - TERMINAL ]</div>
@@ -988,8 +1070,8 @@
 
         </div>
 
-        <!-- BOTTOM SECTION: Technonomicon + Crystal Ball -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 2px;">
+        <!-- HIDDEN: Technonomicon + Crystal Ball (floated as windows) -->
+        <div style="display: none; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 2px;">
           
           <!-- TECHNONOMICON -->
           <div class="technonomicon">
