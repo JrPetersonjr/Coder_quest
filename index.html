@@ -795,7 +795,8 @@
   async function runBoot() {
     await new Promise(r => setTimeout(r, 1000));
     knock(); setTimeout(knock, 300);
-    document.getElementById('room-text').innerText = "*Knock Knock*";
+    const roomText = document.getElementById('room-text');
+    if (roomText) roomText.innerText = "*Knock Knock*";
     await new Promise(r => setTimeout(r, 1500));
     playTheme();
     const messages = [
@@ -804,20 +805,26 @@
       "Identity Protocol: ACTIVE", "Mounting OS..."
     ];
     for (let msg of messages) {
-      bootLog.innerHTML += `> ${msg}<br>`;
+      if (bootLog) bootLog.innerHTML += `> ${msg}<br>`;
       await new Promise(r => setTimeout(r, 800));
     }
     await new Promise(r => setTimeout(r, 1000));
-    introScreen.style.opacity = '0';
-    setTimeout(() => { introScreen.style.display = 'none'; startSequence(); }, 1000);
+    if (introScreen) {
+      introScreen.style.opacity = '0';
+      setTimeout(() => { introScreen.style.display = 'none'; startSequence(); }, 1000);
+    } else {
+      startSequence();
+    }
   }
 
   function print(msg, className = "") {
     const div = document.createElement('div');
     div.className = className;
     div.innerHTML = msg;
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
+    if (log) {
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
   }
 
   function startSequence() {

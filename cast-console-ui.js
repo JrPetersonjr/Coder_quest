@@ -51,14 +51,22 @@ window.CastConsoleUI = {
     const state = this.gameEngine.gameState;
 
     // Update HP
-    const hpPercent = (state.hp / state.maxHp) * 100;
-    document.getElementById("stat-hp").style.width = hpPercent + "%";
-    document.getElementById("stat-hp-text").textContent = `${state.hp}/${state.maxHp}`;
+    const hpBar = document.getElementById("stat-hp");
+    const hpText = document.getElementById("stat-hp-text");
+    if (hpBar && hpText) {
+      const hpPercent = (state.hp / state.maxHp) * 100;
+      hpBar.style.width = hpPercent + "%";
+      hpText.textContent = `${state.hp}/${state.maxHp}`;
+    }
 
     // Update MANA
-    const manaPercent = (state.mp / state.maxMp) * 100;
-    document.getElementById("stat-mana").style.width = manaPercent + "%";
-    document.getElementById("stat-mana-text").textContent = `${state.mp}/${state.maxMp}`;
+    const manaBar = document.getElementById("stat-mana");
+    const manaText = document.getElementById("stat-mana-text");
+    if (manaBar && manaText) {
+      const manaPercent = (state.mp / state.maxMp) * 100;
+      manaBar.style.width = manaPercent + "%";
+      manaText.textContent = `${state.mp}/${state.maxMp}`;
+    }
 
     // Update DATA (use level * 10 as max, or 100)
     const dataMax = Math.max(100, state.level * 10);

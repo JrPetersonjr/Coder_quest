@@ -453,7 +453,8 @@ window.CastTerminals = {
       codes: ["DEPARTURE_SEQUENCE_ALPHA", "WHEELS_TURN_AGAIN"],
       log: "The escape route revealed. Freedom awaits beyond the tunnel."
     }
-  },
+  }
+};
 
 // ============================================================
 // [AI_MODEL_CONFIG] - Model selection for challenges

@@ -9,7 +9,7 @@ const CastZones = {
   forest: {
     name: "Refactor Forest",
     description: "Ancient trees made of nested code. Branches hum with logic.",
-    banner: ["    /\\    /\\    /\\", "   /  \\  /  \\  /  \", "  /    \\/    \\/    \", " /  FOREST  BRIDGE  \", "/______________________\\"],
+    banner: ["    /\\    /\\    /\\", "   /  \\  /  \\  /  \\", "  /    \\/    \\/    \\", " /  FOREST  BRIDGE  \\", "/______________________\\"],
     emoji: "🌲"
   },
   city: {
