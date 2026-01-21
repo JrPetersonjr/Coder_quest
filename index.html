@@ -1181,6 +1181,9 @@
   <!-- Integration bootstrap (ties all systems together) -->
   <script src="integration-bootstrap.js"></script>
   
+  <!-- NEW: Pane manager for resizable, draggable windows -->
+  <script src="pane-manager.js"></script>
+  
   <!-- NEW: Window manager for draggable, resizable UI -->
   <script src="window-manager.js"></script>
   
@@ -1239,6 +1242,13 @@
       
       // Setup command handlers (tutorial, system, debug)
       CommandHandlers.initialize(gameEngine);
+      
+      // Initialize pane manager (resizable windows)
+      console.log("[Boot] Initializing pane manager...");
+      if (window.PaneManager) {
+        PaneManager.initialize();
+        console.log("[Boot] ✓ Pane manager ready");
+      }
       
       // Initialize AI DM integration
       console.log("[Boot] Initializing AI DM integration...");
