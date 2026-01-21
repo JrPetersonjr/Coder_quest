@@ -1193,6 +1193,9 @@
   <!-- NEW: Dice UI for visual dice roller -->
   <script src="dice-ui.js"></script>
   
+  <!-- NEW: Technonomicon arcane spellbook -->
+  <script src="technonomicon.js"></script>
+  
   <!-- NEW: Window manager for draggable, resizable UI -->
   <script src="window-manager.js"></script>
   
@@ -1298,6 +1301,13 @@
       if (window.DiceUI && window.DiceSystem && window.LoggingSystem) {
         DiceUI.initialize(window.DiceSystem, window.LoggingSystem);
         console.log("[Boot] ✓ Dice UI ready");
+      }
+      
+      // Initialize Technonomicon (arcane spellbook)
+      console.log("[Boot] Initializing Technonomicon...");
+      if (window.Technonomicon && window.LoggingSystem) {
+        Technonomicon.initialize(gameEngine, window.LoggingSystem);
+        console.log("[Boot] ✓ Technonomicon ready");
       }
       
       // Initialize AI DM integration
