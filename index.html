@@ -1187,6 +1187,9 @@
   <!-- NEW: Enhanced command parser -->
   <script src="command-parser-new.js"></script>
   
+  <!-- NEW: Logging system for multiple log channels -->
+  <script src="logging-system.js"></script>
+  
   <!-- NEW: Window manager for draggable, resizable UI -->
   <script src="window-manager.js"></script>
   
@@ -1273,6 +1276,18 @@
             }
           });
         }
+      }
+      
+      // Initialize logging system
+      console.log("[Boot] Initializing logging system...");
+      if (window.LoggingSystem) {
+        LoggingSystem.initialize();
+        console.log("[Boot] ✓ Logging system ready");
+        
+        // Log some startup messages
+        LoggingSystem.cast("Cast Console initialized", "BOOT", "#00ff00");
+        LoggingSystem.tech("Technonomicon ready", "BOOT", "#88ff00");
+        LoggingSystem.oracle("Oracle online", "BOOT", "#aa77ff");
       }
       
       // Initialize AI DM integration
