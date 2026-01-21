@@ -878,6 +878,13 @@ class GameEngine {
       this.output(`   Temperament: ${ally.temperament} | Loyalty: ${ally.loyalty}%`, "info");
     });
   }
+
+  /**
+   * Get definitions for lore/encyclopedia
+   */
+  getDefinitions() {
+    return this.gameState.definitions || {};
+  }
 }
 
 // Export for use in HTML

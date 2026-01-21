@@ -886,12 +886,14 @@
     localStorage.setItem('cq_v5', JSON.stringify(save));
   }
 
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      handleInput(input.value);
-      input.value = '';
-    }
-  });
+  if (input) {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        handleInput(input.value);
+        input.value = '';
+      }
+    });
+  }
 
   window.onclick = () => { if(!audioCtx) runBoot(); };
   </script>

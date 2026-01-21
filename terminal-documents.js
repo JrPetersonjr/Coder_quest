@@ -116,7 +116,7 @@ New growth = active processes. When you see the branches hum, data is flowing.
 The east path is blocked. Someone locked it from the other side. The code is simple:
 First 3 letters of the biological organism that imitates nature through recursive design.
 
-Hint: In nature, no line is straight. ${this.markCorrupted("fractals", 17)}
+Hint: In nature, no line is straight. [⚠ CORRUPTED: oymkrhov]
 
 - Kessler"
 
@@ -171,7 +171,7 @@ Consequence: Time literally stopped. Citizens paused mid-action. The frozen mome
 A locked door in Central Square requires override codes. We have three parts:
 
 Part 1: From the Forest (contact Kessler's lab)
-Part 2: From the Wasteland Archive (retrieve from ${this.markCorrupted("dlvxtr", 23)}
+Part 2: From the Wasteland Archive (retrieve from [⚠ CORRUPTED: goxapd])
 Part 3: From the Train Station (see manifest)
 
 Do not attempt to unfreeze the city without all three parts.
@@ -208,7 +208,7 @@ The city is too quiet now. Check on it, please.
 
 Catherine
 
-P.S. - If you're reading this and we're gone: The city's lock uses the password ${this.markCorrupted("sxyzgxev", 14)}.
+P.S. - If you're reading this and we're gone: The city's lock uses the password [⚠ CORRUPTED: gvmzlsob].
 It's my daughter's name reversed and scrambled. I'd never forget it, even here.
       `,
       solution: "margaret", // "sxyzgxev" unscrambles to "tegrammer" reversed = "margaret"
@@ -236,9 +236,9 @@ Recent retrieval log:
 - Status: Retrieved
 
 Legacy file references (locked):
-1. Project Genesis Documentation - requires ${this.markCorrupted("mnxsj", 8)} password
-2. Dr. Vale's Personal Research - requires ${this.markCorrupted("ryqzf", 11)} password  
-3. The Recursion Theory - requires ${this.markCorrupted("svmya", 19)} password
+1. Project Genesis Documentation - requires [⚠ CORRUPTED: usvbsm] password
+2. Dr. Vale's Personal Research - requires [⚠ CORRUPTED: yvgdou] password  
+3. The Recursion Theory - requires [⚠ CORRUPTED: gvyzv] password
 
 Retrieval of these files will trigger audit protocols.
 
@@ -269,7 +269,7 @@ Passengers boarding:
 - Dr. James Kessler (Research)
 - Sarah Chen (Child) [accompanied by David Chen]
 - Dr. Marcus Vale (Medical Officer) [brother of C. Vale]
-- ${this.markCorrupted("Kzntrv Wnyq", 5)} (Engineer) [name corrupted in transit]
+- [⚠ CORRUPTED: Fdrtev Dvyp] (Engineer) [name corrupted in transit]
 
 Cargo loaded:
 - Server backup drives (encrypted)

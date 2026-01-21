@@ -3,7 +3,7 @@ const CastZones = {
   hub: {
     name: "Central Hub",
     description: "A nexus of infinite corridors. The air hums with potential.",
-    banner: ["    ✦   ✦   ✦", "   /     |     \", "  /      |      \", " [HUB]--[+]--[PATHS]", "  \\      |      /", "   \\     |     /", "    ✦   ✦   ✦"],
+    banner: ["    ✦   ✦   ✦", "   /     |     \\", "  /      |      \\", " [HUB]--[+]--[PATHS]", "  \\      |      /", "   \\     |     /", "    ✦   ✦   ✦"],
     emoji: "💠"
   },
   forest: {

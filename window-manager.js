@@ -468,6 +468,17 @@ window.WindowManager = {
     if (panel) {
       this.toggleWindow(panel.id);
     }
+  },
+
+  /**
+   * Open Technonomicon with content
+   */
+  openTechnonomicon: function(content) {
+    const config = Object.assign({}, this.templates.technonomicon, {
+      id: "technonomicon",
+      content: content
+    });
+    return this.createWindow(config);
   }
 
 };

@@ -344,8 +344,7 @@ window.CastTerminals = {
         }
       };
     }
-  }
-};
+  },
 
   // ============================================================
   // [EMAIL TERMINALS] - Lore delivery through emails

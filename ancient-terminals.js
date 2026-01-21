@@ -614,6 +614,7 @@ window.AncientTerminal = {
       this.close(appendLine);
     } else {
       appendLine("Commands: list, read <title>, unscramble <text>, answer <text>, exit", "error");
+    }
   },
 
   // ============================================================
