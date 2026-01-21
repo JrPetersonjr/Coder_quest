@@ -83,9 +83,15 @@ window.AIDMIntegration = {
   },
 
   /**
-   * Detect local models (Ollama, LM Studio)
+   * Detect local models (Ollama, LM Studio) - DISABLED
+   * Localhost servers are disabled for cloud deployment
    */
   async detectLocalModels() {
+    console.log("[AI-DM] Local model detection disabled. Using API fallback.");
+    return;
+    
+    // Original code commented out - localhost disabled
+    /*
     if (!this.config.providers.autoDetectLocal) return;
 
     const models = {
@@ -110,6 +116,7 @@ window.AIDMIntegration = {
     }
 
     console.log("[AI-DM] No local models detected. Will use API fallback.");
+    */
   },
 
   /**

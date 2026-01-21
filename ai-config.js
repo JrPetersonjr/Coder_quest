@@ -57,9 +57,9 @@ window.AIConfig = {
 
     // PROVIDER SELECTION
     // PRIMARY: Claude Haiku (via GitHub Copilot)
-    // FALLBACK: LM Studio if available, then HuggingFace
-    primaryProvider: "claude",  // "claude", "local", "huggingface"
-    fallbackProviders: ["local", "huggingface"],  // Order: local model first, then cloud
+    // FALLBACK: HuggingFace only (no localhost LM Studio)
+    primaryProvider: "claude",  // "claude", "huggingface"
+    fallbackProviders: ["huggingface"],  // Order: cloud only (LM Studio disabled)
     localModelUrl: "http://localhost:1234/v1/chat/completions",  // LM Studio
     ollamaUrl: "http://localhost:11434/api/generate",  // Ollama alternative
     
@@ -266,11 +266,11 @@ window.AIConfig = {
   async detectProviders() {
     this.state.availableProviders = [];
 
-    // Check local model first (fastest to fail if not present)
-    if (await this.checkLocalModel()) {
-      this.state.availableProviders.push("local");
-      console.log("[AI] ✓ Local model detected");
-    }
+    // LM Studio localhost disabled - skip local model check
+    // if (await this.checkLocalModel()) {
+    //   this.state.availableProviders.push("local");
+    //   console.log("[AI] ✓ Local model detected");
+    // }
 
     // Check HuggingFace API
     if (await this.checkHuggingFace()) {
