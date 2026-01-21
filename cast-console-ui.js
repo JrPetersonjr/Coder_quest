@@ -71,8 +71,12 @@ window.CastConsoleUI = {
     // Update DATA (use level * 10 as max, or 100)
     const dataMax = Math.max(100, state.level * 10);
     const dataPercent = (state.data / dataMax) * 100;
-    document.getElementById("stat-data").style.width = dataPercent + "%";
-    document.getElementById("stat-data-text").textContent = `${state.data}/${dataMax}`;
+    const dataBar = document.getElementById("stat-data");
+    const dataText = document.getElementById("stat-data-text");
+    if (dataBar && dataText) {
+      dataBar.style.width = dataPercent + "%";
+      dataText.textContent = `${state.data}/${dataMax}`;
+    }
   },
 
   // ============================================================
