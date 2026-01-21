@@ -61,7 +61,7 @@ window.AIConfig = {
     primaryProvider: "claude",  // "claude", "huggingface"
     fallbackProviders: ["huggingface"],  // Order: cloud only (LM Studio disabled)
     localModelUrl: "http://localhost:1234/v1/chat/completions",  // LM Studio
-    ollamaUrl: "http://localhost:11434/api/generate",  // Ollama alternative
+    // ollamaUrl: "http://localhost:11434/api/generate",  // DISABLED - cloud-only operation
     
     // CLAUDE HAIKU CONFIG (GitHub Copilot API)
     claudeModel: "claude-3-5-haiku-20241022",  // Latest Haiku model

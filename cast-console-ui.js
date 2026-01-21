@@ -90,6 +90,12 @@ window.CastConsoleUI = {
     const quests = this.gameEngine.questSystem ? this.gameEngine.questSystem.getActiveQuests() : [];
     const panel = document.getElementById("quests-panel");
     
+    // Defensive null check - quests panel may not exist during early boot
+    if (!panel) {
+      console.warn("[CastConsoleUI] Quests panel not found - skipping update");
+      return;
+    }
+    
     if (!quests || quests.length === 0) {
       panel.innerHTML = `<div class="quest-item" style="text-align: center; opacity: 0.5;">No active quests</div>`;
       return;
