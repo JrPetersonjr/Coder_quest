@@ -902,7 +902,16 @@
     });
   }
 
-  window.onclick = () => { if(!audioCtx) runBoot(); };
+  // Debounce click handler to prevent multiple rapid fires
+  let bootClickTimeout = null;
+  window.onclick = () => {
+    if (!audioCtx && !bootClickTimeout) {
+      bootClickTimeout = true;
+      runBoot();
+      // Reset after 2 seconds to allow next click if needed
+      setTimeout(() => { bootClickTimeout = null; }, 2000);
+    }
+  };
   </script>
 
   <!-- CRT Monitor Frame -->

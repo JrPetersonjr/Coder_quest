@@ -213,13 +213,14 @@ window.IntroSystem = {
     container.style.background = "#000";
     container.style.color = "#00ff00";
     container.style.fontFamily = "'Courier Prime', monospace";
-    container.style.padding = "20px";
+    container.style.padding = "40px";
     container.style.minHeight = "100vh";
     container.style.display = "flex";
     container.style.flexDirection = "column";
     container.style.justifyContent = "center";
     container.style.alignItems = "center";
     container.style.textShadow = "0 0 5px rgba(0, 255, 0, 0.3)";
+    container.style.lineHeight = "2";
     
     // Play MIDI intro (request audio system)
     if (window.FXSystem && window.FXSystem.playMusicTrack) {
@@ -234,15 +235,34 @@ window.IntroSystem = {
         <pre style="
           color: #00ff00;
           text-align: center;
-          line-height: 1.2;
+          line-height: 1.8;
           text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
-          font-size: 0.95em;
+          font-size: 1em;
           letter-spacing: 1px;
+          margin: 20px auto;
         ">${frame}</pre>
       `;
     }
     
     await this.delay(1000);
+    
+    // Add click instruction with pulsing effect
+    container.innerHTML += `
+      <div style="
+        margin-top: 40px;
+        text-align: center;
+        animation: pulse 1.5s ease-in-out infinite;
+      ">
+        <p style="margin: 10px 0; font-size: 1.1em;">[ CLICK ANYWHERE TO CONTINUE ]</p>
+      </div>
+      <style>
+        @keyframes pulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+      </style>
+    `;
+    
     console.log("[IntroSystem] Intro animation complete");
   },
 
