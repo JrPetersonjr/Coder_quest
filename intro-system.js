@@ -272,102 +272,122 @@ window.IntroSystem = {
   
   showCharacterCreation: async function(gameEngine) {
     console.log("[IntroSystem] Starting character creation...");
+    console.log("[IntroSystem] GameEngine output method:", typeof gameEngine.output);
+    console.log("[IntroSystem] Game output container:", document.getElementById("game-output"));
     
     const gameState = gameEngine.gameState;
     
-    // Step 1: Get name
-    gameEngine.output("[IDENTITY RECONSTRUCTION PHASE]", "system");
-    await this.delay(600);
-    
-    this.state.screen.name = await this.promptQuestion(
-      gameEngine,
-      "[CASTCONSOLE] What name echoes in your core memory?",
-      "text"
-    );
-    
-    gameState.character.name = this.state.screen.name;
-    gameEngine.output(`[CASTCONSOLE] ${this.state.screen.name}... a name retrieved from the void.`, "system");
-    await this.delay(700);
-    
-    // Step 2: Get pronouns
-    this.state.screen.pronouns = await this.promptQuestion(
-      gameEngine,
-      "[CASTCONSOLE] Your self-reference parameters? (they/them, he/him, she/her, etc)",
-      "text"
-    );
-    
-    gameState.character.pronouns = this.state.screen.pronouns;
-    gameEngine.output(`[CASTCONSOLE] Parameters accepted. Identity locked in.`, "system");
-    await this.delay(700);
-    
-    // Step 3: Choose class
-    await this.delay(500);
-    gameEngine.output("[ARCANE ATTUNEMENT DETECTED]", "highlight");
-    gameEngine.output("Three resonances await activation:", "hint");
-    gameEngine.output("  [1] TECHNOMANCER  — Command spells and pure code", "hint");
-    gameEngine.output("  [2] CRYPTID       — Walk unseen through all systems", "hint");
-    gameEngine.output("  [3] ARCHITECT     — Forge new networks from ruin", "hint");
-    
-    const classChoice = await this.promptQuestion(
-      gameEngine,
-      "[CASTCONSOLE] Which path calls to you? (1, 2, or 3)",
-      "choice",
-      ["1", "2", "3"]
-    );
-    
-    const classMap = {
-      "1": "technomancer",
-      "2": "cryptid",
-      "3": "architect"
-    };
-    
-    const selectedClass = classMap[classChoice];
-    const classInfo = this.classDescriptions[selectedClass];
-    
-    gameState.character.class = selectedClass;
-    gameState.character.classBonus = classInfo.bonuses;
-    
-    await this.delay(600);
-    gameEngine.output(`[▓▓▓ ATTUNEMENT LOCKED: ${classInfo.name.toUpperCase()} ▓▓▓]`, "highlight");
-    gameEngine.output(`[CASTCONSOLE] "${classInfo.description}"`, "hint");
-    await this.delay(1000);
-    
-    // Step 4: Define essence (optional backstory hint)
-    const essence = await this.promptQuestion(
-      gameEngine,
-      "[CASTCONSOLE] In one breath: why do you seek the code?",
-      "text"
-    );
-    
-    gameState.character.backstory = essence;
-    this.state.screen.backstory = essence;
-    
-    gameEngine.output("[CASTCONSOLE] Your essence is written to the matrix.", "system");
-    await this.delay(600);
-    gameEngine.output("[█▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ INITIALIZATION COMPLETE]", "highlight");
-    await this.delay(800);
-    
-    // Save character data
-    gameState.character.level = 1;
-    gameState.character.experience = 0;
-    gameState.character.hp = classInfo.bonuses.hp;
-    gameState.character.maxHp = classInfo.bonuses.hp;
-    gameState.character.mp = 20;
-    gameState.character.maxMp = 20;
-    
-    this.state.characterDefined = true;
-    console.log("[IntroSystem] Character created:", gameState.character);
-    
-    // Wire narrative: Generate welcome email
-    if (window.DynamicNarrative) {
-      DynamicNarrative.narrativeState.milestones.character_created = true;
-      DynamicNarrative.generateEmail(gameState, "discovery").then(email => {
-        if (email) {
-          gameState.emails = gameState.emails || [];
-          gameState.emails.push(email);
-          console.log("[IntroSystem] First narrative email generated:", email);
-        }
-      }).catch(err => console.warn("[IntroSystem] Could not generate narrative email:", err));
+    try {
+      // Step 1: Get name
+      console.log("[IntroSystem] Step 1: Prompting for name");
+      gameEngine.output("[IDENTITY RECONSTRUCTION PHASE]", "system");
+      await this.delay(600);
+      
+      this.state.screen.name = await this.promptQuestion(
+        gameEngine,
+        "[CASTCONSOLE] What name echoes in your core memory?",
+        "text"
+      );
+      
+      console.log("[IntroSystem] Name received:", this.state.screen.name);
+      gameState.character.name = this.state.screen.name;
+      gameEngine.output(`[CASTCONSOLE] ${this.state.screen.name}... a name retrieved from the void.`, "system");
+      await this.delay(700);
+      
+      // Step 2: Get pronouns
+      console.log("[IntroSystem] Step 2: Prompting for pronouns");
+      this.state.screen.pronouns = await this.promptQuestion(
+        gameEngine,
+        "[CASTCONSOLE] Your self-reference parameters? (they/them, he/him, she/her, etc)",
+        "text"
+      );
+      
+      console.log("[IntroSystem] Pronouns received:", this.state.screen.pronouns);
+      gameState.character.pronouns = this.state.screen.pronouns;
+      gameEngine.output(`[CASTCONSOLE] Parameters accepted. Identity locked in.`, "system");
+      await this.delay(700);
+      
+      // Step 3: Choose class
+      console.log("[IntroSystem] Step 3: Prompting for class");
+      await this.delay(500);
+      gameEngine.output("[ARCANE ATTUNEMENT DETECTED]", "highlight");
+      gameEngine.output("Three resonances await activation:", "hint");
+      gameEngine.output("  [1] TECHNOMANCER  — Command spells and pure code", "hint");
+      gameEngine.output("  [2] CRYPTID       — Walk unseen through all systems", "hint");
+      gameEngine.output("  [3] ARCHITECT     — Forge new networks from ruin", "hint");
+      
+      const classChoice = await this.promptQuestion(
+        gameEngine,
+        "[CASTCONSOLE] Which path calls to you? (1, 2, or 3)",
+        "choice",
+        ["1", "2", "3"]
+      );
+      
+      console.log("[IntroSystem] Class choice received:", classChoice);
+      const classMap = {
+        "1": "technomancer",
+        "2": "cryptid",
+        "3": "architect"
+      };
+      
+      const selectedClass = classMap[classChoice];
+      const classInfo = this.classDescriptions[selectedClass];
+      
+      gameState.character.class = selectedClass;
+      gameState.character.classBonus = classInfo.bonuses;
+      
+      await this.delay(600);
+      gameEngine.output(`[▓▓▓ ATTUNEMENT LOCKED: ${classInfo.name.toUpperCase()} ▓▓▓]`, "highlight");
+      gameEngine.output(`[CASTCONSOLE] "${classInfo.description}"`, "hint");
+      await this.delay(1000);
+      
+      // Step 4: Define essence (optional backstory hint)
+      console.log("[IntroSystem] Step 4: Prompting for essence/backstory");
+      const essence = await this.promptQuestion(
+        gameEngine,
+        "[CASTCONSOLE] In one breath: why do you seek the code?",
+        "text"
+      );
+      
+      console.log("[IntroSystem] Essence received:", essence);
+      gameState.character.backstory = essence;
+      this.state.screen.backstory = essence;
+      
+      gameEngine.output("[CASTCONSOLE] Your essence is written to the matrix.", "system");
+      await this.delay(600);
+      gameEngine.output("[█▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ INITIALIZATION COMPLETE]", "highlight");
+      await this.delay(800);
+      
+      // Save character data
+      gameState.character.level = 1;
+      gameState.character.experience = 0;
+      gameState.character.hp = classInfo.bonuses.hp;
+      gameState.character.maxHp = classInfo.bonuses.hp;
+      gameState.character.mp = 20;
+      gameState.character.maxMp = 20;
+      
+      this.state.characterDefined = true;
+      console.log("[IntroSystem] Character created:", gameState.character);
+      
+      // Wire narrative: Generate welcome email
+      if (window.DynamicNarrative) {
+        DynamicNarrative.narrativeState.milestones.character_created = true;
+        DynamicNarrative.generateEmail(gameState, "discovery").then(email => {
+          if (email) {
+            gameState.emails = gameState.emails || [];
+            gameState.emails.push(email);
+            console.log("[IntroSystem] First narrative email generated:", email);
+          }
+        }).catch(err => console.warn("[IntroSystem] Could not generate narrative email:", err));
+      }
+      
+    } catch (error) {
+      console.error("[IntroSystem] ERROR in character creation:", error);
+      console.error("[IntroSystem] Stack:", error.stack);
+      gameEngine.output("Error during character creation: " + error.message, "error");
+      throw error;
+    }
+  },
     }
   },
 
@@ -379,81 +399,109 @@ window.IntroSystem = {
    * Prompt user for input
    */
   promptQuestion: async function(gameEngine, question, type = "text", options = []) {
+    console.log("[PromptQuestion] Question:", question, "Type:", type);
+    
     return new Promise((resolve) => {
-      gameEngine.output(question, "system");
-      
-      // Create a wrapper div for the input line
-      const lineDiv = document.createElement("div");
-      lineDiv.style.cssText = "display: flex; align-items: center; gap: 5px; margin: 10px 0;";
-      
-      // Create prompt indicator
-      const promptSpan = document.createElement("span");
-      promptSpan.textContent = "> ";
-      promptSpan.style.cssText = "color: #00ff00; font-family: monospace;";
-      
-      // Create input field
-      const inputField = document.createElement("input");
-      inputField.type = "text";
-      inputField.style.cssText = `
-        background: #0a0a0a;
-        color: #00ff00;
-        border: 1px solid #00ff00;
-        padding: 8px;
-        font-family: monospace;
-        font-size: 14px;
-        width: 300px;
-        outline: none;
-      `;
-      inputField.placeholder = type === "choice" ? `Enter: ${options.join(" or ")}` : "Type and press Enter...";
-      
-      // Assemble line
-      lineDiv.appendChild(promptSpan);
-      lineDiv.appendChild(inputField);
-      
-      // Append to game output
-      const outputContainer = document.getElementById("game-output");
-      if (outputContainer) {
+      try {
+        // Output the question
+        console.log("[PromptQuestion] Calling gameEngine.output for question");
+        gameEngine.output(question, "system");
+        
+        // Get output container
+        const outputContainer = document.getElementById("game-output");
+        console.log("[PromptQuestion] Output container found:", !!outputContainer);
+        
+        if (!outputContainer) {
+          console.error("[PromptQuestion] game-output container not found!");
+          // Fallback: use browser prompt
+          const answer = window.prompt(question, type === "choice" ? options[0] : "");
+          resolve(answer || (type === "choice" ? options[0] : "Anonymous"));
+          return;
+        }
+        
+        // Create a wrapper div for the input line
+        const lineDiv = document.createElement("div");
+        lineDiv.style.cssText = "display: flex; align-items: center; gap: 5px; margin: 10px 0;";
+        
+        // Create prompt indicator
+        const promptSpan = document.createElement("span");
+        promptSpan.textContent = "> ";
+        promptSpan.style.cssText = "color: #00ff00; font-family: monospace;";
+        
+        // Create input field
+        const inputField = document.createElement("input");
+        inputField.type = "text";
+        inputField.style.cssText = `
+          background: #0a0a0a;
+          color: #00ff00;
+          border: 1px solid #00ff00;
+          padding: 8px;
+          font-family: monospace;
+          font-size: 14px;
+          width: 300px;
+          outline: none;
+        `;
+        inputField.placeholder = type === "choice" ? `Enter: ${options.join(" or ")}` : "Type and press Enter...";
+        
+        // Assemble line
+        lineDiv.appendChild(promptSpan);
+        lineDiv.appendChild(inputField);
+        
+        // Append to game output
         outputContainer.appendChild(lineDiv);
+        console.log("[PromptQuestion] Input field appended to container");
+        
         // Scroll to bottom
         outputContainer.scrollTop = outputContainer.scrollHeight;
-      }
-      
-      // Focus immediately
-      inputField.focus();
-      
-      // Handle Enter key
-      const handleEnter = (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          let answer = inputField.value.trim();
-          
-          // Validate choice input
-          if (type === "choice") {
-            if (!options.includes(answer)) {
-              gameEngine.output(`Invalid choice. Try: ${options.join(", ")}`, "hint");
-              inputField.value = "";
-              inputField.focus();
-              return;
+        
+        // Focus immediately
+        inputField.focus();
+        console.log("[PromptQuestion] Input field focused");
+        
+        // Handle Enter key
+        const handleEnter = (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            let answer = inputField.value.trim();
+            console.log("[PromptQuestion] User input received:", answer);
+            
+            // Validate choice input
+            if (type === "choice") {
+              if (!options.includes(answer)) {
+                console.log("[PromptQuestion] Invalid choice, showing options");
+                gameEngine.output(`Invalid choice. Try: ${options.join(", ")}`, "hint");
+                inputField.value = "";
+                inputField.focus();
+                return;
+              }
             }
+            
+            // Default values
+            if (!answer) {
+              answer = type === "choice" ? options[0] : "Anonymous";
+              console.log("[PromptQuestion] Using default answer:", answer);
+            }
+            
+            // Display the answer in console
+            gameEngine.output(answer, "input");
+            
+            // Remove input line and handler
+            inputField.removeEventListener("keydown", handleEnter);
+            lineDiv.remove();
+            
+            console.log("[PromptQuestion] Resolving with:", answer);
+            resolve(answer);
           }
-          
-          // Default values
-          if (!answer) {
-            answer = type === "choice" ? options[0] : "Anonymous";
-          }
-          
-          // Display the answer in console
-          gameEngine.output(answer, "input");
-          
-          // Remove input line and handler
-          inputField.removeEventListener("keydown", handleEnter);
-          lineDiv.remove();
-          
-          resolve(answer);
-        }
-      };
-      
-      inputField.addEventListener("keydown", handleEnter);
+        };
+        
+        inputField.addEventListener("keydown", handleEnter);
+        
+      } catch (error) {
+        console.error("[PromptQuestion] Error:", error);
+        // Fallback to browser prompt
+        const answer = window.prompt(question, type === "choice" ? options[0] : "");
+        resolve(answer || (type === "choice" ? options[0] : "Anonymous"));
+      }
     });
   },
 
