@@ -995,7 +995,7 @@
   <div class="crt-frame">
     <div class="crt-inner">
       <div class="container">
-        <h1>[ TECHNOMANCER ]</h1>
+        <h1>[ CAST CONSOLE ]</h1>
         
         <!-- Graphics Container (optional canvas layer) -->
         <div id="graphics-container" style="margin-bottom: 15px; display: none;">
@@ -1409,23 +1409,7 @@
       }
     }
 
-    // --- Technonomicon Runes/Buttons UI ---
-    function renderTechnonomiconContent() {
-      return `
-        <div style="display: flex; justify-content: space-around; align-items: center; gap: 16px;">
-          <button class="rune-btn" onclick="WindowManager.openInventory()">🜁<br><span style='font-size:0.7em'>Inventory</span></button>
-          <button class="rune-btn" onclick="WindowManager.openHoloDice()">🎲<br><span style='font-size:0.7em'>HoloDice</span></button>
-          <button class="rune-btn" onclick="WindowManager.openCRT('Terminal opened!')">🖳<br><span style='font-size:0.7em'>Terminal</span></button>
-        </div>
-        <div style="margin-top:12px; text-align:center; color:#2fb43a; font-size:1.1em;">TECHNONOMICON</div>
-      `;
-    }
-    // On DOMContentLoaded, open Technonomicon at bottom
-    document.addEventListener('DOMContentLoaded', function() {
-      if (window.WindowManager) {
-        WindowManager.openTechnonomicon(renderTechnonomiconContent());
-      }
-    });
+    // Technonomicon UI managed by pane-manager and ui-layout-manager
     
     // Start when page loads
     if (document.readyState === 'loading') {
