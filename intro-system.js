@@ -381,32 +381,60 @@ window.IntroSystem = {
   promptQuestion: async function(gameEngine, question, type = "text", options = []) {
     return new Promise((resolve) => {
       gameEngine.output(question, "system");
-      gameEngine.output(`> `, "input");
       
-      // Create input capture within the game console
+      // Create a wrapper div for the input line
+      const lineDiv = document.createElement("div");
+      lineDiv.style.cssText = "display: flex; align-items: center; gap: 5px; margin: 10px 0;";
+      
+      // Create prompt indicator
+      const promptSpan = document.createElement("span");
+      promptSpan.textContent = "> ";
+      promptSpan.style.cssText = "color: #00ff00; font-family: monospace;";
+      
+      // Create input field
       const inputField = document.createElement("input");
       inputField.type = "text";
-      inputField.style.cssText = "background: #0a0a0a; color: #00ff00; border: 1px solid #00ff00; padding: 5px; font-family: monospace; width: 200px;";
-      inputField.placeholder = type === "choice" ? "Enter option number" : "Type your answer...";
+      inputField.style.cssText = `
+        background: #0a0a0a;
+        color: #00ff00;
+        border: 1px solid #00ff00;
+        padding: 8px;
+        font-family: monospace;
+        font-size: 14px;
+        width: 300px;
+        outline: none;
+      `;
+      inputField.placeholder = type === "choice" ? `Enter: ${options.join(" or ")}` : "Type and press Enter...";
       
-      // Append to game output if available, otherwise use body
+      // Assemble line
+      lineDiv.appendChild(promptSpan);
+      lineDiv.appendChild(inputField);
+      
+      // Append to game output
       const outputContainer = document.getElementById("game-output");
       if (outputContainer) {
-        outputContainer.appendChild(inputField);
-      } else {
-        document.body.appendChild(inputField);
+        outputContainer.appendChild(lineDiv);
+        // Scroll to bottom
+        outputContainer.scrollTop = outputContainer.scrollHeight;
       }
       
+      // Focus immediately
       inputField.focus();
       
       // Handle Enter key
-      inputField.addEventListener("keydown", (e) => {
+      const handleEnter = (e) => {
         if (e.key === "Enter") {
+          e.preventDefault();
           let answer = inputField.value.trim();
           
           // Validate choice input
-          if (type === "choice" && !options.includes(answer)) {
-            answer = options[0];
+          if (type === "choice") {
+            if (!options.includes(answer)) {
+              gameEngine.output(`Invalid choice. Try: ${options.join(", ")}`, "hint");
+              inputField.value = "";
+              inputField.focus();
+              return;
+            }
           }
           
           // Default values
@@ -414,13 +442,18 @@ window.IntroSystem = {
             answer = type === "choice" ? options[0] : "Anonymous";
           }
           
-          // Display the input in console and remove field
+          // Display the answer in console
           gameEngine.output(answer, "input");
-          inputField.remove();
+          
+          // Remove input line and handler
+          inputField.removeEventListener("keydown", handleEnter);
+          lineDiv.remove();
           
           resolve(answer);
         }
-      });
+      };
+      
+      inputField.addEventListener("keydown", handleEnter);
     });
   },
 
