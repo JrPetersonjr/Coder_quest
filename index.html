@@ -1184,6 +1184,9 @@
   <!-- NEW: Pane manager for resizable, draggable windows -->
   <script src="pane-manager.js"></script>
   
+  <!-- NEW: Enhanced command parser -->
+  <script src="command-parser-new.js"></script>
+  
   <!-- NEW: Window manager for draggable, resizable UI -->
   <script src="window-manager.js"></script>
   
@@ -1248,6 +1251,28 @@
       if (window.PaneManager) {
         PaneManager.initialize();
         console.log("[Boot] ✓ Pane manager ready");
+      }
+      
+      // Initialize command parser
+      console.log("[Boot] Initializing command parser...");
+      if (window.CommandParser && window.DiceSystem) {
+        CommandParser.initialize(gameEngine, window.DiceSystem);
+        console.log("[Boot] ✓ Command parser ready");
+        
+        // Wire up cast console input to command parser
+        const consoleInput = document.getElementById("console-input");
+        if (consoleInput) {
+          consoleInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const input = consoleInput.value.trim();
+              if (input) {
+                CommandParser.parse(input);
+                consoleInput.value = "";
+              }
+            }
+          });
+        }
       }
       
       // Initialize AI DM integration
