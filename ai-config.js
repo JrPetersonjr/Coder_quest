@@ -68,8 +68,8 @@ window.AIConfig = {
     anthropicBaseUrl: "https://api.anthropic.com",  // Anthropic API endpoint
     
     // BACKEND SERVER CONFIG (For secure online deployment)
-    backendUrl: null,  // Set to your Render server URL (e.g., https://your-app.onrender.com)
-    useBackend: false,  // Set to true to use backend proxy instead of direct API
+    backendUrl: "https://coder-quest.onrender.com",  // Render backend URL
+    useBackend: true,  // Use backend proxy for secure API access
     
     // FEATURE TOGGLES
     aiFeatures: {
