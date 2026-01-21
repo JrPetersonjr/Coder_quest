@@ -381,17 +381,46 @@ window.IntroSystem = {
   promptQuestion: async function(gameEngine, question, type = "text", options = []) {
     return new Promise((resolve) => {
       gameEngine.output(question, "system");
+      gameEngine.output(`> `, "input");
       
-      if (type === "choice") {
-        gameEngine.output(`> `, "input");
-        // Simulate player input (in real impl, would hook to input handler)
-        const choice = window.prompt(question, options[0]);
-        resolve(choice || options[0]);
+      // Create input capture within the game console
+      const inputField = document.createElement("input");
+      inputField.type = "text";
+      inputField.style.cssText = "background: #0a0a0a; color: #00ff00; border: 1px solid #00ff00; padding: 5px; font-family: monospace; width: 200px;";
+      inputField.placeholder = type === "choice" ? "Enter option number" : "Type your answer...";
+      
+      // Append to game output if available, otherwise use body
+      const outputContainer = document.getElementById("game-output");
+      if (outputContainer) {
+        outputContainer.appendChild(inputField);
       } else {
-        gameEngine.output(`> `, "input");
-        const input = window.prompt(question, "");
-        resolve(input || "Anonymous");
+        document.body.appendChild(inputField);
       }
+      
+      inputField.focus();
+      
+      // Handle Enter key
+      inputField.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          let answer = inputField.value.trim();
+          
+          // Validate choice input
+          if (type === "choice" && !options.includes(answer)) {
+            answer = options[0];
+          }
+          
+          // Default values
+          if (!answer) {
+            answer = type === "choice" ? options[0] : "Anonymous";
+          }
+          
+          // Display the input in console and remove field
+          gameEngine.output(answer, "input");
+          inputField.remove();
+          
+          resolve(answer);
+        }
+      });
     });
   },
 
