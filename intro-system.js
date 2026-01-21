@@ -337,6 +337,18 @@ window.IntroSystem = {
     
     this.state.characterDefined = true;
     console.log("[IntroSystem] Character created:", gameState.character);
+    
+    // Wire narrative: Generate welcome email
+    if (window.DynamicNarrative) {
+      DynamicNarrative.narrativeState.milestones.character_created = true;
+      DynamicNarrative.generateEmail(gameState, "discovery").then(email => {
+        if (email) {
+          gameState.emails = gameState.emails || [];
+          gameState.emails.push(email);
+          console.log("[IntroSystem] First narrative email generated:", email);
+        }
+      }).catch(err => console.warn("[IntroSystem] Could not generate narrative email:", err));
+    }
   },
 
   // ============================================================

@@ -22,6 +22,21 @@ window.CastBattle = {
 
     log(`⚔ A ${enemy.name} materializes!`, "battle");
     log("Commands: attack, cast <spell>, run, stats, help.", "battle");
+    
+    // Wire narrative: Generate boss intro email
+    if (window.BossEncounters && window.DynamicNarrative) {
+      const bossConfig = window.BossEncounters.bosses[enemyKey];
+      if (bossConfig) {
+        DynamicNarrative.narrativeState.milestones.first_boss = true;
+        DynamicNarrative.generateEmail(gameState, "boss_intro").then(email => {
+          if (email) {
+            gameState.emails = gameState.emails || [];
+            gameState.emails.push(email);
+            console.log("[BattleCore] Boss intro email generated for:", enemyKey);
+          }
+        }).catch(err => console.warn("[BattleCore] Could not generate boss email:", err));
+      }
+    }
   },
 
   // ------------------------------------------------------------

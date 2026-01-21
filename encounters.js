@@ -311,6 +311,18 @@ window.EncounterSystem = {
     appendLine("════════════════════════════════════", "system");
     appendLine(narrativeText, "battle");
     appendLine("", "system");
+    
+    // Wire narrative: Generate NPC dialogue for encounters
+    if (window.DynamicNarrative && window.AIDMIntegration) {
+      const npcName = encounter.npc ? encounter.npc.name : primaryEnemy.name;
+      DynamicNarrative.generateEmail(gameState, "mystery").then(email => {
+        if (email) {
+          gameState.emails = gameState.emails || [];
+          gameState.emails.push(email);
+          console.log("[Encounters] NPC narrative generated for:", npcName);
+        }
+      }).catch(err => console.warn("[Encounters] Could not generate NPC narrative:", err));
+    }
 
     // Present choices
     this.presentChoices(encounter, appendLine);

@@ -122,6 +122,26 @@ window.ZoneTransitions = {
       gameEngine.output("", "system");
       gameEngine.output(toAtmosphere.description, "system");
       gameEngine.output("", "system");
+      
+      // Wire narrative: Generate restoration email on zone transition
+      if (window.DynamicNarrative && gameEngine.gameState) {
+        const zoneKey = toZone.toLowerCase();
+        const wasRestored = !DynamicNarrative.narrativeState.terminalsRestored[zoneKey];
+        
+        // Mark zone as encountered/restored
+        DynamicNarrative.narrativeState.terminalsRestored[zoneKey] = true;
+        
+        if (wasRestored) {
+          DynamicNarrative.narrativeState.milestones.first_terminal = true;
+          DynamicNarrative.generateEmail(gameEngine.gameState, "restoration").then(email => {
+            if (email) {
+              gameEngine.gameState.emails = gameEngine.gameState.emails || [];
+              gameEngine.gameState.emails.push(email);
+              gameEngine.output("[EMAIL] Terminal restoration detected...", "system");
+            }
+          }).catch(err => console.warn("[ZoneTransitions] Could not generate restoration email:", err));
+        }
+      }
 
     } catch (e) {
       console.error("[Transition] Error:", e);
