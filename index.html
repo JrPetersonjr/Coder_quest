@@ -1196,6 +1196,9 @@
   <!-- NEW: Technonomicon arcane spellbook -->
   <script src="technonomicon.js"></script>
   
+  <!-- NEW: UI Layout manager for windows positioning -->
+  <script src="ui-layout-manager.js"></script>
+  
   <!-- NEW: Window manager for draggable, resizable UI -->
   <script src="window-manager.js"></script>
   
@@ -1308,6 +1311,21 @@
       if (window.Technonomicon && window.LoggingSystem) {
         Technonomicon.initialize(gameEngine, window.LoggingSystem);
         console.log("[Boot] ✓ Technonomicon ready");
+      }
+      
+      // Initialize UI Layout Manager (positions windows)
+      console.log("[Boot] Initializing UI layout...");
+      if (window.UILayoutManager) {
+        UILayoutManager.initialize(gameEngine);
+        
+        // Hook graphics unlock to quest completion
+        const originalOnGraphicsUnlock = gameEngine.onGraphicsUnlock;
+        gameEngine.onGraphicsUnlock = function() {
+          if (originalOnGraphicsUnlock) originalOnGraphicsUnlock();
+          if (UILayoutManager) UILayoutManager.unlockGraphics();
+        };
+        
+        console.log("[Boot] ✓ UI layout ready");
       }
       
       // Initialize AI DM integration
