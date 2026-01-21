@@ -237,12 +237,21 @@ window.UILayoutManager = {
       
       // Create canvas context and start rendering
       setTimeout(() => {
-        if (window.GraphicsUI) {
-          const canvas = document.getElementById("game-canvas");
-          if (canvas) {
-            GraphicsUI.initCanvas(canvas);
-            console.log("[UILayoutManager] Graphics rendering started");
+        const canvas = document.getElementById("game-canvas");
+        if (canvas) {
+          // Initialize arcane background (particle/fractal/lighting effects)
+          if (window.ArcaneBackground && typeof window.ArcaneBackground.initialize === "function") {
+            console.log("[UILayoutManager] Initializing arcane background...");
+            window.ArcaneBackground.initialize(canvas);
           }
+          
+          // Initialize graphics engine overlay
+          if (window.GraphicsUI && typeof window.GraphicsUI.initCanvas === "function") {
+            console.log("[UILayoutManager] Initializing graphics engine...");
+            GraphicsUI.initCanvas(canvas);
+          }
+          
+          console.log("[UILayoutManager] Graphics rendering started");
         }
       }, 100);
     }
@@ -253,6 +262,11 @@ window.UILayoutManager = {
     }
 
     // Log to system
+    if (window.LoggingSystem) {
+      window.LoggingSystem.success("oracle-log", "GRAPHICS ENGINE UNLOCKED", "RENDER");
+      window.LoggingSystem.cast("2D viewport activated. Arcane background + visual rendering online.", "RENDER");
+    }
+
     if (this.gameEngine?.output) {
       this.gameEngine.output("[GRAPHICS ENGINE UNLOCKED]", "highlight");
       this.gameEngine.output("2D viewport activated. Visual rendering online.", "system");
