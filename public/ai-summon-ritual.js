@@ -34,6 +34,63 @@ class AISummonRitualsystem {
   // ========== RITUAL REGISTRY (DEFINED SUMMONS) ==========
 
   /**
+   * Unlock a ritual from a defeated enemy
+   */
+  registerEnemyRitual(enemy) {
+    const ritualId = enemy.name.toLowerCase().replace(/\s+/g, '_');
+    
+    // Check if already known
+    if (this.ritualRegistry.has(ritualId)) {
+        return null; // Already known
+    }
+
+    // Derive elements from enemy properties
+    let elements = [];
+    const name = enemy.name.toLowerCase();
+    
+    // Primary Element
+    if (name.includes('fire') || name.includes('inferno') || name.includes('ember')) elements.push('fire');
+    else if (name.includes('water') || name.includes('tide') || name.includes('aqua')) elements.push('water');
+    else if (name.includes('earth') || name.includes('stone') || name.includes('rock')) elements.push('earth');
+    else if (name.includes('wind') || name.includes('storm') || name.includes('zephyr')) elements.push('wind');
+    else elements.push('chaos'); // Fallback primary
+
+    // Secondary Element for higher levels
+    if (enemy.level >= 5) {
+        if (elements[0] === 'chaos') elements.push('entropy');
+        else elements.push('control'); // Or some other binder
+    }
+
+    // Determine Difficulty & Cost
+    let minQuality = 'medium';
+    if (enemy.level >= 8) minQuality = 'high';
+    if (enemy.level >= 12) minQuality = 'critical';
+
+    const dataCost = enemy.level * 150;
+    const baseMana = enemy.level * 20;
+
+    const ritualData = {
+        name: `Summon ${enemy.name}`,
+        tier: Math.max(1, Math.floor(enemy.level / 3)),
+        elements: elements,
+        codeBits: ['summon', 'binding'], // Requires 'binding' bit for captured foes
+        baseMana: baseMana,
+        dataCost: dataCost,
+        minQuality: minQuality,
+        description: `Reconstruct the code matrix of ${enemy.name}.`,
+        personality: {
+            archetype: 'construct',
+            temperament: 'bound',
+            combatStyle: 'aggressive'
+        },
+        isCaptured: true
+    };
+
+    this.ritualRegistry.set(ritualId, ritualData);
+    return ritualData;
+  }
+
+  /**
    * Initialize base ritual spells (linear progression)
    */
   initializeRitualRegistry() {
@@ -193,46 +250,61 @@ class AISummonRitualsystem {
     // Check if known ritual (linear path)
     const knownRitual = this.findRitualByComposition(elements, codeBits);
 
-    if (knownRitual && rollQuality !== 'low') {
-      // SUCCESS: Summoned known ally
-      const dataCost = knownRitual.dataCost;
+    if (knownRitual) {
+      // Check quality requirement
+      const qualities = ['low', 'medium', 'high', 'critical'];
+      const rollIdx = qualities.indexOf(rollQuality);
+      const reqIdx = qualities.indexOf(knownRitual.minQuality || 'medium');
 
-      if (this.spellTinkering.dataInventory.totalData < dataCost) {
+      if (rollIdx >= reqIdx) {
+        // SUCCESS: Summoned known ally
+        const dataCost = knownRitual.dataCost;
+
+        if (this.spellTinkering.dataInventory.totalData < dataCost) {
+            return {
+            success: false,
+            message: `Insufficient data. Need ${dataCost}, have ${this.spellTinkering.dataInventory.totalData}.`,
+            rollQuality
+            };
+        }
+
+        // Deduct data
+        this.spellTinkering.dataInventory.totalData -= dataCost;
+
+        // Generate ally personality
+        const ally = this.generateAlly(knownRitual, character, rollQuality);
+
+        // Add to summoned allies
+        this.summonedAllies.push(ally);
+        this.summonHistory.push(ally);
+        this.summonCount++;
+
+        // Record in NPC memory system
+        if (this.aiDM) {
+            this.aiDM.recordEvent(ally.id, 'summoned', {
+            summoner: character.name,
+            elements: elements,
+            ritual: knownRitual.name,
+            quality: rollQuality,
+            });
+        }
+
         return {
-          success: false,
-          message: `Insufficient data. Need ${dataCost}, have ${this.spellTinkering.dataInventory.totalData}.`,
-          rollQuality
+            success: true,
+            ally: ally,
+            rollQuality,
+            dataCost,
+            message: `✨ ${ally.name} has answered your call!`
         };
+      } else {
+          // Known ritual but failed roll (quality too low)
+          return {
+             success: false,
+             message: `Ritual unstable (Quality: ${rollQuality}, Needed: ${knownRitual.minQuality || 'medium'}).`,
+             // Potentially spawn aberration here too?
+             failedAlly: this.generateFailedRitual(elements, codeBits, character)
+          };
       }
-
-      // Deduct data
-      this.spellTinkering.dataInventory.totalData -= dataCost;
-
-      // Generate ally personality
-      const ally = this.generateAlly(knownRitual, character, rollQuality);
-
-      // Add to summoned allies
-      this.summonedAllies.push(ally);
-      this.summonHistory.push(ally);
-      this.summonCount++;
-
-      // Record in NPC memory system
-      if (this.aiDM) {
-        this.aiDM.recordEvent(ally.id, 'summoned', {
-          summoner: character.name,
-          elements: elements,
-          ritual: knownRitual.name,
-          quality: rollQuality,
-        });
-      }
-
-      return {
-        success: true,
-        ally: ally,
-        rollQuality,
-        dataCost,
-        message: `✨ ${ally.name} has answered your call!`
-      };
     }
 
     // EXPERIMENTAL: Unknown ritual (sandbox)
@@ -484,10 +556,22 @@ class AISummonRitualsystem {
   // ========== ALLY MANAGEMENT ==========
 
   /**
-   * Get active allies in battle
+   * Get active allies in battle (includes ephemeral/temp allies)
    */
   getActiveAllies() {
-    return this.summonedAllies.filter(a => !a.isEphemeral);
+    return this.summonedAllies;
+  }
+
+  /**
+   * Cleanup ephemeral allies after battle
+   */
+  cleanupEphemeralAllies() {
+    const toDismiss = this.summonedAllies.filter(a => a.isEphemeral);
+    toDismiss.forEach(a => {
+      this.dismissAlly(a.id);
+      this.log(`[Summon] Ephemeral ally ${a.name} faded away.`);
+    });
+    return toDismiss.length;
   }
 
   /**

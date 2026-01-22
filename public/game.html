@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TECHNOMANCER: Quest for the Code</title>
+  <title>Coder's Quest: Quest for the Code</title>
   
   <!-- Sprite Icons System (custom pixel art emojis) -->
   <link rel="stylesheet" href="sprite-icons.css">
@@ -1131,11 +1131,22 @@
   };
 
   async function runBoot() {
+    // Don't run boot if already skipped
+    if (skipTriggered) return;
+    
     await new Promise(r => setTimeout(r, 1000));
+    
+    // Check skip again after delay
+    if (skipTriggered) return;
+    
     knock(); setTimeout(knock, 300);
     const roomText = document.getElementById('room-text');
     if (roomText) roomText.innerText = "*Knock Knock*";
     await new Promise(r => setTimeout(r, 1500));
+    
+    // Check skip again
+    if (skipTriggered) return;
+    
     playTheme();
     const messages = [
       "Initializing CastConsole...", "Detecting Neural Interface...", 
@@ -1143,10 +1154,17 @@
       "Identity Protocol: ACTIVE", "Mounting OS..."
     ];
     for (let msg of messages) {
+      // Check skip during message loop
+      if (skipTriggered) return;
+      
       if (bootLog) bootLog.innerHTML += `> ${msg}<br>`;
       await new Promise(r => setTimeout(r, 800));
     }
     await new Promise(r => setTimeout(r, 1000));
+    
+    // Final skip check before completing
+    if (skipTriggered) return;
+    
     if (introScreen) {
       introScreen.style.opacity = '0';
       setTimeout(() => { introScreen.style.display = 'none'; startSequence(); }, 1000);
@@ -1240,10 +1258,40 @@
     });
   }
 
+  // Skip functionality - Press backtick (`) to skip boot screen and animation
+  let skipTriggered = false;
+  
+  function skipBootSequence() {
+    if (skipTriggered) return; // Prevent multiple triggers
+    skipTriggered = true;
+    
+    // Hide intro screen immediately
+    const introScreen = document.getElementById('intro-screen');
+    if (introScreen) {
+      introScreen.style.display = 'none';
+    }
+    
+    // Clear any pending timeouts and intervals
+    clearTimeout(bootClickTimeout);
+    
+    // Start the main sequence immediately
+    startSequence();
+    console.log("[SKIP] Boot sequence skipped with backtick key");
+  }
+
+  // Keyboard event listener for skip functionality
+  document.addEventListener('keydown', (e) => {
+    // Check for backtick key (keyCode 192 or key "`")
+    if (e.key === '`' || e.keyCode === 192) {
+      e.preventDefault(); // Prevent default backtick behavior
+      skipBootSequence();
+    }
+  });
+
   // Debounce click handler to prevent multiple rapid fires
   let bootClickTimeout = null;
   window.onclick = () => {
-    if (!audioCtx && !bootClickTimeout) {
+    if (!audioCtx && !bootClickTimeout && !skipTriggered) {
       bootClickTimeout = true;
       runBoot();
       // Reset after 2 seconds to allow next click if needed
@@ -1382,7 +1430,15 @@
   <!-- NEW: Audio system -->
   <script src="fx-audio.js"></script>
   
-  <!-- NEW: Quest system -->
+  <!-- NEW: MIDI Music Player -->
+  <script src="midi-player.js"></script>
+  
+  <!-- NEW: Zone Background System -->
+  <script src="zone-backgrounds.js"></script>
+  
+  <!-- NEW: Browser-based LLM (No setup required) -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.1.0/dist/transformers.min.js"></script>
+  <script src="browser-llm.js"></script>
   <script src="quest-system.js"></script>
   
   <!-- NEW: Save system -->
@@ -1393,6 +1449,9 @@
   
   <!-- NEW: AI Integration System -->
   <script src="ai-config.js"></script>
+  
+  <!-- NEW: Qwen Roleplay V2 Configuration -->
+  <script src="qwen-roleplay-config.js"></script>
   
   <!-- NEW: Authentication System (cloud saves) -->
   <script src="auth-system.js"></script>
@@ -1683,6 +1742,22 @@
         gameEngine.output("=".repeat(50), "system");
       }
 
+      // ============================================================
+      // [PLATFORM CHECK] - Enforce Online vs Electron separation
+      // ============================================================
+      let isElectron = !!(window.electronAPI && window.electronAPI.isElectron) || 
+                       !!(window.require && window.process && window.process.versions && window.process.versions.electron) ||
+                       navigator.userAgent.toLowerCase().indexOf('electron') > -1;
+      
+      // TEMPORARY: Allow full game in browser for now
+      isElectron = true; // This allows browser mode to work normally
+      
+      if (!isElectron) {
+          // BROWSER MODE: Will implement download-only mode later
+          console.log("[Boot] Browser detected - full game allowed for now");
+      }
+
+      // Continue to full game (regardless of platform for now)
       // Show welcome message
       if (hasAutoSave) {
         gameEngine.output("[ TECHNOMANCER: QUEST FOR THE CODE ]", "system");
@@ -1697,6 +1772,15 @@
 
       // Focus input
       gameUI.focus();
+      
+      // Simple system checks
+      setTimeout(() => {
+        console.log("[Debug] Systems check:");
+        console.log("- MIDIPlayer:", !!window.MIDIPlayer);
+        console.log("- AIConfig:", !!window.AIConfig);
+        console.log("- PaneManager:", !!window.PaneManager);
+        console.log("- GameEngine commands:", Object.getOwnPropertyNames(gameEngine).filter(n => n.startsWith('cmd')));
+      }, 1000);
       
       // Set up periodic auto-save every 2 minutes (local + cloud)
       setInterval(() => {

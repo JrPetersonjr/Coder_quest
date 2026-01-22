@@ -268,63 +268,193 @@ window.Technonomicon = {
   // ============================================================
 
   renderSkillTree: function(container) {
+    const char = this.gameEngine?.gameState || {};
+    const skills = char.skills || {};
+    const availablePoints = char.skillPoints || 0;
+    
     const html = `
       <div style="color: #88ff00; font-weight: bold; margin-bottom: 12px;">[ SKILL TREE ]</div>
+      <div style="color: #ffaa00; margin-bottom: 16px; text-align: center; font-weight: bold;">
+        Available Points: ${availablePoints}
+      </div>
       <div style="border-left: 2px solid #00ff00; padding-left: 12px; color: #00ff00;">
-        <div style="margin-bottom: 8px;">
+        <div style="margin-bottom: 12px;">
           ├─ COMBAT ARTS
-          │  ├─ Blade Mastery (Level 1)
-          │  ├─ Dual Wield (Locked)
-          │  └─ Parry (Available)
+          ${this.renderSkillCategory('combat', skills.combat, availablePoints)}
         </div>
-        <div style="margin-bottom: 8px;">
-        ├─ ARCANE MASTERY
-          │  ├─ Fireball (Level 1)
-          │  ├─ Mana Shield (Level 1)
-          │  └─ Spell Amplify (Available)
+        <div style="margin-bottom: 12px;">
+          ├─ ARCANE MASTERY  
+          ${this.renderSkillCategory('arcane', skills.arcane, availablePoints)}
         </div>
-        <div style="margin-bottom: 8px;">
+        <div style="margin-bottom: 12px;">
           ├─ CODE INJECTION
-          │  ├─ System Probe (Level 1)
-          │  ├─ Exploit (Level 1)
-          │  └─ Rootkit (Locked)
+          ${this.renderSkillCategory('code_injection', skills.code_injection, availablePoints)}
         </div>
         <div>
           └─ SURVIVAL
-             ├─ Stealth (Available)
-             ├─ Camouflage (Locked)
-             └─ Vanish (Locked)
+          ${this.renderSkillCategory('survival', skills.survival, availablePoints)}
         </div>
       </div>
     `;
     container.innerHTML = html;
+    this.attachSkillListeners(container);
   },
+  
+  renderSkillCategory: function(category, skills = {}, availablePoints) {
+    const skillNames = {
+      combat: {
+        blade_mastery: 'Blade Mastery',
+        dual_wield: 'Dual Wield',
+        parry: 'Parry'
+      },
+      arcane: {
+        fireball: 'Fireball',
+        mana_shield: 'Mana Shield', 
+        spell_amplify: 'Spell Amplify'
+      },
+      code_injection: {
+        system_probe: 'System Probe',
+        exploit: 'Exploit',
+        rootkit: 'Rootkit'
+      },
+      survival: {
+        stealth: 'Stealth',
+        camouflage: 'Camouflage',
+        vanish: 'Vanish'
+      }
+    };
+    
+    const categorySkills = skillNames[category] || {};
+    let html = "";
+    
+    Object.entries(categorySkills).forEach(([skillId, skillName]) => {
+      const level = skills[skillId] || 0;
+      const maxLevel = 5;
+      const canUpgrade = level < maxLevel && availablePoints > 0;
+      const status = level === 0 ? "Locked" : `Level ${level}`;
+      const color = level > 0 ? "#00ff00" : "#888888";
+      
+      html += `
+        <div style="margin-left: 20px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+          <span style="color: ${color}; min-width: 120px;">│  ├─ ${skillName}</span>
+          <span style="color: #ffaa00; font-size: 0.9em; min-width: 60px;">(${status})</span>
+          ${canUpgrade ? `
+            <button class="skill-upgrade-btn" data-category="${category}" data-skill="${skillId}" style="
+              background: #004400;
+              border: 1px solid #00ff00;
+              color: #00ff00;
+              padding: 2px 8px;
+              font-size: 0.8em;
+              cursor: pointer;
+              border-radius: 2px;
+            ">+1</button>
+          ` : ""}
+        </div>
+      `;
+    });
+    
+    return html;
+  },
+  
+  attachSkillListeners: function(container) {
+    const upgradeButtons = container.querySelectorAll('.skill-upgrade-btn');
+    upgradeButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const category = e.target.dataset.category;
+        const skill = e.target.dataset.skill;
+        this.upgradeSkill(category, skill);
+      });
+    });
+  },
+  
+  upgradeSkill: function(category, skillId) {
+    if (!this.gameEngine || !this.gameEngine.gameState) return;
+    
+    const state = this.gameEngine.gameState;
+    if (state.skillPoints <= 0) {
+      this.gameEngine.output("❌ No skill points available!", "error");
+      return;
+    }
+    
+    const currentLevel = state.skills[category][skillId] || 0;
+    if (currentLevel >= 5) {
+      this.gameEngine.output("❌ Skill already at maximum level!", "error");
+      return;
+    }
+    
+    // Upgrade the skill
+    state.skills[category][skillId] = currentLevel + 1;
+    state.skillPoints -= 1;
+    state.spentSkillPoints += 1;
+    
+    const skillNames = {
+      blade_mastery: 'Blade Mastery',
+      dual_wield: 'Dual Wield', 
+      parry: 'Parry',
+      fireball: 'Fireball',
+      mana_shield: 'Mana Shield',
+      spell_amplify: 'Spell Amplify',
+      system_probe: 'System Probe',
+      exploit: 'Exploit',
+      rootkit: 'Rootkit',
+      stealth: 'Stealth',
+      camouflage: 'Camouflage',
+      vanish: 'Vanish'
+    };
+    
+    this.gameEngine.output(`✅ ${skillNames[skillId]} upgraded to level ${currentLevel + 1}!`, "highlight");
+    
+    // Re-render the skill tree
+    if (this.currentPage === 'skills') {
+      this.renderPage('skills');
+    }
+    
+    // Save the game
+    this.gameEngine.saveGame('auto');
 
   renderCharDevelopment: function(container) {
     const char = this.gameEngine?.gameState?.character || {};
+    const gameState = this.gameEngine?.gameState || {};
+    
+    // Calculate actual proficiency based on skill levels and experience
+    let totalSkillLevels = 0;
+    let maxPossibleSkillLevels = 0;
+    
+    if (gameState.skills) {
+      Object.values(gameState.skills).forEach(category => {
+        Object.values(category).forEach(level => {
+          totalSkillLevels += level;
+          maxPossibleSkillLevels += 5; // Max level per skill
+        });
+      });
+    }
+    
+    const proficiency = maxPossibleSkillLevels > 0 
+      ? Math.floor((totalSkillLevels / maxPossibleSkillLevels) * 100)
+      : 0;
     
     const html = `
       <div style="color: #aa77ff; font-weight: bold; margin-bottom: 12px;">[ CHARACTER DEVELOPMENT ]</div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div>
           <div style="color: #ffaa00; margin-bottom: 4px;">Name:</div>
-          <div>${char.name || "Unknown Technomancer"}</div>
+          <div>${char.name || "Unknown Coder"}</div>
           
           <div style="color: #ffaa00; margin-bottom: 4px; margin-top: 8px;">Class:</div>
           <div>${char.class ? char.class.toUpperCase() : "UNASSIGNED"}</div>
           
           <div style="color: #ffaa00; margin-bottom: 4px; margin-top: 8px;">Level:</div>
-          <div>${char.level || 1}</div>
+          <div>${gameState.level || 1}</div>
         </div>
         <div>
           <div style="color: #ffaa00; margin-bottom: 4px;">Experience:</div>
-          <div>${char.experience || 0} / 1000</div>
+          <div>${gameState.exp || 0} / ${gameState.nextExp || 100}</div>
           
-          <div style="color: #ffaa00; margin-bottom: 4px; margin-top: 8px;">Proficiency:</div>
-          <div>67%</div>
+          <div style="color: #ffaa00; margin-bottom: 4px; margin-top: 8px;">Skill Proficiency:</div>
+          <div style="color: ${proficiency >= 50 ? '#00ff00' : '#ffaa00'}">${proficiency}%</div>
           
-          <div style="color: #ffaa00; margin-bottom: 4px; margin-top: 8px;">Mastery Points:</div>
-          <div>12 available</div>
+          <div style="color: #ffaa00; margin-bottom: 4px; margin-top: 8px;">Skill Points:</div>
+          <div style="color: ${gameState.skillPoints > 0 ? '#00ff00' : '#888'}">${gameState.skillPoints || 0} available</div>
         </div>
       </div>
     `;

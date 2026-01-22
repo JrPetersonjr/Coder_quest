@@ -1,4 +1,4 @@
 @echo off
-title TECHNOMANCER
+title Coder's Quest
 cd /d "%~dp0"
 start "" npx electron .

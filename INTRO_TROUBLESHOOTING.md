@@ -109,7 +109,7 @@ When working correctly, you'll see:
 1. **Name**: "What name echoes in your core memory?"
 2. **Pronouns**: "Your self-reference parameters?"
 3. **Class**: Choose from:
-   - **TECHNOMANCER** - Master of spells and code (Spell Power +20%, Code Affinity +30%, 40 HP)
+   - **TECHNOMANCER** - Master of code-magic and digital sorcery (Spell Power +20%, Code Affinity +30%, 40 HP)
    - **CRYPTID** - Mysterious shadow operator (Stealth +30%, Hack +20%, 45 HP)
    - **ARCHITECT** - Network designer (Engineering +30%, Repair +20%, 50 HP)
 

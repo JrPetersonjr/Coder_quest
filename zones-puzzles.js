@@ -24,6 +24,12 @@ window.CastZones = {
     id: "hub",
     name: "Central Hub",
     desc: "A nexus of infinite corridors. The air hums with potential.",
+    background: "ASSETS/PNG/1.png", // Cyber hub atmosphere
+    atmosphere: {
+      bgColor: "#0a0a0a",
+      textShadow: "0 0 8px #00ff00",
+      scanlines: true
+    },
     banner: [
       "    ✦   ✦   ✦",
       "   /     |     \\",
@@ -50,6 +56,7 @@ window.CastZones = {
         id: "hub_center",
         name: "Hub Center",
         desc: "The convergence point. Terminals line the walls, humming softly.",
+        background: "ASSETS/PNG/2.png", // Central hub core,
         banner: [
           "    [  ===  ]",
           "    | CORE |",
@@ -69,6 +76,7 @@ window.CastZones = {
         id: "hub_archive",
         name: "Archive Wing",
         desc: "Dusty shelves hold ancient code repositories and forgotten logs.",
+        background: "ASSETS/PNG/3.png", // Archive/library atmosphere,
         banner: [
           "  |===|  |===|  |===|",
           "  | ░ |  | ░ |  | ░ |",
@@ -88,6 +96,7 @@ window.CastZones = {
         id: "hub_nexus",
         name: "The Nexus",
         desc: "Where all paths converge. Reality feels thin here. Multiple terminals pulse.",
+        background: "ASSETS/PNG/4.png", // Portal/nexus effect,
         banner: [
           "    ∞   ∞   ∞",
           "   / \\ / \\ / \\",
@@ -387,7 +396,7 @@ window.CastZones = {
     music: "data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==",
     hints: [
       "The stars align to ancient patterns.",
-      "Only a true Technomancer can navigate the void.",
+      "Only a true coder can navigate the void.",
       "The final gateway awaits."
     ],
 

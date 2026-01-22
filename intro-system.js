@@ -16,7 +16,7 @@
 //   3. "You wake up..."
 //   4. Questions by castconsole (Who are you? Why are you here?)
 //   5. Define character name, class, pronouns
-//   6. First glimpse of TECHNOMANCER world
+//   6. First glimpse of Coder's Quest world
 //   7. Tutorial quest unlocks
 // ============================================================
 
@@ -100,7 +100,7 @@ window.IntroSystem = {
     │ [ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ] │
     └─────────────────────────────────┘
     
-    Welcome back, Technomancer.
+    Welcome back, Coder.
     `
   ],
 

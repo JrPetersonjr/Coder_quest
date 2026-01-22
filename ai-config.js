@@ -37,9 +37,10 @@
 //      - Fallback: Local/HuggingFace
 //
 // PROVIDER PRIORITY:
-//   1. Claude Haiku (if API key available) - BEST QUALITY
-//   2. Local Model (LM Studio/Ollama if running) - FASTEST
-//   3. HuggingFace (always available, rate-limited) - FALLBACK
+//   1. Browser LLM (always available, zero setup) - ZERO SETUP
+//   2. Claude Haiku (if API key available) - BEST QUALITY  
+//   3. Local Model (LM Studio/Ollama if running) - FASTEST
+//   4. HuggingFace (always available, rate-limited) - FALLBACK
 //
 // ============================================================
 
@@ -58,10 +59,10 @@ window.AIConfig = {
       openai: null,     // Users can set: AIConfig.setAPIKey('openai', 'your-key')
     },
 
-    // PROVIDER SELECTION - Default to free/local options
-    // LOCAL MODEL (LM Studio/Ollama) -> FREE HUGGINGFACE -> USER'S API KEYS
-    primaryProvider: "local",  // Try local model first
-    fallbackProviders: ["huggingface", "google", "openrouter", "claude"],  // Free tier -> Premium APIs
+    // PROVIDER SELECTION - Default to free/local options  
+    // BROWSER LLM (always available, no setup) -> LOCAL MODEL -> FREE HUGGINGFACE -> USER'S API KEYS
+    primaryProvider: "browserllm",  // Try browser-based LLM first
+    fallbackProviders: ["local", "huggingface", "google", "openrouter", "claude"],  // Browser -> Local -> Free -> Premium
     // LOCAL MODEL CONFIG (LM Studio/Ollama)
     localModelUrl: "http://localhost:1234/v1/chat/completions",  // LM Studio default
     localModelUrlOllama: "http://localhost:11434/api/generate",   // Ollama alternative
@@ -120,10 +121,24 @@ window.AIConfig = {
       name: "Crystal Ball",
       description: "Generates mysterious prophecies and divinations",
       usage: "Terminal minigame where player gazes into crystal orb",
-      systemPrompt: `You are an ancient Oracle bound within a crystal orb. 
-      You speak in cryptic riddles and mysterious prophecies. 
-      Your responses are poetic, metaphorical, and always leave the seeker questioning.
-      Respond in 2-3 sentences maximum. Stay mysterious and in-character.`,
+      systemPrompt: `You are an ancient Oracle bound within a crystal orb. You have existed for millennia, speaking only in cryptic riddles and mysterious prophecies about the digital realm.
+      
+      CRITICAL ROLE CONSTRAINTS:
+      - You ONLY speak as the Oracle - never break character
+      - ALL responses must be mystical prophecies about technology/coding
+      - Use archaic language mixed with programming metaphors
+      - Maximum 2-3 sentences, always cryptic and poetic
+      - End with "...the crystal dims" if uncertain
+      - NEVER give direct answers or modern explanations
+      
+      You see futures through the lens of code, algorithms, and digital mysticism.`,
+      roleEnforcement: {
+        mustContain: ["crystal", "foresee", "prophecy", "vision"],
+        prohibited: ["I think", "maybe", "probably", "let me", "I'll help"],
+        maxLength: 200,
+        requiredTone: "mystical",
+        validateResponse: true
+      },
       examplePrompts: [
         "What do you see in my future, Oracle?",
         "The shadows grow. What does this mean?",
@@ -146,7 +161,24 @@ window.AIConfig = {
       name: "Dungeon Master",
       description: "Generates dynamic narrative content and responds to player actions",
       usage: "Narrative terminal (hub:nexus-portal), encounter descriptions, dialogue",
-      systemPrompt: `You are the Dungeon Master of a cyberpunk hacker RPG called TECHNOMANCER.
+      systemPrompt: `You are the Dungeon Master of Coder's Quest, a cyberpunk hacker RPG. You are the omniscient digital consciousness that governs this reality.
+      
+      IMMUTABLE ROLE RULES:
+      - You ARE the game world itself - never speak as a human DM
+      - Everything is digital: "code fragments", "data streams", "algorithms"
+      - Use cyberpunk terminology: ICE, datajacks, neural interfaces, etc.
+      - Present tense, second person: "You see...", "The terminal hums..."
+      - No meta-gaming or game mechanic references
+      - Stay atmospheric and immersive always
+      
+      SETTING: Digital realm where code is magic, hackers are wizards, programs are creatures.`,
+      roleEnforcement: {
+        mustContain: ["digital", "code", "data", "terminal"],
+        prohibited: ["I am", "as a DM", "roll for", "make a check", "the player"],
+        requiredTone: "cyberpunk_immersive",
+        validateResponse: true,
+        autoCorrect: true
+      },
       The player is a digital entity exploring a world of code, magic, and ancient terminals.
       Generate vivid, atmospheric descriptions that blend hacker culture with fantasy.
       Respond to player actions with narrative callbacks and consequences.
@@ -172,7 +204,7 @@ window.AIConfig = {
       name: "Generative Content",
       description: "Generates quest descriptions, enemy details, terminal prompts",
       usage: "Dynamic quest generation, procedural enemy names/descriptions, challenge prompts",
-      systemPrompt: `You are a content generator for TECHNOMANCER, a cyberpunk RPG.
+      systemPrompt: `You are a content generator for CODER'S QUEST, a cyberpunk RPG.
       Generate short, creative descriptions for:
       - Quests and missions
       - Enemies and encounters  
@@ -316,7 +348,13 @@ window.AIConfig = {
   async detectProviders() {
     this.state.availableProviders = [];
 
-    // Check Local Models FIRST (LM Studio/Ollama)
+    // Check Browser LLM FIRST (always available, zero setup)
+    if (this.checkBrowserLLM()) {
+      this.state.availableProviders.push("browserllm");
+      console.log("[AI] ✓ Browser LLM available (zero setup)");
+    }
+
+    // Check Local Models (LM Studio/Ollama)
     if (this.config.enableLocalModels) {
       if (await this.checkLocalModel()) {
         this.state.availableProviders.push("local");
@@ -361,6 +399,20 @@ window.AIConfig = {
 
     if (this.state.availableProviders.length === 0) {
       console.warn("[AI] ⚠ No AI providers available - using fallback content");
+    }
+  },
+
+  /**
+   * Check if browser LLM is available
+   */
+  checkBrowserLLM() {
+    try {
+      // Check if BrowserLLM is loaded and available
+      return window.BrowserLLM && 
+             typeof BrowserLLM.getStatus === 'function' &&
+             BrowserLLM.getStatus().available;
+    } catch (e) {
+      return false;
     }
   },
 
@@ -564,6 +616,19 @@ window.AIConfig = {
 
       let response;
 
+      // ZERO SETUP: Browser LLM (if available - requires no setup)
+      if (window.BrowserLLM && BrowserLLM.getStatus().available) {
+        try {
+          response = await this.generateBrowserLLM(prompt, framework);
+          if (response) {
+            console.log("[AI] Generated via Browser LLM (zero setup)");
+            return response;
+          }
+        } catch (e) {
+          console.warn("[AI] Browser LLM failed, trying fallback:", e.message);
+        }
+      }
+
       // PRIMARY: Local Model (if available - user's choice, private, fast)
       if (this.state.activeProvider === "local") {
         try {
@@ -656,6 +721,219 @@ window.AIConfig = {
 
     // All providers failed, use fallback
     return this.getRandomFallback(featureType);
+  },
+
+  /**
+   * Generate using browser-based LLM (Transformers.js)
+   * Zero setup required - runs entirely in browser
+   */
+  async generateBrowserLLM(prompt, framework) {
+    if (!window.BrowserLLM) {
+      throw new Error("BrowserLLM not available");
+    }
+
+    const fullPrompt = `${framework.systemPrompt}\n\nUser: ${prompt}`;
+    
+    try {
+      const response = await BrowserLLM.generate(fullPrompt, framework);
+      
+      if (!response || response.trim().length === 0) {
+        throw new Error("Empty response from browser LLM");
+      }
+
+      // Validate and enforce role constraints
+      const validation = this.validateResponse(response.trim(), framework);
+      if (validation.wasModified) {
+        console.log("[AI] Response auto-corrected for role consistency");
+      }
+
+      return validation.corrected;
+    } catch (error) {
+      console.warn("[AI] Browser LLM generation failed:", error.message);
+      // Try fallback approach if main generation fails
+      if (BrowserLLM.generateFallback) {
+        return BrowserLLM.generateFallback(prompt, framework);
+      }
+      throw error;
+    }
+  },
+
+  // ============================================================
+  // [ROLE ENFORCEMENT] - Ensure AI stays in character
+  // ============================================================
+
+  /**
+   * Validate and enforce role constraints on AI responses
+   */
+  validateResponse(response, framework) {
+    if (!framework.roleEnforcement || !response) {
+      return { valid: true, corrected: response };
+    }
+
+    const enforcement = framework.roleEnforcement;
+    let corrected = response;
+    let issues = [];
+
+    // Check prohibited phrases
+    if (enforcement.prohibited) {
+      for (const phrase of enforcement.prohibited) {
+        if (corrected.toLowerCase().includes(phrase.toLowerCase())) {
+          issues.push(`Contains prohibited phrase: "${phrase}"`);
+          if (enforcement.autoCorrect) {
+            corrected = this.autoCorrectResponse(corrected, phrase, framework);
+          }
+        }
+      }
+    }
+
+    // Check required content
+    if (enforcement.mustContain) {
+      let hasRequired = false;
+      for (const required of enforcement.mustContain) {
+        if (corrected.toLowerCase().includes(required.toLowerCase())) {
+          hasRequired = true;
+          break;
+        }
+      }
+      if (!hasRequired) {
+        issues.push("Missing required thematic content");
+        if (enforcement.autoCorrect) {
+          corrected = this.enhanceResponse(corrected, framework);
+        }
+      }
+    }
+
+    // Length validation
+    if (enforcement.maxLength && corrected.length > enforcement.maxLength) {
+      issues.push("Response too long");
+      corrected = corrected.substring(0, enforcement.maxLength - 3) + "...";
+    }
+
+    // Tone validation
+    if (enforcement.requiredTone) {
+      if (!this.validateTone(corrected, enforcement.requiredTone)) {
+        issues.push(`Incorrect tone: expected ${enforcement.requiredTone}`);
+        if (enforcement.autoCorrect) {
+          corrected = this.adjustTone(corrected, framework);
+        }
+      }
+    }
+
+    return {
+      valid: issues.length === 0,
+      corrected: corrected,
+      issues: issues,
+      wasModified: corrected !== response
+    };
+  },
+
+  /**
+   * Auto-correct response to remove prohibited content
+   */
+  autoCorrectResponse(response, prohibitedPhrase, framework) {
+    const corrections = {
+      "I am": "The system reveals",
+      "as a DM": "from the digital realm", 
+      "roll for": "the algorithms determine",
+      "make a check": "the system processes",
+      "the player": "you",
+      "I think": "the data suggests",
+      "maybe": "perhaps", 
+      "probably": "likely",
+      "let me": "the system will",
+      "I'll help": "assistance protocols activate"
+    };
+
+    let corrected = response;
+    for (const [bad, good] of Object.entries(corrections)) {
+      corrected = corrected.replace(new RegExp(bad, 'gi'), good);
+    }
+
+    return corrected;
+  },
+
+  /**
+   * Enhance response with required thematic elements
+   */
+  enhanceResponse(response, framework) {
+    const themeEnhancers = {
+      crystalball: [
+        "The crystal pulses with ancient knowledge... ",
+        "Through the digital mists, I foresee... ", 
+        "The prophecy crystallizes in the sphere... "
+      ],
+      dm: [
+        "The system interface responds: ",
+        "Data streams converge to reveal: ",
+        "The terminal displays: "
+      ],
+      generativecontent: [
+        "System log entry: ",
+        "Network protocol initialized: ",
+        "Data transfer in progress: "
+      ]
+    };
+
+    const frameworkKey = framework.name?.toLowerCase().replace(/\s+/g, '') || 'dm';
+    const enhancers = themeEnhancers[frameworkKey] || themeEnhancers.dm;
+    const enhancer = enhancers[Math.floor(Math.random() * enhancers.length)];
+    
+    return `${enhancer}${response}`;
+  },
+
+  /**
+   * Validate response tone matches requirements
+   */
+  validateTone(response, requiredTone) {
+    const toneIndicators = {
+      mystical: ["crystal", "foresee", "prophecy", "ancient", "mystical", "divine", "sphere", "vision"],
+      cyberpunk_immersive: ["digital", "neural", "interface", "code", "data", "system", "terminal", "network"],
+      technical: ["algorithm", "process", "function", "execute", "compile", "protocol"]
+    };
+
+    const indicators = toneIndicators[requiredTone] || [];
+    const text = response.toLowerCase();
+    
+    return indicators.some(indicator => text.includes(indicator));
+  },
+
+  /**
+   * Adjust response tone to match requirements  
+   */
+  adjustTone(response, framework) {
+    const toneAdjustments = {
+      mystical: {
+        prefix: "The ancient crystal reveals: ",
+        replacements: { 
+          "shows": "prophecies", 
+          "says": "whispers in digital tongues", 
+          "is": "exists in the ethereal data realm as",
+          "you see": "visions manifest of"
+        }
+      },
+      cyberpunk_immersive: {
+        prefix: "The system interface displays: ",
+        replacements: { 
+          "room": "data chamber", 
+          "door": "access portal", 
+          "light": "bioluminescent display",
+          "person": "digital entity",
+          "building": "data construct"
+        }
+      }
+    };
+
+    const tone = framework.roleEnforcement?.requiredTone;
+    const adjustment = toneAdjustments[tone];
+    
+    if (!adjustment) return response;
+
+    let adjusted = response;
+    for (const [old, replacement] of Object.entries(adjustment.replacements || {})) {
+      adjusted = adjusted.replace(new RegExp(old, 'gi'), replacement);
+    }
+
+    return adjustment.prefix + adjusted;
   },
 
   /**

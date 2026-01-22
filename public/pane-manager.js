@@ -317,6 +317,7 @@ window.PaneManager = {
 
     // Drag from header
     pane.header.addEventListener("mousedown", (e) => {
+      e.preventDefault(); // Prevent text selection/drag weirdness
       if (e.target.closest("button")) return; // Don't drag if clicking buttons
 
       this.focusPane(id);
@@ -365,12 +366,18 @@ window.PaneManager = {
 
     // If dragged while docked, undock immediately
     if (pane.isInDeck && state.type === "drag") {
-        this.undockPane(state.paneId, e.clientX, e.clientY);
-        // Update state logic to standard drag now
-        state.startX = e.clientX;
-        state.startY = e.clientY;
-        state.paneStartX = pane.x;
-        state.paneStartY = pane.y;
+        // Only undock if moved significantly (hysteresis) to prevent accidental clicks
+        const moveDist = Math.hypot(e.clientX - state.startX, e.clientY - state.startY);
+        if (moveDist > 5) {
+            this.undockPane(state.paneId, e.clientX, e.clientY);
+            // Update state logic to standard drag now
+            state.startX = e.clientX;
+            state.startY = e.clientY;
+            state.paneStartX = pane.x;
+            state.paneStartY = pane.y;
+        } else {
+            return; // Wait for more movement
+        }
     }
 
     if (state.type === "drag") {
@@ -485,9 +492,61 @@ window.PaneManager = {
       pane.element.style.border = "1px solid #aa8800";
       pane.element.style.boxShadow = "0 -5px 10px rgba(0,0,0,0.5)"; // Shadow up for stack effect
       
-      // Add clicking explicitly expands it inside deck? Or just dragging out?
-      // For now, let's allow clicking the header to "peek" (expand content temporarily?)
-      // We'll keep it simple: drag out to use.
+      // Add click handler to undock from deck
+      const undockClickHandler = (e) => {
+        // Only undock on direct clicks to the header, not buttons or inputs
+        if (e.target.closest("button") || e.target.closest("input") || e.target.closest("select")) {
+          return;
+        }
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log("[PaneManager] Click undock triggered for:", id);
+        
+        // Use mouse position for undock placement
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mouseX = e.clientX || rect.left + rect.width / 2;
+        const mouseY = e.clientY || rect.top + 20;
+        
+        this.undockPane(id, mouseX, mouseY);
+        
+        // Remove this handler since we're no longer in deck
+        pane.header.removeEventListener("click", undockClickHandler, true);
+        delete pane.undockClickHandler;
+      };
+      
+      // Add visual feedback for undock capability
+      pane.header.style.cursor = "pointer";
+      pane.header.title = "Click to undock from deck";
+      
+      // Add hover effects for better UX
+      pane.header.addEventListener('mouseenter', () => {
+        pane.header.style.background = "rgba(0, 255, 0, 0.1)";
+        pane.header.style.borderColor = "#00ff00";
+      });
+      
+      pane.header.addEventListener('mouseleave', () => {
+        pane.header.style.background = "";
+        pane.header.style.borderColor = "";
+      });
+      
+      // Use capture phase for better handling and add to header directly
+      pane.header.addEventListener("click", undockClickHandler, true);
+      
+      // Store reference to the handler so we can remove it later
+      pane.undockClickHandler = undockClickHandler;
+      
+      // Also add double-click as alternative undock method
+      const doubleClickHandler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("[PaneManager] Double-click undock for:", id);
+        const rect = e.currentTarget.getBoundingClientRect();
+        this.undockPane(id, rect.left + rect.width / 2, rect.top + 20);
+      };
+      pane.header.addEventListener("dblclick", doubleClickHandler);
+      pane.undockDoubleClickHandler = doubleClickHandler;
   },
   
   undockPane: function(id, mouseX, mouseY) {
@@ -497,13 +556,24 @@ window.PaneManager = {
       console.log("[PaneManager] Undocking pane:", id);
       pane.isInDeck = false;
       
+      // Remove all deck-related event handlers
+      if (pane.undockClickHandler) {
+        pane.header.removeEventListener("click", pane.undockClickHandler, true);
+        delete pane.undockClickHandler;
+      }
+      
+      if (pane.undockDoubleClickHandler) {
+        pane.header.removeEventListener("dblclick", pane.undockDoubleClickHandler);
+        delete pane.undockDoubleClickHandler;
+      }
+      
       // Move back to main container
       this.container.appendChild(pane.element);
       
-      // Restore Position
+      // Restore Position - center on mouse with bounds checking
       pane.element.style.position = "absolute";
-      pane.x = mouseX - 150; // Center(ish) on mouse
-      pane.y = mouseY - 20;
+      pane.x = Math.max(0, Math.min(window.innerWidth - 300, mouseX - 150));
+      pane.y = Math.max(0, Math.min(window.innerHeight - 200, mouseY - 30));
       pane.element.style.left = pane.x + "px";
       pane.element.style.top = pane.y + "px";
       
@@ -513,15 +583,36 @@ window.PaneManager = {
       pane.element.style.marginBottom = "0";
       
       // Restore Content
-      pane.element.querySelector(".pane-content").style.display = "flex";
-      pane.element.querySelector(".pane-resize-handle").style.display = "block";
+      const content = pane.element.querySelector(".pane-content");
+      const resizeHandle = pane.element.querySelector(".pane-resize-handle");
+      
+      if (content) content.style.display = "flex";
+      if (resizeHandle) resizeHandle.style.display = "block";
       
       // Restore Style
+      pane.header.style.cursor = "grab";
+      pane.header.title = "Drag to move";
       pane.header.style.background = "linear-gradient(180deg, #001a00 0%, #000a00 100%)";
       pane.header.style.border = "none"; 
       pane.header.style.borderBottom = "2px solid #00ff00";
       pane.element.style.border = "2px solid #00ff00";
-      pane.element.style.boxShadow = "0 0 20px rgba(0, 255, 0, 0.3)";
+      
+      // Visual feedback for successful undock
+      pane.element.style.boxShadow = "0 0 30px #00ff00";
+      setTimeout(() => {
+        pane.element.style.boxShadow = "0 0 20px rgba(0, 255, 0, 0.3)";
+      }, 800);
+      
+      // Remove from deck tracking
+      const deckIndex = this.deck.panes.indexOf(id);
+      if (deckIndex !== -1) {
+        this.deck.panes.splice(deckIndex, 1);
+      }
+      
+      // Clear saved rect
+      delete pane.savedRect;
+      
+      console.log("[PaneManager] Pane", id, "successfully undocked");
   },
 
   // ============================================================

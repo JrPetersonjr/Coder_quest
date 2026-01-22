@@ -113,6 +113,32 @@ class GameEngine {
       allies: [],
       hunted_by: [],
       claimed_zones: [],
+      
+      // Skill system
+      skillPoints: 3, // Available skill points to allocate
+      spentSkillPoints: 0,
+      skills: {
+        combat: {
+          blade_mastery: 1,
+          dual_wield: 0, 
+          parry: 0
+        },
+        arcane: {
+          fireball: 1,
+          mana_shield: 1,
+          spell_amplify: 0
+        },
+        code_injection: {
+          system_probe: 1,
+          exploit: 1,
+          rootkit: 0
+        },
+        survival: {
+          stealth: 0,
+          camouflage: 0,
+          vanish: 0
+        }
+      },
 
       // Spell crafting (character profile for spellTinkering)
       character: {
@@ -464,7 +490,7 @@ class GameEngine {
 
   cmdHelp() {
     this.output("════════════════════════════════════", "system");
-    this.output("[ TECHNOMANCER COMMANDS ]", "system");
+    this.output("[ CODER'S QUEST COMMANDS ]", "system");
     this.output("════════════════════════════════════", "system");
     this.output("", "system");
     this.output("MOVEMENT:", "highlight");
@@ -874,6 +900,15 @@ class GameEngine {
     // Use actual CastZones data from zones-puzzles.js
     if (window.CastZones && window.CastZones[zoneId]) {
       return window.CastZones[zoneId];
+    }
+    
+    // Check if it's a subzone (zone_subzone format)
+    if (window.CastZones && zoneId.includes('_')) {
+      for (const [mainZoneId, mainZone] of Object.entries(window.CastZones)) {
+        if (mainZone.subzones && mainZone.subzones[zoneId]) {
+          return mainZone.subzones[zoneId];
+        }
+      }
     }
     
     // Fallback for basic zones if CastZones not loaded
@@ -1689,6 +1724,76 @@ GameEngine.prototype.cmdUse = function(args) {
 
 // Alias commands for convenience
 GameEngine.prototype.cmdInv = GameEngine.prototype.cmdInventory;
+GameEngine.prototype.cmdI = GameEngine.prototype.cmdInventory;
+
+// Map command to show current area and exits
+GameEngine.prototype.cmdMap = function() {
+  this.output("🗺️ [AREA MAP]", "system");
+  const currentZone = this.gameState.zone;
+  const zoneData = this.getZoneData(currentZone);
+  
+  if (!zoneData) {
+    this.output("Location data corrupted.", "error");
+    return;
+  }
+  
+  this.output(`Current Zone: ${zoneData.name}`, "highlight");
+  this.output(`Description: ${zoneData.desc}`, "text");
+  
+  if (zoneData.exits && Object.keys(zoneData.exits).length > 0) {
+    this.output("\nAvailable Exits:", "system");
+    for (const [direction, zone] of Object.entries(zoneData.exits)) {
+      const targetData = this.getZoneData(zone);
+      const targetName = targetData ? targetData.name : zone;
+      this.output(`  ${direction}: ${targetName} (go ${zone})`, "hint");
+    }
+  } else {
+    this.output("No obvious exits.", "hint");
+  }
+  
+  // Show subzones if available
+  if (zoneData.subzones && Object.keys(zoneData.subzones).length > 0) {
+    this.output("\nSubzones:", "system");
+    for (const [subzoneId, subzone] of Object.entries(zoneData.subzones)) {
+      const accessible = !subzone.unlockReq || this.gameState.unlockedContent?.includes(subzone.unlockReq);
+      const status = accessible ? "(accessible)" : "(locked)";
+      this.output(`  ${subzone.name}: go ${subzoneId} ${status}`, accessible ? "hint" : "error");
+    }
+  }
+};
+
+// Status command for character info
+GameEngine.prototype.cmdStatus = function() {
+  this.output("⚡ [CHARACTER STATUS]", "system");
+  this.output("═══════════════════════════════════", "hint");
+  
+  const char = this.gameState.character || {};
+  this.output(`Name: ${char.name || 'Unknown'}`, "text");
+  this.output(`Class: ${char.class || 'Coder'}`, "text");
+  this.output(`Level: ${this.gameState.experience?.level || 1}`, "text");
+  this.output(`XP: ${this.gameState.experience?.xp || 0}`, "text");
+  
+  const stats = this.gameState.stats || {};
+  this.output(`Health: ${stats.health || 100}/${stats.maxHealth || 100}`, "text");
+  this.output(`Mana: ${stats.mana || 50}/${stats.maxMana || 50}`, "text");
+  this.output(`Data: ${this.gameState.data || 0}`, "text");
+  
+  this.output("═══════════════════════════════════", "hint");
+};
+
+// Exits command as alias for map
+GameEngine.prototype.cmdExits = function() {
+  const zoneData = this.getZoneData(this.gameState.zone);
+  if (!zoneData || !zoneData.exits) {
+    this.output("No obvious exits.", "hint");
+    return;
+  }
+  
+  this.output("Available exits:", "system");
+  for (const [direction, zone] of Object.entries(zoneData.exits)) {
+    this.output(`  ${direction}: go ${zone}`, "hint");
+  }
+};
 
 // ============================================================
 // [MUSIC COMMANDS] - MIDI music system integration
@@ -1736,7 +1841,7 @@ GameEngine.prototype.cmdMusic = function(args) {
   else if (command === "list") {
     this.output("🎵 Available Music Themes:", "system");
     this.output("═════════════════════════════════", "hint");
-    this.output("  menu        - Main Technomancer theme", "text");
+    this.output("  menu        - Main Coder's Quest theme", "text");
     this.output("  battle      - Intense combat music", "text");
     this.output("  exploration - Ambient discovery theme", "text");
     this.output("  victory     - Triumphant success music", "text");
@@ -1779,6 +1884,15 @@ GameEngine.prototype.cmdTest = function(args) {
     case 'local':
       this.testLocalAI();
       break;
+    case 'browser':
+      this.testBrowserLLM();
+      break;
+    case 'qwen':
+      this.testQwenRoleplay();
+      break;
+    case 'character':
+      this.testCharacterConsistency(args[1]);
+      break;
     default:
       this.output("Test commands:", "system");
       this.output("  test ai    - Test AI backend connection", "hint");
@@ -1786,6 +1900,9 @@ GameEngine.prototype.cmdTest = function(args) {
       this.output("  test deck  - Test deck functionality", "hint");
       this.output("  test generate - Test AI generation", "hint");
       this.output("  test local - Test local model connection", "hint");
+      this.output("  test browser - Test browser-based LLM", "hint");
+      this.output("  test qwen - Test Qwen roleplay consistency", "hint");
+      this.output("  test character <type> - Test specific character (oracle/dm/npc)", "hint");
       break;
   }
 };
@@ -1952,6 +2069,132 @@ GameEngine.prototype.testLocalAI = async function() {
     }
   } catch (error) {
     this.output("❌ Local AI test error:", "error");
+    this.output(error.message, "error");
+  }
+};
+
+GameEngine.prototype.testBrowserLLM = async function() {
+  this.output("🌐 Testing browser-based LLM (zero setup)...", "system");
+  
+  if (!window.BrowserLLM) {
+    this.output("❌ Browser LLM not loaded", "error");
+    this.output("💡 Check if browser-llm.js is included", "hint");
+    return;
+  }
+  
+  try {
+    // Check status
+    const status = BrowserLLM.getStatus();
+    this.output(`Status: ${status.initialized ? 'Initialized' : 'Not initialized'}`, "text");
+    this.output(`Loading: ${status.loading ? 'Yes' : 'No'}`, "text");
+    this.output(`Model: ${status.model || 'None'}`, "text");
+    this.output(`Available: ${status.available ? 'Yes' : 'No'}`, "text");
+    
+    if (status.available) {
+      this.output("✅ Browser LLM is ready!", "highlight");
+      this.output("", "system");
+      this.output("Testing generation...", "hint");
+      
+      const result = await BrowserLLM.test();
+      if (result.success) {
+        this.output("✅ Generation test successful!", "highlight");
+        this.output(`Response: "${result.result}"`, "text");
+        this.output(`Model used: ${result.model}`, "hint");
+      } else {
+        this.output("❌ Generation test failed:", "error");
+        this.output(result.error, "error");
+      }
+    } else if (status.loading) {
+      this.output("⏳ Browser LLM is still loading...", "system");
+      this.output(`Progress: ${Math.round(status.progress)}%`, "hint");
+    } else if (status.error) {
+      this.output("❌ Browser LLM error:", "error");
+      this.output(status.error, "error");
+    } else {
+      this.output("⚠️ Browser LLM not available", "system");
+      this.output("Try: refresh page or check browser compatibility", "hint");
+    }
+  } catch (error) {
+    this.output("❌ Browser LLM test error:", "error");
+    this.output(error.message, "error");
+  }
+};
+
+GameEngine.prototype.testQwenRoleplay = async function() {
+  this.output("🎭 Testing Qwen Roleplay V2 character consistency...", "system");
+  
+  if (!window.QwenRoleplayConfig) {
+    this.output("❌ Qwen Roleplay Config not loaded", "error");
+    this.output("💡 Check if qwen-roleplay-config.js is included", "hint");
+    return;
+  }
+  
+  try {
+    const status = QwenRoleplayConfig.getStatus();
+    this.output(`Model: ${status.model}`, "text");
+    this.output(`Endpoint: ${status.endpoint}`, "text");
+    this.output(`Role Enforcement: ${status.roleEnforcement.strictMode ? 'Enabled' : 'Disabled'}`, "text");
+    this.output(`Available Characters: ${status.availableCharacters.join(', ')}`, "text");
+    
+    this.output("", "system");
+    this.output("Testing Oracle character...", "hint");
+    
+    const result = await QwenRoleplayConfig.generateWithQwen(
+      "What do you see in my coding future?", 
+      "oracle"
+    );
+    
+    this.output("✅ Oracle test successful!", "highlight");
+    this.output(`Oracle says: "${result}"`, "spell");
+    
+  } catch (error) {
+    this.output("❌ Qwen Roleplay test error:", "error");
+    this.output(error.message, "error");
+    this.output("", "system");
+    this.output("💡 Make sure LM Studio is running with Qwen model loaded", "hint");
+  }
+};
+
+GameEngine.prototype.testCharacterConsistency = async function(characterType = 'oracle') {
+  if (!window.QwenRoleplayConfig) {
+    this.output("❌ Qwen Roleplay Config not available", "error");
+    return;
+  }
+  
+  const validTypes = ['oracle', 'dungeonMaster', 'npcEntity'];
+  if (!validTypes.includes(characterType)) {
+    this.output(`❌ Invalid character type. Use: ${validTypes.join(', ')}`, "error");
+    return;
+  }
+  
+  this.output(`🎯 Testing ${characterType} character consistency...`, "system");
+  
+  try {
+    const results = await QwenRoleplayConfig.testCharacter(characterType);
+    
+    let passed = 0;
+    let failed = 0;
+    
+    for (const result of results) {
+      if (result.error) {
+        this.output(`❌ "${result.prompt}" - ${result.error}`, "error");
+        failed++;
+      } else if (result.valid) {
+        this.output(`✅ "${result.prompt}" - Character consistent`, "highlight");
+        this.output(`   Response: "${result.response.substring(0, 80)}..."`, "text");
+        passed++;
+      } else {
+        this.output(`⚠️ "${result.prompt}" - Rule violations: ${result.violations.join(', ')}`, "error");
+        this.output(`   Response: "${result.response.substring(0, 80)}..."`, "text");
+        failed++;
+      }
+    }
+    
+    this.output("", "system");
+    this.output(`Test Results: ${passed} passed, ${failed} failed`, passed > failed ? "highlight" : "error");
+    
+  } catch (error) {
+    this.output("❌ Character consistency test failed:", "error");
     this.output(error.message, "error");
   }
 };

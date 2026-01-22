@@ -14,7 +14,7 @@ const DynamicNarrative = {
     playerIdentity: {
       discovered: false,
       realName: null,
-      role: null, // "Guardian", "Technomancer", "Echo", etc.
+      role: null, // "Guardian", "Technomancer", "Hacker", "Datamancer", etc.
       power: null // "Corruption Fighter", "Terminal Restorer", "Code Weaver"
     },
 

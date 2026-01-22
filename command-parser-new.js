@@ -48,6 +48,9 @@ window.CommandParser = {
     this.registerCommand("skills", this.cmdSkills.bind(this), "List skills");
     this.registerCommand("inventory", this.cmdInventory.bind(this), "Show inventory");
     this.registerCommand("inv", this.cmdInventory.bind(this), "Show inventory (short)");
+    this.registerCommand("i", this.cmdInventory.bind(this), "Show inventory (short)");
+    this.registerCommand("map", this.cmdMap.bind(this), "Show area map and exits");
+    this.registerCommand("exits", this.cmdExits.bind(this), "List available exits");
     this.registerCommand("test", this.cmdTest.bind(this), "System diagnostics: test [ai|music|deck]");
     this.registerCommand("music", this.cmdMusic.bind(this), "Music control: music [play|stop|volume]");
     this.registerCommand("cast", this.cmdCast.bind(this), "Cast a spell: cast [spell name]");
@@ -416,6 +419,22 @@ window.CommandParser = {
       this.gameEngine.cmdMusic(args);
     } else {
       this.logToConsole("Music system not available", "error");
+    }
+  },
+
+  cmdMap: function(args) {
+    if (this.gameEngine && this.gameEngine.cmdMap) {
+      this.gameEngine.cmdMap(args);
+    } else {
+      this.logToConsole("Map system not available", "error");
+    }
+  },
+
+  cmdExits: function(args) {
+    if (this.gameEngine && this.gameEngine.cmdExits) {
+      this.gameEngine.cmdExits(args);
+    } else {
+      this.logToConsole("Navigation system not available", "error");
     }
   }
 

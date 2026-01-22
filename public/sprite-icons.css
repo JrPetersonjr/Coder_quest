@@ -12,7 +12,7 @@
   --sprite-sheet: url('ASSETS/custom/sprite-icons.png');
   --icon-size: 32px;
   --icon-scale: 1;  /* Adjust for different display sizes */
-  --icons-per-row: 8;
+  --icons-per-row: 32;  /* Updated: 1024px ÷ 32px = 32 icons per row */
 }
 
 /* Base icon class */
@@ -22,47 +22,58 @@
   height: var(--icon-size);
   background-image: var(--sprite-sheet);
   background-repeat: no-repeat;
-  background-size: calc(var(--icon-size) * var(--icons-per-row)) auto;
+  /* Use specific pixel size for background to avoid zooming the container but not the image */
+  background-size: calc(32px * var(--icons-per-row)) auto; 
   vertical-align: middle;
-  transform: scale(var(--icon-scale));
+  /* Remove transform scale, use width/height scaling instead for proper flow */
+  /* transform: scale(var(--icon-scale)); */
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
 
 /* Small icons (inline with text) */
 .icon-sm {
-  --icon-scale: 0.5;
+  width: 16px;
+  height: 16px;
+  background-size: calc(16px * var(--icons-per-row)) auto;
   margin: 0 2px;
 }
 
 /* Medium icons (buttons, headers) */
 .icon-md {
-  --icon-scale: 0.75;
+  width: 24px;
+  height: 24px;
+  background-size: calc(24px * var(--icons-per-row)) auto;
   margin: 0 4px;
 }
 
 /* Large icons (decorative) */
 .icon-lg {
-  --icon-scale: 1.5;
+  width: 48px;
+  height: 48px;
+  background-size: calc(48px * var(--icons-per-row)) auto;
   margin: 0 8px;
 }
 
 /* ============================================================
-   SPRITE POSITIONS
+   SPRITE POSITIONS - Updated for 32-column grid (1024px ÷ 32px = 32 icons per row)
    Format: background-position: -Xpx -Ypx;
    Row 0 = 0px, Row 1 = -32px, Row 2 = -64px, etc.
    Col 0 = 0px, Col 1 = -32px, Col 2 = -64px, etc.
+   
+   NOTE: These positions may need adjustment based on actual sprite layout
+   Current positions assume icons are arranged starting from top-left
    ============================================================ */
 
-/* ROW 1: UI CONTROLS */
-.icon-close      { background-position: 0px 0px; }        /* ✕ */
-.icon-popout     { background-position: -32px 0px; }      /* ⬈ */
-.icon-popin      { background-position: -64px 0px; }      /* ⬋ */
-.icon-sound-on   { background-position: -96px 0px; }      /* 🔊 */
-.icon-sound-off  { background-position: -128px 0px; }     /* 🔇 */
-.icon-mic        { background-position: -160px 0px; }     /* 🎤 */
-.icon-hex        { background-position: -192px 0px; }     /* ⬢ */
-.icon-star4      { background-position: -224px 0px; }     /* ✦ */
+/* ROW 1: UI CONTROLS - Positions 0-7 in first row */
+.icon-close      { background-position: 0px 0px; }        /* ✕ - Col 0 */
+.icon-popout     { background-position: -32px 0px; }      /* ⬈ - Col 1 */
+.icon-popin      { background-position: -64px 0px; }      /* ⬋ - Col 2 */
+.icon-sound-on   { background-position: -96px 0px; }      /* 🔊 - Col 3 */
+.icon-sound-off  { background-position: -128px 0px; }     /* 🔇 - Col 4 */
+.icon-mic        { background-position: -160px 0px; }     /* 🎤 - Col 5 */
+.icon-hex        { background-position: -192px 0px; }     /* ⬢ - Col 6 */
+.icon-star4      { background-position: -224px 0px; }     /* ✦ - Col 7 */
 
 /* ROW 2: GAME MECHANICS */
 .icon-dice       { background-position: 0px -32px; }      /* 🎲 */

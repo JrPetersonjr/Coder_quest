@@ -622,8 +622,11 @@
       </div>
 
       <div class="button-row">
-        <button class="btn btn-gold" onclick="IntroSystem.launchGame()">
-          ⚡ ENTER THE SYSTEM ⚡
+        <button class="btn btn-gold" onclick="IntroSystem.downloadDesktop()">
+          ⚡ DOWNLOAD DESKTOP APP ⚡
+        </button>
+        <button class="btn btn-secondary" onclick="IntroSystem.playInBrowser()" style="margin-left: 10px; background: #333; color: #ccc;">
+          🌐 Play in Browser
         </button>
       </div>
     </div>
@@ -632,7 +635,7 @@
     <div class="footer">
       <p>TECHNOMANCER © 2026 | Quest for the Code</p>
       <p style="margin-top: 10px;">
-        Already have an account? <a href="game.html" style="color: var(--terminal-cyan);">Log In</a>
+        Download the full desktop experience | <a href="game.html" style="color: var(--terminal-cyan);">Try Web Version</a>
       </p>
     </div>
   </div>
@@ -980,15 +983,15 @@
       },
 
       playInBrowser() {
-        // Redirect to game with auto-login
+        // Redirect to web game with auto-login
         window.location.href = `game.html?autoLogin=true&token=${this.userData.token}`;
       },
 
       launchGame() {
-        // Store credentials and launch
+        // Store credentials and show download options
         localStorage.setItem('technomancer_token', this.userData.token);
         localStorage.setItem('technomancer_username', this.userData.username);
-        window.location.href = 'game.html?autoLogin=true';
+        this.downloadDesktop();
       }
     };
 

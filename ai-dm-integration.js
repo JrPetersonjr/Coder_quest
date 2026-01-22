@@ -653,24 +653,40 @@ window.AIDMIntegration = {
    * Call local model (Ollama/LM Studio)
    */
   async callLocalModel(taskType, context) {
-    // Placeholder - actual implementation
-    console.log("[AI-DM] Calling local model for:", taskType);
-    return {
-      text: "Local model response",
-      memorize: null
-    };
+    try {
+      const framework = this.getFramework(taskType);
+      const prompt = this.buildPrompt(taskType, context, framework);
+      
+      const response = await window.AIConfig.generateLocal(prompt, framework);
+      
+      return {
+        text: response || this.getOfflineFallback(taskType, context),
+        memorize: this.extractMemory(response, context)
+      };
+    } catch (error) {
+      console.warn("[AI-DM] Local model failed:", error.message);
+      return this.callOfflineMode(taskType, context);
+    }
   },
 
   /**
    * Call Claude API
    */
   async callClaude(taskType, context) {
-    // Placeholder - actual implementation
-    console.log("[AI-DM] Calling Claude for:", taskType);
-    return {
-      text: "Claude response",
-      memorize: null
-    };
+    try {
+      const framework = this.getFramework(taskType);
+      const prompt = this.buildPrompt(taskType, context, framework);
+      
+      const response = await window.AIConfig.generate(prompt, taskType);
+      
+      return {
+        text: response || this.getOfflineFallback(taskType, context),
+        memorize: this.extractMemory(response, context)
+      };
+    } catch (error) {
+      console.warn("[AI-DM] AI generation failed:", error.message);
+      return this.callOfflineMode(taskType, context);
+    }
   },
 
   /**

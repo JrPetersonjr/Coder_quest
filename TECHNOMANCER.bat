@@ -1,9 +1,9 @@
 @echo off
-title TECHNOMANCER: Quest for the Code
+title Coder's Quest
 cd /d "%~dp0"
 echo.
 echo   ╔══════════════════════════════════════════════╗
-echo   ║     TECHNOMANCER: Quest for the Code         ║
+echo   ║           CODER'S QUEST                      ║
 echo   ║         ✦ Starting the Oracle ✦             ║
 echo   ╚══════════════════════════════════════════════╝
 echo.

@@ -1,4 +1,4 @@
-5555# TECHNOMANCER - COMPLETE VISION RESTORATION
+5555# CODER'S QUEST - COMPLETE VISION RESTORATION
 
 **Status:** Discovery Complete - Ready to Rebuild  
 **Date:** January 19, 2026  

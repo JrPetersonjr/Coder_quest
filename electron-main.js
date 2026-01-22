@@ -1,6 +1,6 @@
 // ============================================================
 // ELECTRON MAIN PROCESS
-// Makes TECHNOMANCER a downloadable desktop app
+// Makes Coder's Quest a downloadable desktop app
 // 
 // Benefits:
 // - No CORS issues (direct Claude API calls work)
@@ -31,7 +31,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 768,
     icon: path.join(__dirname, 'favicon.ico'),
-    title: 'TECHNOMANCER: Quest for the Code',
+    title: "Coder's Quest: Quest for the Code",
     backgroundColor: '#0a0a0a',
     webPreferences: {
       nodeIntegration: false,
@@ -240,4 +240,4 @@ ipcMain.handle('is-oracle-popout', () => {
   return oracleWindow !== null;
 });
 
-console.log('[Electron] TECHNOMANCER Desktop App Started');
+console.log("[Electron] Coder's Quest Desktop App Started");

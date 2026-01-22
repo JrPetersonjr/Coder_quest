@@ -362,13 +362,13 @@ window.AuthSystem = {
       </style>
 
       <div class="login-panel">
-        <h1 class="login-title">TECHNOMANCER</h1>
+        <h1 class="login-title">CODER'S QUEST</h1>
         <p class="login-subtitle">Enter your credentials to continue</p>
 
         <form class="login-form" onsubmit="AuthSystem.handleLogin(event)">
           <div class="form-group">
             <label for="login-username">USERNAME</label>
-            <input type="text" id="login-username" placeholder="Your technomancer name" autocomplete="username" required>
+            <input type="text" id="login-username" placeholder="Your coder name" autocomplete="username" required>
           </div>
 
           <div class="form-group">

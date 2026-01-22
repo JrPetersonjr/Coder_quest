@@ -100,7 +100,7 @@ Then refresh the page.
 ```
 [CASTCONSOLE] Which path calls to you?
 
-1. TECHNOMANCER
+1. TECHNOMANCER - Code-magic specialist
    Master of spells and code. Harness the quantum nature of reality.
    Bonuses: Spell Power +20%, Code Affinity +30%, 40 HP
 
@@ -142,7 +142,7 @@ gameEngine.gameState.character = {
 
 Full class data is in `intro-system.js` lines 180-200:
 
-**TECHNOMANCER**
+**TECHNOMANCER** - Master of code-magic
 - Spell Power: 1.2× (20% bonus)
 - Code Affinity: 1.3× (30% bonus)
 - Starting HP: 40
