@@ -1,0 +1,15 @@
+// Optional local AI DM integration
+
+const AI = {
+  // Replace this with actual local model wiring if desired.
+  async askDM(prompt) {
+    // Stub: deterministic fake DM response
+    const base =
+      "The DM considers your question carefully, tracing patterns in the mosslight before replying:\n\n";
+    const reply =
+      "This world responds to definition and ritual. When you name a thing, you give it edges. " +
+      "When you repeat a pattern, you carve a channel. Use the console to define, repeat, and refine.\n\n" +
+      "If you feel lost, type 'help', 'look', or 'codex' to reorient yourself.";
+    return base + reply;
+  }
+};

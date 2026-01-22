@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TECHNOMANCER - Download</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Courier Prime', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff00;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            text-shadow: 0 0 20px #00ff00;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        
+        .packages {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .package {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .package:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 255, 0, 0.3);
+        }
+        
+        .package-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .package-description {
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+        
+        .package-size {
+            font-weight: 700;
+            color: #ffff00;
+            margin-bottom: 20px;
+        }
+        
+        .download-btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            font-family: 'Courier Prime', monospace;
+            font-weight: 700;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .download-btn:hover {
+            background: #ffff00;
+            box-shadow: 0 5px 15px rgba(255, 255, 0, 0.5);
+        }
+        
+        .features {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 40px;
+        }
+        
+        .features h3 {
+            margin-bottom: 20px;
+            color: #ffff00;
+        }
+        
+        .feature-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .feature-list li {
+            padding: 10px;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 5px;
+        }
+        
+        .feature-list li::before {
+            content: "⚡ ";
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">TECHNOMANCER</h1>
+            <p class="subtitle">Quest for the Code - AI-Powered Retro RPG</p>
+        </div>
+        
+        <div class="packages">
+            <div class="package">
+                <h3 class="package-name">🪶 Lightweight Edition</h3>
+                <p class="package-description">Perfect for quick demos and low-bandwidth deployment. Single AI model handles all tasks efficiently.</p>
+                <p class="package-size">📦 Size: ~1.5GB</p>
+                <button class="download-btn" onclick="downloadPackage('lightweight')">
+                    Download Lightweight
+                </button>
+            </div>
+            
+            <div class="package">
+                <h3 class="package-name">⚖️ Standard Edition</h3>
+                <p class="package-description">Balanced performance with specialized models. Great for most users seeking quality AI interactions.</p>
+                <p class="package-size">📦 Size: ~3.2GB</p>
+                <button class="download-btn" onclick="downloadPackage('standard')">
+                    Download Standard
+                </button>
+            </div>
+            
+            <div class="package">
+                <h3 class="package-name">🚀 Premium Edition</h3>
+                <p class="package-description">Maximum AI quality with full specialized model suite. Best experience for dedicated players.</p>
+                <p class="package-size">📦 Size: ~7.5GB</p>
+                <button class="download-btn" onclick="downloadPackage('premium')">
+                    Download Premium
+                </button>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h3>🎯 Game Features</h3>
+            <ul class="feature-list">
+                <li>Crystal Ball Oracle with AI consultation</li>
+                <li>Terminal hacking minigames</li>
+                <li>Specialized AI task delegation</li>
+                <li>Dynamic narrative generation</li>
+                <li>NPC dialogue system</li>
+                <li>Progressive subzone unlocking</li>
+                <li>Offline gameplay capability</li>
+                <li>Retro cyberpunk aesthetic</li>
+                <li>Spell crafting system</li>
+                <li>Battle mechanics with AI strategy</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function downloadPackage(tier) {
+            alert('Preparing download for ' + tier + ' edition...\n\nThis would initiate the actual download in a real deployment.');
+            // In real deployment, this would trigger actual file download
+            // window.location.href = '/downloads/' + tier + '.zip';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "tier": "lightweight",
+  "aiTier": "lightweight",
+  "name": "TECHNOMANCER-Lightweight",
+  "description": "1.1GB - Single AI model for all tasks",
+  "estimatedSize": "~1.5GB",
+  "version": "1.0.0",
+  "createdAt": "2026-01-22T11:20:14.291Z"
+}

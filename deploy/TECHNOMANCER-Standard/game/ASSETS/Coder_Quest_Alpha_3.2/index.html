@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Coder Quest — CastConsole v5.0</title>
+  <style>
+    :root { --accent: #00ff41; --panel-bg: rgba(0, 0, 0, 0.95); }
+    body { 
+      background: #000; color: #fff; font-family: 'Courier New', monospace; 
+      display: flex; justify-content: center; align-items: center; 
+      height: 100vh; margin: 0; overflow: hidden;
+    }
+    #game-container { 
+      width: 900px; height: 650px; background: var(--panel-bg); 
+      border: 2px solid #333; display: flex; flex-direction: column; 
+      border-radius: 12px; position: relative; box-shadow: 0 0 20px rgba(0,255,65,0.2);
+    }
+    
+    /* Cinematic Intro Overlay */
+    #intro-screen {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; z-index: 100; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; text-align: center;
+    }
+    #boot-log { font-size: 12px; color: #00ff41; text-align: left; width: 300px; margin-top: 20px; }
+
+    /* Core UI */
+    #viewport { height: 180px; border-bottom: 1px solid #333; position: relative; background: #050505; }
+    #sprite { width: 64px; height: 64px; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: none; filter: drop-shadow(0 0 10px var(--accent)); }
+    #output { flex: 1; padding: 20px; overflow-y: auto; font-size: 14px; line-height: 1.6; }
+    #input-bar { padding: 15px; border-top: 1px solid #333; display: flex; gap: 10px; }
+    input { flex: 1; background: #000; border: 1px solid #00ff41; color: #00ff41; padding: 12px; outline: none; border-radius: 4px; font-family: inherit; }
+    .sys { color: #888; font-style: italic; }
+    .highlight { color: #00ff41; text-shadow: 0 0 5px #00ff41; }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <div id="intro-screen">
+    <div id="room-text">You wake up in an empty room...</div>
+    <div id="boot-log"></div>
+  </div>
+
+  <div id="viewport"><img id="sprite" src="" alt="Sprite"></div>
+  <div id="output"></div>
+  <div id="input-bar"><input type="text" id="console-input" autofocus autocomplete="off"></div>
+</div>
+
+<script>
+const log = document.getElementById('output');
+const input = document.getElementById('console-input');
+const bootLog = document.getElementById('boot-log');
+const introScreen = document.getElementById('intro-screen');
+const sprite = document.getElementById('sprite');
+
+let audioCtx;
+let save = JSON.parse(localStorage.getItem('cq_v5')) || {
+  step: 'BOOT', name: '', class: '', ai_unlocked: false, ip: '', hp: 100, quiz: []
+};
+
+// --- SYNTHESIZER (Nintendo/Tandy Style) ---
+function playTone(freq, duration, type = "square", vol = 0.1) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+const knock = () => { playTone(100, 0.1, "sine", 0.5); };
+const playTheme = () => {
+  const notes = [440, 493, 523, 587, 440, 523, 493];
+  notes.forEach((f, i) => setTimeout(() => playTone(f, 0.4), i * 500));
+};
+
+// --- BOOT SEQUENCE ---
+async function runBoot() {
+  await new Promise(r => setTimeout(r, 1000));
+  knock(); setTimeout(knock, 300);
+  document.getElementById('room-text').innerText = "*Knock Knock*";
+  
+  await new Promise(r => setTimeout(r, 1500));
+  playTheme();
+  
+  const messages = [
+    "Initializing CastConsole...", "Detecting Neural Interface...", 
+    "Bypassing Security Gates...", "Memory Partition Found: [CORRUPT]",
+    "Identity Protocol: ACTIVE", "Mounting OS..."
+  ];
+
+  for (let msg of messages) {
+    bootLog.innerHTML += `> ${msg}<br>`;
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  await new Promise(r => setTimeout(r, 1000));
+  introScreen.style.opacity = '0';
+  setTimeout(() => { introScreen.style.display = 'none'; startSequence(); }, 1000);
+}
+
+function print(msg, className = "") {
+  const div = document.createElement('div');
+  div.className = className;
+  div.innerHTML = msg;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function startSequence() {
+  print("<span class='highlight'>[SYSTEM]: Identity Data Missing.</span>");
+  print("The console screen blinks. Two options remain:");
+  print("1. [Forgot Identity] - Run psych-eval protocol.");
+  print("2. [Select Config] - Restore from Technomancer/Data Knight pre-builds.");
+}
+
+async function handleInput(cmd) {
+  const raw = cmd.toLowerCase();
+
+  // Branching Identity
+  if (save.step === 'BOOT') {
+    if (raw.includes('forgot')) {
+      save.step = 'QUIZ_1';
+      print("> Running Psych-Eval...");
+      print("Question 1: In a failing system, do you fix the code or defend the server?");
+    } else if (raw.includes('config')) {
+      save.step = 'CLASS_SELECT';
+      print("Choose: [Technomancer] or [Data Knight]");
+    }
+  } 
+  
+  // Quiz Logic
+  else if (save.step === 'QUIZ_1') {
+    save.quiz.push(raw);
+    save.step = 'QUIZ_2';
+    print("Question 2: Do you prefer a [Blade] of light or a [Key] to all doors?");
+  }
+  else if (save.step === 'QUIZ_2') {
+    save.quiz.push(raw);
+    save.step = 'QUIZ_3';
+    print("Final Question: Is the Void [Home] or a [Prison]?");
+  }
+  else if (save.step === 'QUIZ_3') {
+    save.quiz.push(raw);
+    // Class Determination
+    save.class = save.quiz[0].includes('code') ? 'Technomancer' : 'Data Knight';
+    save.step = 'RECALL_NAME';
+    print(`Evaluation Complete. You are a <span class='highlight'>${save.class}</span>.`);
+    print("Do you remember your name now?");
+  }
+
+  // Name Recall
+  else if (save.step === 'RECALL_NAME' || save.step === 'CLASS_SELECT') {
+    if (save.step === 'CLASS_SELECT') save.class = raw.includes('techno') ? 'Technomancer' : 'Data Knight';
+    save.name = cmd;
+    save.step = 'SUMMON_DICE';
+    print(`Welcome back, <span class='highlight'>${save.name}</span>.`);
+    print("Finalize connection by typing: <span class='highlight'>'summon dice'</span>");
+    sprite.src = save.class === 'Technomancer' ? "https://img.icons8.com" : "https://img.icons8.com";
+    sprite.style.display = "block";
+  }
+
+  // Final Step: AI Summon
+  else if (save.step === 'SUMMON_DICE' && raw === 'summon dice') {
+    print("🎲 Dice Summoned. Enter Local IP to Invoke DM (e.g., http://10.81.53.190:1234)");
+    save.step = 'SET_IP';
+  }
+  else if (save.step === 'SET_IP' && raw.startsWith('http')) {
+    save.ip = cmd;
+    save.ai_unlocked = true;
+    save.step = 'PLAY';
+    print("REALITY BRIDGED. The DM is listening.");
+  }
+  else if (save.ai_unlocked) {
+    const res = await fetch(`${save.ip}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: "system", content: `You are the DM for ${save.name}, a ${save.class}.` }, { role: "user", content: cmd }]
+      })
+    }).then(r => r.json()).catch(() => ({choices: [{message: {content: "The connection flickers..."}}]}));
+    print(res.choices[0].message.content);
+  }
+
+  localStorage.setItem('cq_v5', JSON.stringify(save));
+}
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    handleInput(input.value);
+    input.value = '';
+  }
+});
+
+window.onclick = () => { if(!audioCtx) runBoot(); };
+</script>
+</body>
+</html>
