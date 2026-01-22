@@ -511,8 +511,10 @@ window.PaneManager = {
         
         this.undockPane(id, mouseX, mouseY);
         
-        // Remove this handler since we're no longer in deck
+        // Aggressive handler cleanup - remove from EVERYWHERE
         pane.header.removeEventListener("click", undockClickHandler, true);
+        pane.header.removeEventListener("click", undockClickHandler, false);
+        pane.header.removeEventListener("click", undockClickHandler);
         delete pane.undockClickHandler;
       };
       
@@ -551,14 +553,20 @@ window.PaneManager = {
   
   undockPane: function(id, mouseX, mouseY) {
       const pane = this.panes[id];
-      if (!pane) return;
+      if (!pane) {
+        console.warn("[PaneManager] Cannot undock - pane not found:", id);
+        return;
+      }
       
-      console.log("[PaneManager] Undocking pane:", id);
+      console.log("[PaneManager] FORCE Undocking pane:", id, "from deck:", pane.isInDeck);
+      
+      // Force undock regardless of state
       pane.isInDeck = false;
       
-      // Remove all deck-related event handlers
+      // Remove ALL deck-related event handlers aggressively
       if (pane.undockClickHandler) {
         pane.header.removeEventListener("click", pane.undockClickHandler, true);
+        pane.header.removeEventListener("click", pane.undockClickHandler, false);
         delete pane.undockClickHandler;
       }
       
@@ -567,7 +575,12 @@ window.PaneManager = {
         delete pane.undockDoubleClickHandler;
       }
       
-      // Move back to main container
+      // Force removal from deck if present
+      if (pane.element.parentNode && pane.element.parentNode.classList.contains('deck-container')) {
+        console.log("[PaneManager] Forcing removal from deck container");
+      }
+      
+      // Move back to main container FORCEFULLY
       this.container.appendChild(pane.element);
       
       // Restore Position - center on mouse with bounds checking

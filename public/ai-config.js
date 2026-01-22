@@ -76,7 +76,7 @@ window.AIConfig = {
     
     // BACKEND SERVER CONFIG (For secure online deployment)
     backendUrl: "https://coder-quest.onrender.com",  // Render backend URL
-    useBackend: true,  // Use backend proxy for secure API access
+    useBackend: false,  // Disable for web - use direct API calls
     enableCORS: true,  // Enable CORS for browser requests
     timeout: 30000,    // 30 second timeout for AI requests
     
