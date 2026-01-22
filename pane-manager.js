@@ -29,6 +29,13 @@ window.PaneManager = {
   dragState: null,
   gridSize: 20, // Snap-to-grid size in pixels
   snapEnabled: true, // Enable/disable snap-to-grid
+  
+  // WINDOW DECK (Tarot Style Stacking)
+  deck: {
+    container: null,
+    panes: [],
+    rect: null
+  },
 
   // ============================================================
   // [INIT] - Initialize pane manager
@@ -63,7 +70,68 @@ window.PaneManager = {
     this.addCircuitPattern(container);
     
     this.container = container;
+    
+    // Initialize the Deck
+    this.createDeck();
+
     console.log("[PaneManager] Ready. Call createPane() to add windows");
+  },
+
+  // ============================================================
+  // [DECK SYSTEM] - Tarot Card Docking
+  // ============================================================
+  createDeck: function() {
+    const deckInfo = document.createElement("div");
+    deckInfo.id = "deck-info";
+    deckInfo.innerHTML = "🎴 WINDOW DECK (DROP HERE)";
+    deckInfo.style.cssText = `
+      color: #004400;
+      font-size: 0.8em;
+      margin-bottom: 10px;
+      pointer-events: none;
+      text-align: center; 
+      width: 100%;
+      letter-spacing: 2px;
+    `;
+
+    const deckContainer = document.createElement("div");
+    deckContainer.id = "window-deck";
+    deckContainer.appendChild(deckInfo);
+    
+    // Position on right side
+    deckContainer.style.cssText = `
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      width: 300px;
+      height: 80vh; /* Takes up most of right side */
+      background: rgba(0, 10, 0, 0.3);
+      border: 2px dashed #003300;
+      border-radius: 12px;
+      z-index: 900;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+      pointer-events: none; /* Let clicks pass through if empty, but we need drop detection */
+    `;
+    // Enable pointer events for drop detection calculations (rect)
+    // Actually pointer-events auto is fine, dropping is calculated via coordinates
+    
+    this.container.appendChild(deckContainer);
+    this.deck.container = deckContainer;
+    
+    // Update rect for collision
+    this.updateDeckRect();
+    window.addEventListener('resize', () => this.updateDeckRect());
+  },
+
+  updateDeckRect: function() {
+    if (this.deck.container) {
+      this.deck.rect = this.deck.container.getBoundingClientRect();
+    }
   },
 
   // ============================================================
@@ -249,6 +317,7 @@ window.PaneManager = {
 
     // Drag from header
     pane.header.addEventListener("mousedown", (e) => {
+      e.preventDefault(); // Prevent text selection/drag weirdness
       if (e.target.closest("button")) return; // Don't drag if clicking buttons
 
       this.focusPane(id);
@@ -295,6 +364,22 @@ window.PaneManager = {
     const state = this.dragState;
     const pane = this.panes[state.paneId];
 
+    // If dragged while docked, undock immediately
+    if (pane.isInDeck && state.type === "drag") {
+        // Only undock if moved significantly (hysteresis) to prevent accidental clicks
+        const moveDist = Math.hypot(e.clientX - state.startX, e.clientY - state.startY);
+        if (moveDist > 5) {
+            this.undockPane(state.paneId, e.clientX, e.clientY);
+            // Update state logic to standard drag now
+            state.startX = e.clientX;
+            state.startY = e.clientY;
+            state.paneStartX = pane.x;
+            state.paneStartY = pane.y;
+        } else {
+            return; // Wait for more movement
+        }
+    }
+
     if (state.type === "drag") {
       const dx = e.clientX - state.startX;
       const dy = e.clientY - state.startY;
@@ -317,6 +402,21 @@ window.PaneManager = {
 
       pane.x = newX;
       pane.y = newY;
+
+      // Check Deck Collision
+      if (this.deck.container && this.deck.rect) {
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+        if (mouseX >= this.deck.rect.left && mouseX <= this.deck.rect.right &&
+            mouseY >= this.deck.rect.top && mouseY <= this.deck.rect.bottom) {
+            this.deck.container.style.borderColor = "#00ff00"; // Highlight
+            this.deck.container.style.boxShadow = "0 0 20px #00ff00";
+        } else {
+            this.deck.container.style.borderColor = "#003300";
+            this.deck.container.style.boxShadow = "inset 0 0 20px rgba(0,0,0,0.8)";
+        }
+      }
+
     } else if (state.type === "resize") {
       const dw = e.clientX - state.startX;
       const dh = e.clientY - state.startY;
@@ -340,8 +440,120 @@ window.PaneManager = {
     if (this.dragState && this.dragState.type === "drag") {
       const pane = this.panes[this.dragState.paneId];
       pane.header.style.cursor = "grab";
+      
+      // Check collision and Dock
+      if (this.deck.container && !pane.isInDeck && this.deck.rect) {
+          const rect = pane.element.getBoundingClientRect();
+          const centerX = rect.left + rect.width/2;
+          const centerY = rect.top + rect.height/2;
+          
+          if (centerX >= this.deck.rect.left && centerX <= this.deck.rect.right &&
+              centerY >= this.deck.rect.top && centerY <= this.deck.rect.bottom) {
+              this.dockPane(this.dragState.paneId);
+          }
+      }
+      
+      // Reset Deck Highlight
+      if (this.deck.container) {
+          this.deck.container.style.borderColor = "#003300";
+          this.deck.container.style.boxShadow = "inset 0 0 20px rgba(0,0,0,0.8)";
+      }
     }
     this.dragState = null;
+  },
+
+  dockPane: function(id) {
+      const pane = this.panes[id];
+      if (!pane) return;
+      
+      console.log("[PaneManager] Docking pane:", id);
+      pane.isInDeck = true;
+      pane.savedRect = { width: pane.element.style.width, height: pane.element.style.height };
+      
+      // Move to deck container
+      this.deck.container.appendChild(pane.element);
+      
+      // Apply Deck Styling (Tarot Card Stack)
+      pane.element.style.position = "relative";
+      pane.element.style.left = "0";
+      pane.element.style.top = "0";
+      pane.element.style.width = "100%";
+      pane.element.style.height = "auto";
+      pane.element.style.marginBottom = "-10px"; // Stack overlap
+      pane.element.style.transition = "all 0.3s ease";
+      
+      // Minimize Content
+      pane.element.querySelector(".pane-content").style.display = "none";
+      pane.element.querySelector(".pane-resize-handle").style.display = "none";
+      
+      // Tarot Header Styling
+      pane.header.style.background = "linear-gradient(45deg, #2a2a00, #001a00)";
+      pane.header.style.border = "1px solid #aa8800"; // Gold border
+      pane.element.style.border = "1px solid #aa8800";
+      pane.element.style.boxShadow = "0 -5px 10px rgba(0,0,0,0.5)"; // Shadow up for stack effect
+      
+      // Add click handler to undock from deck
+      const undockClickHandler = (e) => {
+        // Only undock on direct clicks to the header, not buttons
+        if (e.target.closest("button")) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log("[PaneManager] Click undock triggered for:", id);
+        this.undockPane(id, e.clientX, e.clientY);
+        
+        // Remove this handler since we're no longer in deck
+        pane.header.removeEventListener("click", undockClickHandler);
+      };
+      
+      // Add the click listener for undocking - use capture phase for better handling
+      pane.header.addEventListener("click", undockClickHandler, true);
+      // Also add visual feedback
+      pane.header.style.cursor = "pointer";
+      pane.header.title = "Click to undock from deck";
+      
+      // Store reference to the handler so we can remove it later
+      pane.undockClickHandler = undockClickHandler;
+  },
+  
+  undockPane: function(id, mouseX, mouseY) {
+      const pane = this.panes[id];
+      if (!pane) return;
+      
+      console.log("[PaneManager] Undocking pane:", id);
+      pane.isInDeck = false;
+      
+      // Remove the click handler if it exists
+      if (pane.undockClickHandler) {
+        pane.header.removeEventListener("click", pane.undockClickHandler);
+        delete pane.undockClickHandler;
+      }
+      
+      // Move back to main container
+      this.container.appendChild(pane.element);
+      
+      // Restore Position
+      pane.element.style.position = "absolute";
+      pane.x = mouseX - 150; // Center(ish) on mouse
+      pane.y = mouseY - 20;
+      pane.element.style.left = pane.x + "px";
+      pane.element.style.top = pane.y + "px";
+      
+      // Restore Size
+      pane.element.style.width = pane.savedRect ? pane.savedRect.width : (pane.width + "px");
+      pane.element.style.height = pane.savedRect ? pane.savedRect.height : (pane.height + "px");
+      pane.element.style.marginBottom = "0";
+      
+      // Restore Content
+      pane.element.querySelector(".pane-content").style.display = "flex";
+      pane.element.querySelector(".pane-resize-handle").style.display = "block";
+      
+      // Restore Style
+      pane.header.style.background = "linear-gradient(180deg, #001a00 0%, #000a00 100%)";
+      pane.header.style.border = "none"; 
+      pane.header.style.borderBottom = "2px solid #00ff00";
+      pane.element.style.border = "2px solid #00ff00";
+      pane.element.style.boxShadow = "0 0 20px rgba(0, 255, 0, 0.3)";
   },
 
   // ============================================================

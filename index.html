@@ -959,6 +959,42 @@
       box-shadow: 0 0 15px rgba(201, 162, 39, 0.5);
     }
 
+    /* ========== UI ENHANCEMENTS (ICON SPACING & CLARITY) ========== */
+    .technonomicon-tabs {
+       gap: 12px !important; /* Fix icon spacing in tabs */
+    }
+    
+    .technonomicon-tab {
+       border: 1px solid #004400; /* Subtle border for clarity */
+       border-radius: 4px;
+       margin-bottom: 4px;
+    }
+    
+    .oracle-controls {
+       display: flex;
+       gap: 12px; /* Clear spacing between icons */
+       align-items: center;
+    }
+    
+    .oracle-ctrl-btn {
+       width: 32px;
+       height: 32px;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       border: 1px solid rgba(201, 162, 39, 0.8) !important;
+       background: rgba(0,0,0,0.6) !important;
+       border-radius: 4px;
+       font-size: 1.1em;
+       transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .oracle-ctrl-btn:hover {
+       transform: scale(1.1);
+       box-shadow: 0 0 10px rgba(201, 162, 39, 0.6);
+       background: rgba(20, 10, 0, 0.8) !important;
+    }
+
     /* ========== RESPONSIVE ========== */
 
     @media (max-width: 1200px) {
@@ -1095,11 +1131,22 @@
   };
 
   async function runBoot() {
+    // Don't run boot if already skipped
+    if (skipTriggered) return;
+    
     await new Promise(r => setTimeout(r, 1000));
+    
+    // Check skip again after delay
+    if (skipTriggered) return;
+    
     knock(); setTimeout(knock, 300);
     const roomText = document.getElementById('room-text');
     if (roomText) roomText.innerText = "*Knock Knock*";
     await new Promise(r => setTimeout(r, 1500));
+    
+    // Check skip again
+    if (skipTriggered) return;
+    
     playTheme();
     const messages = [
       "Initializing CastConsole...", "Detecting Neural Interface...", 
@@ -1107,10 +1154,17 @@
       "Identity Protocol: ACTIVE", "Mounting OS..."
     ];
     for (let msg of messages) {
+      // Check skip during message loop
+      if (skipTriggered) return;
+      
       if (bootLog) bootLog.innerHTML += `> ${msg}<br>`;
       await new Promise(r => setTimeout(r, 800));
     }
     await new Promise(r => setTimeout(r, 1000));
+    
+    // Final skip check before completing
+    if (skipTriggered) return;
+    
     if (introScreen) {
       introScreen.style.opacity = '0';
       setTimeout(() => { introScreen.style.display = 'none'; startSequence(); }, 1000);
@@ -1204,10 +1258,40 @@
     });
   }
 
+  // Skip functionality - Press backtick (`) to skip boot screen and animation
+  let skipTriggered = false;
+  
+  function skipBootSequence() {
+    if (skipTriggered) return; // Prevent multiple triggers
+    skipTriggered = true;
+    
+    // Hide intro screen immediately
+    const introScreen = document.getElementById('intro-screen');
+    if (introScreen) {
+      introScreen.style.display = 'none';
+    }
+    
+    // Clear any pending timeouts and intervals
+    clearTimeout(bootClickTimeout);
+    
+    // Start the main sequence immediately
+    startSequence();
+    console.log("[SKIP] Boot sequence skipped with backtick key");
+  }
+
+  // Keyboard event listener for skip functionality
+  document.addEventListener('keydown', (e) => {
+    // Check for backtick key (keyCode 192 or key "`")
+    if (e.key === '`' || e.keyCode === 192) {
+      e.preventDefault(); // Prevent default backtick behavior
+      skipBootSequence();
+    }
+  });
+
   // Debounce click handler to prevent multiple rapid fires
   let bootClickTimeout = null;
   window.onclick = () => {
-    if (!audioCtx && !bootClickTimeout) {
+    if (!audioCtx && !bootClickTimeout && !skipTriggered) {
       bootClickTimeout = true;
       runBoot();
       // Reset after 2 seconds to allow next click if needed
@@ -1318,7 +1402,6 @@
               <div class="oracle-controls" id="oracle-controls" style="display:none;">
                 <button class="oracle-ctrl-btn" id="oracle-tts-btn" title="Toggle Voice Output">🔊</button>
                 <button class="oracle-ctrl-btn" id="oracle-voice-btn" title="Voice Input">🎤</button>
-                <button class="oracle-ctrl-btn" id="oracle-popout-btn" title="Pop Out">⬈</button>
               </div>
             </div>
             <div class="crystal-ball-display" id="crystal-ball-display">
@@ -1346,6 +1429,9 @@
   
   <!-- NEW: Audio system -->
   <script src="fx-audio.js"></script>
+  
+  <!-- NEW: MIDI Music Player -->
+  <script src="midi-player.js"></script>
   
   <!-- NEW: Quest system -->
   <script src="quest-system.js"></script>
@@ -1648,6 +1734,22 @@
         gameEngine.output("=".repeat(50), "system");
       }
 
+      // ============================================================
+      // [PLATFORM CHECK] - Enforce Online vs Electron separation
+      // ============================================================
+      let isElectron = !!(window.electronAPI && window.electronAPI.isElectron) || 
+                       !!(window.require && window.process && window.process.versions && window.process.versions.electron) ||
+                       navigator.userAgent.toLowerCase().indexOf('electron') > -1;
+      
+      // TEMPORARY: Allow full game in browser for now
+      isElectron = true; // This allows browser mode to work normally
+      
+      if (!isElectron) {
+          // BROWSER MODE: Will implement download-only mode later
+          console.log("[Boot] Browser detected - full game allowed for now");
+      }
+
+      // Continue to full game (regardless of platform for now)
       // Show welcome message
       if (hasAutoSave) {
         gameEngine.output("[ TECHNOMANCER: QUEST FOR THE CODE ]", "system");
@@ -1662,6 +1764,15 @@
 
       // Focus input
       gameUI.focus();
+      
+      // Simple system checks
+      setTimeout(() => {
+        console.log("[Debug] Systems check:");
+        console.log("- MIDIPlayer:", !!window.MIDIPlayer);
+        console.log("- AIConfig:", !!window.AIConfig);
+        console.log("- PaneManager:", !!window.PaneManager);
+        console.log("- GameEngine commands:", Object.getOwnPropertyNames(gameEngine).filter(n => n.startsWith('cmd')));
+      }, 1000);
       
       // Set up periodic auto-save every 2 minutes (local + cloud)
       setInterval(() => {

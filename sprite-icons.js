@@ -23,6 +23,7 @@ window.SpriteIcons = {
     iconSize: 32,
     defaultSize: 'sm',  // sm, md, lg
     observeDOM: true,   // Auto-replace in new content
+    debugMode: false,   // Shows background positions for debugging
   },
 
   // Emoji to icon class mapping
@@ -348,6 +349,120 @@ window.SpriteIcons = {
    * @param {string} emoji - Emoji character
    * @param {string} iconClass - CSS class (without 'icon-' prefix)
    */
+  addMapping: function(emoji, iconClass) {
+    this.mapping[emoji] = iconClass;
+    console.log('[SpriteIcons] Added mapping:', emoji, '->', iconClass);
+  },
+
+  /**
+   * Debug utility: Create a grid showing all sprite positions
+   * Useful for figuring out correct background-position values
+   * @param {number} rows - Number of rows to show
+   * @param {number} cols - Number of columns to show
+   */
+  createDebugGrid: function(rows = 8, cols = 32) {
+    const container = document.createElement('div');
+    container.id = 'sprite-debug-grid';
+    container.style.cssText = `
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 10000;
+      background: rgba(0,0,0,0.9);
+      border: 2px solid #00ff00;
+      padding: 20px;
+      max-height: 80vh;
+      overflow: auto;
+      font-family: monospace;
+      color: #00ff00;
+    `;
+
+    const title = document.createElement('h3');
+    title.textContent = `Sprite Debug Grid (${cols}×${rows}) - Click positions to copy CSS`;
+    title.style.margin = '0 0 15px 0';
+    container.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.style.cssText = `
+      display: grid;
+      grid-template-columns: repeat(${cols}, 34px);
+      gap: 2px;
+      max-width: 100%;
+    `;
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const cell = document.createElement('div');
+        const xPos = col * -32;
+        const yPos = row * -32;
+        
+        cell.style.cssText = `
+          width: 32px;
+          height: 32px;
+          background-image: var(--sprite-sheet);
+          background-position: ${xPos}px ${yPos}px;
+          background-size: ${cols * 32}px auto;
+          border: 1px solid #004400;
+          cursor: pointer;
+          position: relative;
+        `;
+        
+        cell.title = `Row ${row}, Col ${col}\nPosition: ${xPos}px ${yPos}px`;
+        cell.onclick = () => {
+          const css = `background-position: ${xPos}px ${yPos}px;`;
+          navigator.clipboard.writeText(css).then(() => {
+            console.log('Copied to clipboard:', css);
+            cell.style.border = '2px solid #00ff00';
+            setTimeout(() => cell.style.border = '1px solid #004400', 1000);
+          });
+        };
+
+        // Add position label
+        const label = document.createElement('div');
+        label.style.cssText = `
+          position: absolute;
+          bottom: -15px;
+          left: 0;
+          font-size: 8px;
+          color: #888;
+          white-space: nowrap;
+        `;
+        label.textContent = `${row},${col}`;
+        cell.appendChild(label);
+
+        grid.appendChild(cell);
+      }
+    }
+
+    container.appendChild(grid);
+
+    // Add close button
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ Close';
+    closeBtn.style.cssText = `
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: #ff0000;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    `;
+    closeBtn.onclick = () => container.remove();
+    container.appendChild(closeBtn);
+
+    document.body.appendChild(container);
+    console.log('[SpriteIcons] Debug grid created. Click grid cells to copy CSS positions.');
+  }
+};
+
+// Auto-initialize when DOM loads
+document.addEventListener('DOMContentLoaded', () => {
+  SpriteIcons.initialize();
+});
+
+console.log('[sprite-icons.js] Loaded. Call SpriteIcons.createDebugGrid() to debug sprite positions.');
   addMapping: function(emoji, iconClass) {
     this.mapping[emoji] = iconClass;
   },

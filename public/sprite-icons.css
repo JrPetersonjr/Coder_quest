@@ -1,0 +1,153 @@
+/* ============================================================
+   SPRITE ICONS CSS
+   Replaces Unicode emojis with custom pixel art sprites
+   
+   USAGE:
+   1. Create a sprite sheet (sprite-icons.png) with 32x32 icons
+   2. Icons arranged in 8 columns, multiple rows
+   3. Each emoji gets a <span class="icon icon-dice"></span>
+   ============================================================ */
+
+:root {
+  --sprite-sheet: url('ASSETS/custom/sprite-icons.png');
+  --icon-size: 32px;
+  --icon-scale: 1;  /* Adjust for different display sizes */
+  --icons-per-row: 8;
+}
+
+/* Base icon class */
+.icon {
+  display: inline-block;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  background-image: var(--sprite-sheet);
+  background-repeat: no-repeat;
+  background-size: calc(var(--icon-size) * var(--icons-per-row)) auto;
+  vertical-align: middle;
+  transform: scale(var(--icon-scale));
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Small icons (inline with text) */
+.icon-sm {
+  --icon-scale: 0.5;
+  margin: 0 2px;
+}
+
+/* Medium icons (buttons, headers) */
+.icon-md {
+  --icon-scale: 0.75;
+  margin: 0 4px;
+}
+
+/* Large icons (decorative) */
+.icon-lg {
+  --icon-scale: 1.5;
+  margin: 0 8px;
+}
+
+/* ============================================================
+   SPRITE POSITIONS
+   Format: background-position: -Xpx -Ypx;
+   Row 0 = 0px, Row 1 = -32px, Row 2 = -64px, etc.
+   Col 0 = 0px, Col 1 = -32px, Col 2 = -64px, etc.
+   ============================================================ */
+
+/* ROW 1: UI CONTROLS */
+.icon-close      { background-position: 0px 0px; }        /* ✕ */
+.icon-popout     { background-position: -32px 0px; }      /* ⬈ */
+.icon-popin      { background-position: -64px 0px; }      /* ⬋ */
+.icon-sound-on   { background-position: -96px 0px; }      /* 🔊 */
+.icon-sound-off  { background-position: -128px 0px; }     /* 🔇 */
+.icon-mic        { background-position: -160px 0px; }     /* 🎤 */
+.icon-hex        { background-position: -192px 0px; }     /* ⬢ */
+.icon-star4      { background-position: -224px 0px; }     /* ✦ */
+
+/* ROW 2: GAME MECHANICS */
+.icon-dice       { background-position: 0px -32px; }      /* 🎲 */
+.icon-combat     { background-position: -32px -32px; }    /* ⚔ */
+.icon-sparkle    { background-position: -64px -32px; }    /* ✨ */
+.icon-star       { background-position: -96px -32px; }    /* 🌟 */
+.icon-crystal    { background-position: -128px -32px; }   /* 🔮 */
+.icon-gear       { background-position: -160px -32px; }   /* ⚙ */
+.icon-forest     { background-position: -192px -32px; }   /* ▲ */
+.icon-skull      { background-position: -224px -32px; }   /* ☠ */
+
+/* ROW 3: STATUS INDICATORS */
+.icon-check      { background-position: 0px -64px; }      /* ✓ */
+.icon-cross      { background-position: -32px -64px; }    /* ✗ */
+.icon-warning    { background-position: -64px -64px; }    /* ⚠ */
+.icon-play       { background-position: -96px -64px; }    /* ▶ */
+.icon-pointer    { background-position: -128px -64px; }   /* ➤ */
+.icon-circle     { background-position: -160px -64px; }   /* ○ */
+.icon-quest      { background-position: -192px -64px; }   /* ► */
+.icon-potion     { background-position: -224px -64px; }   /* ⚗ */
+
+/* ROW 4: INVENTORY */
+.icon-lightning  { background-position: 0px -96px; }      /* ⚡ */
+.icon-save       { background-position: -32px -96px; }    /* 💾 */
+.icon-unlock     { background-position: -64px -96px; }    /* 🔓 */
+.icon-lock       { background-position: -96px -96px; }    /* 🔒 */
+.icon-book       { background-position: -128px -96px; }   /* 📖 */
+.icon-diamond    { background-position: -160px -96px; }   /* ◊ */
+.icon-diamond-f  { background-position: -192px -96px; }   /* ◆ */
+.icon-square     { background-position: -224px -96px; }   /* □ */
+
+/* ROW 5: ARROWS & MISC */
+.icon-dot        { background-position: 0px -128px; }     /* ◉ */
+.icon-bullet     { background-position: -32px -128px; }   /* • */
+.icon-left       { background-position: -64px -128px; }   /* ← */
+.icon-right      { background-position: -96px -128px; }   /* → */
+.icon-up         { background-position: -128px -128px; }  /* ↑ */
+.icon-down       { background-position: -160px -128px; }  /* ↓ */
+.icon-hourglass  { background-position: -192px -128px; }  /* ⏳ */
+.icon-success    { background-position: -224px -128px; }  /* ✅ */
+
+/* ROW 6: EXTRA/RESERVED */
+.icon-fail       { background-position: 0px -160px; }     /* ❌ */
+.icon-test       { background-position: -32px -160px; }   /* 🧪 */
+.icon-scroll     { background-position: -64px -160px; }   /* 📜 */
+.icon-gamepad    { background-position: -96px -160px; }   /* 🎮 */
+
+/* ============================================================
+   BOX DRAWING (Optional - usually keep as text)
+   ============================================================ */
+.icon-box-tl     { background-position: 0px -192px; }     /* ╔ */
+.icon-box-tr     { background-position: -32px -192px; }   /* ╗ */
+.icon-box-bl     { background-position: -64px -192px; }   /* ╚ */
+.icon-box-br     { background-position: -96px -192px; }   /* ╝ */
+.icon-box-h      { background-position: -128px -192px; }  /* ═ */
+.icon-box-v      { background-position: -160px -192px; }  /* ║ */
+.icon-block      { background-position: -192px -192px; }  /* █ */
+.icon-shade      { background-position: -224px -192px; }  /* ░ */
+
+/* ============================================================
+   ANIMATION CLASSES (optional)
+   ============================================================ */
+.icon-pulse {
+  animation: iconPulse 1.5s ease-in-out infinite;
+}
+
+.icon-spin {
+  animation: iconSpin 2s linear infinite;
+}
+
+.icon-bounce {
+  animation: iconBounce 0.6s ease infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% { opacity: 1; transform: scale(var(--icon-scale)); }
+  50% { opacity: 0.7; transform: scale(calc(var(--icon-scale) * 1.1)); }
+}
+
+@keyframes iconSpin {
+  from { transform: scale(var(--icon-scale)) rotate(0deg); }
+  to { transform: scale(var(--icon-scale)) rotate(360deg); }
+}
+
+@keyframes iconBounce {
+  0%, 100% { transform: scale(var(--icon-scale)) translateY(0); }
+  50% { transform: scale(var(--icon-scale)) translateY(-4px); }
+}

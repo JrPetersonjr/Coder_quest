@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-18",
+  "updates": [
+    {
+      "id": "crypt-expansion",
+      "name": "Technomancer Crypt",
+      "version": "1.0.0",
+      "description": "Battle undead files and corrupted daemons",
+      "file": "crypt-expansion.json",
+      "reward": 50,
+      "required": false,
+      "dependencies": []
+    },
+    {
+      "id": "v2.1.0-stability",
+      "name": "v2.1.0 - Stability Update",
+      "version": "2.1.0",
+      "description": "Bug fixes and performance improvements",
+      "file": "v2-1-0-stability.json",
+      "reward": 0,
+      "required": true,
+      "dependencies": []
+    },
+    {
+      "id": "shadow-realm",
+      "name": "Shadow Realm DLC",
+      "version": "1.0.0",
+      "description": "Explore the twisted mirror dimension",
+      "file": "shadow-realm.json",
+      "reward": 75,
+      "required": false,
+      "dependencies": ["crypt-expansion"]
+    }
+  ]
+}

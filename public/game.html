@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TECHNOMANCER: Quest for the Code</title>
+  
+  <!-- Sprite Icons System (custom pixel art emojis) -->
+  <link rel="stylesheet" href="sprite-icons.css">
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --crt-frame-img: url('ASSETS/custom/crt-monitor.png');
+      --technonomicon-front-img: url('ASSETS/custom/technonomicon-front.png');
+      --technonomicon-back-img: url('ASSETS/custom/technonomicon-back.png');
+      --crystal-orb-img: url('ASSETS/custom/crystal-orb.png');
+      --static-noise-img: url('ASSETS/custom/static-noise.png');
+      --glitch-static-img: url('ASSETS/custom/glitch-static.png');
+      --oracle-frame-img: url('ASSETS/custom/oracle-frame.png');
+    }
+    
+    body {
+      background: #0a0a0a;
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      color: #00ff00;
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+    
+    /* CRT Monitor Bezel - Fullscreen */
+    .crt-frame {
+      background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+      border: 20px solid;
+      border-color: #6a6a6a #2a2a2a #2a2a2a #6a6a6a;
+      border-radius: 0;
+      box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.2), 
+        inset 0 -1px 0 rgba(0,0,0,0.8),
+        0 15px 50px rgba(0,0,0,0.9);
+      width: 100vw;
+      height: 100vh;
+      padding: 20px;
+    }
+    
+    /* CRT Screen Glass - Fullscreen */
+    .crt-inner {
+      background: #000;
+      border: 4px solid #1a3a1a;
+      border-radius: 0;
+      padding: 20px;
+      box-shadow: 
+        inset 0 0 30px rgba(0,0,0,0.9),
+        inset 0 2px 5px rgba(0, 255, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      height: calc(100vh - 40px);
+    }
+    
+    /* CRT Scanline Effect */
+    .crt-inner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.3),
+        rgba(0, 0, 0, 0.3) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    /* CRT Glow Effect */
+    .crt-inner::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(0, 255, 0, 0.05) 0%,
+        transparent 70%
+      );
+      pointer-events: none;
+      z-index: 99;
+    }
+    
+    .container { width: 100%; position: relative; z-index: 1; }
+    
+    h1 {
+      color: #00ff00;
+      text-align: center;
+      margin-bottom: 15px;
+      text-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+      font-size: 1.8em;
+      letter-spacing: 3px;
+      font-weight: bold;
+    }
+    
+    /* Boot Screen - Full CRT Green */
+    .boot-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-family: 'Courier Prime', monospace;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
+    }
+    
+    .boot-screen::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0.2) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+    }
+    
+    .boot-screen.hidden { display: none; }
+    
+    .boot-content {
+      color: #00ff00;
+      font-size: 1.1em;
+      text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 10;
+    }
+    
+    .boot-bar {
+      width: 320px;
+      height: 24px;
+      border: 2px solid #00ff00;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+    }
+    
+    .boot-fill {
+      height: 100%;
+      background: #00ff00;
+      width: 0%;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 1);
+    }
+    
+    .boot-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #000;
+      font-weight: bold;
+      z-index: 10;
+      font-size: 0.9em;
+      letter-spacing: 1px;
+    }
+    
+    .game-area {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      margin-bottom: 15px;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.15);
+    }
+    
+    .room-header {
+      color: #00ff00;
+      font-size: 1.1em;
+      margin-bottom: 10px;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    
+    #output {
+      background: #000;
+      border: 1px solid #00ff00;
+      padding: 10px;
+      height: 240px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      font-size: 0.85em;
+      line-height: 1.4;
+      color: #00ff00;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+      box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.1);
+    }
+    
+    .line { 
+      margin-bottom: 3px; 
+      color: #00ff00;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.2);
+    }
+    .line.error { 
+      color: #ff4444;
+      text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+    }
+    .line.system { 
+      color: #ffaa00;
+      text-shadow: 0 0 5px rgba(255, 170, 0, 0.4);
+    }
+    .line.command { 
+      color: #00ff00; 
+      font-weight: bold;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    }
+    .line.battle { 
+      color: #ff5555;
+      text-shadow: 0 0 5px rgba(255, 85, 85, 0.5);
+    }
+    .line.spell { 
+      color: #aa77ff; 
+      font-weight: bold;
+      text-shadow: 0 0 5px rgba(170, 119, 255, 0.5);
+    }
+    .line.puzzle { 
+      color: #ffff00;
+      text-shadow: 0 0 5px rgba(255, 255, 0, 0.5);
+    }
+    .line.highlight { 
+      color: #00ff00; 
+      font-weight: bold;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+    }
+    .line.hint { 
+      color: #88ff00; 
+      font-style: italic;
+      text-shadow: 0 0 3px rgba(136, 255, 0, 0.4);
+    }
+    .line.ascii { 
+      font-family: 'Courier Prime', monospace; 
+      white-space: pre; 
+      color: #00ff00;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+    }
+    
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    #input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #00ff00;
+      color: #00ff00;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.9em;
+      outline: none;
+      padding: 4px 0;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.3);
+    }
+    
+    #input::placeholder { 
+      color: #00ff00; 
+      opacity: 0.4;
+      text-shadow: none;
+    }
+    
+    button {
+      background: #00ff00;
+      color: #000;
+      border: 2px solid #00ff00;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: bold;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.85em;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+    }
+    
+    button:hover { 
+      background: #00dd00;
+      border-color: #00dd00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+    }
+    
+    button:active { 
+      background: #00aa00;
+      box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.6);
+    }
+    
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { 
+      background: #00ff00; 
+      border-radius: 2px;
+      box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    }
+    
+    /* Window Manager Styles */
+    .wm-window {
+      position: absolute;
+      background: #000;
+      border: 2px solid #2fb43a;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px #000a, 0 0 0 2px #2fb43a44;
+      z-index: 1000;
+      min-width: 180px;
+      min-height: 100px;
+      overflow: hidden;
+      resize: both;
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.2s;
+    }
+    .wm-window:active, .wm-window:focus {
+      box-shadow: 0 0 0 3px #2fb43a, 0 4px 24px #000a;
+    }
+    .wm-titlebar {
+      background: #222;
+      color: #2fb43a;
+      font-weight: bold;
+      padding: 6px 12px;
+      cursor: move;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2fb43a44;
+    }
+    .wm-close {
+      color: #ff6e6e;
+      font-size: 1.2em;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    .wm-content {
+      flex: 1;
+      padding: 12px;
+      overflow: auto;
+      font-size: 0.95em;
+      color: #a8a882;
+    }
+    .wm-resize {
+      position: absolute;
+      right: 0; bottom: 0;
+      width: 18px; height: 18px;
+      background: url('data:image/svg+xml;utf8,<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M0,18 L18,0" stroke="%232fb43a" stroke-width="2"/></svg>') no-repeat right bottom;
+      cursor: se-resize;
+      z-index: 10;
+    }
+    .dock-top { top: 0 !important; left: 50% !important; transform: translateX(-50%); }
+    .dock-bottom { bottom: 0 !important; left: 50% !important; transform: translateX(-50%); }
+    
+    .rune-btn {
+      background: #181818;
+      border: 2px solid #2fb43a;
+      border-radius: 8px;
+      color: #2fb43a;
+      font-size: 2em;
+      width: 64px;
+      height: 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 4px;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px #000a;
+    }
+    .rune-btn:hover {
+      background: #222;
+      box-shadow: 0 0 0 2px #2fb43a, 0 2px 8px #000a;
+    }
+
+    /* ========== CAST CONSOLE UI LAYOUT ========== */
+    
+    .cast-console-wrapper {
+      width: 100%;
+      height: calc(100vh - 200px);
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      grid-template-rows: 1fr auto;
+      gap: 2px;
+      background: #001a00;
+      padding: 2px;
+      position: relative;
+    }
+
+    /* CENTER: Floating windows container */
+    .windows-container {
+      grid-column: 1;
+      grid-row: 1;
+      background: #000;
+      border: 2px solid #00ff00;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+    }
+
+    /* Top-Left: Cast Console Terminal */
+    .cast-terminal {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      grid-column: 1;
+      grid-row: 2;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+      height: 200px;
+    }
+
+    .cast-terminal-header {
+      color: #00ff00;
+      font-size: 0.9em;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+      letter-spacing: 1px;
+    }
+
+    .cast-terminal-output {
+      flex: 1;
+      background: #000;
+      border: 1px solid #00ff00;
+      padding: 8px;
+      overflow-y: auto;
+      font-size: 0.8em;
+      line-height: 1.3;
+      margin-bottom: 8px;
+      box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.05);
+    }
+
+    .cast-terminal-input {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .cast-terminal-input input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #00ff00;
+      color: #00ff00;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.85em;
+      outline: none;
+      padding: 2px 0;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.2);
+    }
+
+    .cast-terminal-input button {
+      padding: 4px 8px;
+      font-size: 0.75em;
+    }
+
+    /* Bottom-Left: Inventory */
+    .cast-log {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      grid-column: 1;
+      grid-row: 2;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+      display: none;
+    }
+
+    .cast-log-header {
+      color: #00ff00;
+      font-size: 0.9em;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    }
+
+    .cast-log-content {
+      background: #0a0a0a;
+      border: 1px solid #00ff00;
+      padding: 8px;
+      height: 110px;
+      overflow-y: auto;
+      font-size: 0.75em;
+      line-height: 1.2;
+      color: #00ff00;
+    }
+
+    .cast-log-line {
+      margin-bottom: 2px;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.2);
+    }
+
+    /* Top-Right: Stats Panel */
+    .stats-panel {
+      background: #000;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      grid-column: 2;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.1);
+      overflow-y: auto;
+    }
+
+    .stats-header {
+      color: #00ff00;
+      font-size: 0.9em;
+      font-weight: bold;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+      letter-spacing: 1px;
+    }
+
+    .stat-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-label {
+      color: #88ff00;
+      font-size: 0.75em;
+      text-shadow: 0 0 3px rgba(136, 255, 0, 0.3);
+    }
+
+    .stat-value {
+      background: #0a0a0a;
+      border: 1px solid #00ff00;
+      height: 16px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .stat-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ff00 0%, #88ff00 50%, #00ff00 100%);
+      box-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+      transition: width 0.3s ease;
+    }
+
+    .stat-text {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #000;
+      font-size: 0.7em;
+      font-weight: bold;
+      line-height: 16px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Quests & Objectives */
+    .quests-panel {
+      background: #0a0a0a;
+      border: 1px solid #00ff00;
+      padding: 8px;
+      border-top: none;
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.75em;
+    }
+
+    .quest-item {
+      margin-bottom: 8px;
+      padding: 6px;
+      border-left: 2px solid #88ff00;
+      color: #88ff00;
+    }
+
+    .quest-title {
+      font-weight: bold;
+      color: #00ff00;
+      text-shadow: 0 0 3px rgba(0, 255, 0, 0.3);
+    }
+
+    .quest-objective {
+      font-size: 0.85em;
+      margin-top: 2px;
+      color: #88ff00;
+      opacity: 0.8;
+    }
+
+    /* ========== TECHNONOMICON SECTION ========== */
+
+    .technonomicon {
+      position: relative;
+      background: #000;
+      background-image:
+        linear-gradient(135deg, rgba(0, 255, 0, 0.08) 0%, rgba(0, 255, 0, 0.02) 60%, rgba(0, 255, 0, 0.05) 100%),
+        var(--technonomicon-back-img);
+      background-size: cover;
+      background-position: center;
+      background-blend-mode: screen;
+      border: 2px solid #00ff00;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .technonomicon::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 20%, rgba(0, 255, 0, 0.12), transparent 45%),
+                  radial-gradient(ellipse at 80% 70%, rgba(0, 255, 0, 0.08), transparent 55%);
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .technonomicon > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .technonomicon-header {
+      color: #00ff00;
+      font-size: 0.95em;
+      font-weight: bold;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.7);
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    .technonomicon-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid #00ff00;
+      padding-bottom: 8px;
+    }
+
+    .technonomicon-tab {
+      flex: 1;
+      padding: 4px 6px;
+      background: transparent;
+      border: 1px solid #00ff00;
+      color: #88ff00;
+      font-size: 0.7em;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .technonomicon-tab:hover,
+    .technonomicon-tab.active {
+      background: #00ff00;
+      color: #000;
+    }
+
+    .technonomicon-content {
+      flex: 1;
+      background: #0a0a0a;
+      border: 1px solid #00ff00;
+      padding: 8px;
+      overflow-y: auto;
+      font-size: 0.8em;
+      line-height: 1.3;
+    }
+
+    /* ========== CRYSTAL BALL SECTION ========== */
+
+    .crystal-ball {
+      position: relative;
+      background: #0a0512;
+      background-image: var(--oracle-frame-img);
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #c9a227;
+      padding: 80px 60px 60px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 480px;
+      overflow: hidden;
+      box-shadow: 
+        0 0 30px rgba(201, 162, 39, 0.3),
+        0 0 60px rgba(138, 43, 226, 0.2),
+        inset 0 0 40px rgba(0, 0, 0, 0.8);
+      border-radius: 8px;
+    }
+
+    .crystal-ball::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 30%, rgba(201, 162, 39, 0.08), rgba(138, 43, 226, 0.05) 50%, transparent 80%);
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    .crystal-ball > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .crystal-ball-header {
+      color: #c9a227;
+      font-size: 1.1em;
+      font-weight: bold;
+      text-shadow: 0 0 12px rgba(201, 162, 39, 0.8), 0 0 20px rgba(138, 43, 226, 0.5);
+      letter-spacing: 3px;
+      text-align: center;
+      text-transform: uppercase;
+      margin-top: -20px;
+      position: relative;
+    }
+
+    .oracle-controls {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 5px;
+    }
+
+    .oracle-ctrl-btn {
+      background: rgba(138, 43, 226, 0.3);
+      border: 1px solid rgba(201, 162, 39, 0.5);
+      color: #c9a227;
+      width: 28px;
+      height: 28px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .oracle-ctrl-btn:hover {
+      background: rgba(201, 162, 39, 0.4);
+      transform: scale(1.1);
+    }
+
+    .oracle-ctrl-btn.listening {
+      background: rgba(138, 43, 226, 0.6);
+      animation: voicePulse 1s ease-in-out infinite;
+    }
+
+    @keyframes voicePulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(138, 43, 226, 0.5); }
+      50% { box-shadow: 0 0 15px rgba(138, 43, 226, 0.9); }
+    }
+
+    .crystal-ball-display {
+      flex: 1;
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.95) 0%, rgba(200, 180, 255, 0.6) 30%, rgba(80, 40, 120, 0.4) 60%, transparent 75%);
+      background-size: 100% 100%;
+      background-position: center;
+      background-repeat: no-repeat;
+      border: 3px solid rgba(201, 162, 39, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 180px;
+      max-width: 220px;
+      margin: 0 auto;
+      box-shadow:
+        inset 0 0 50px rgba(138, 43, 226, 0.3),
+        inset 0 0 20px rgba(255, 255, 255, 0.4),
+        0 0 30px rgba(201, 162, 39, 0.4),
+        0 0 60px rgba(138, 43, 226, 0.3);
+      aspect-ratio: 1 / 1;
+    }
+
+    /* Static noise overlay for idle/loading state */
+    .crystal-ball-display.loading::before,
+    .crystal-ball-display.idle::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--static-noise-img);
+      background-size: 200px 200px;
+      opacity: 0.12;
+      mix-blend-mode: overlay;
+      animation: static-flicker 0.15s steps(4) infinite;
+      border-radius: 50%;
+      z-index: 5;
+    }
+
+    @keyframes static-flicker {
+      0% { background-position: 0 0; }
+      25% { background-position: -50px -25px; }
+      50% { background-position: 25px -50px; }
+      75% { background-position: -25px 50px; }
+      100% { background-position: 50px 25px; }
+    }
+
+    /* Green glitch scanlines for connecting/transmission state */
+    .crystal-ball-display.connecting::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--glitch-static-img);
+      background-size: cover;
+      opacity: 0.35;
+      mix-blend-mode: screen;
+      animation: glitch-scroll 0.8s linear infinite, glitch-flicker 0.12s steps(2) infinite;
+      border-radius: 50%;
+      z-index: 6;
+    }
+
+    @keyframes glitch-scroll {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 100%; }
+    }
+
+    @keyframes glitch-flicker {
+      0% { opacity: 0.3; }
+      50% { opacity: 0.45; }
+      100% { opacity: 0.25; }
+    }
+
+    /* Active/receiving state - pulsing mystical glow */
+    .crystal-ball-display.active {
+      box-shadow:
+        inset 0 0 60px rgba(201, 162, 39, 0.4),
+        inset 0 0 30px rgba(255, 255, 255, 0.5),
+        0 0 40px rgba(201, 162, 39, 0.5),
+        0 0 80px rgba(138, 43, 226, 0.4);
+      animation: oracle-active 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes oracle-active {
+      0% { box-shadow: inset 0 0 50px rgba(0, 255, 180, 0.25), 0 0 25px rgba(0, 255, 150, 0.35); }
+      100% { box-shadow: inset 0 0 60px rgba(0, 255, 180, 0.4), 0 0 40px rgba(0, 255, 150, 0.5); }
+    }
+
+    .crystal-ball-display > .orb-highlight {
+      content: '';
+      position: absolute;
+      top: 8%;
+      left: 18%;
+      width: 30%;
+      height: 18%;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.6), transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(6px);
+      z-index: 3;
+    }
+
+    /* Mystical inner glow for orb */
+    .crystal-ball-display::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 60%, rgba(160, 200, 255, 0.15), transparent 50%),
+        radial-gradient(ellipse at 30% 30%, rgba(255, 255, 255, 0.08), transparent 40%);
+      mix-blend-mode: screen;
+      opacity: 0.9;
+      pointer-events: none;
+      border-radius: 50%;
+      animation: orb-pulse 6s ease-in-out infinite alternate;
+      z-index: 2;
+    }
+
+    @keyframes orb-pulse {
+      0% { opacity: 0.7; transform: scale(0.98); }
+      100% { opacity: 1; transform: scale(1.02); }
+    }
+
+    /* Keep scanlines for CRT areas if needed */
+    @keyframes scanlines {
+      0% { background-position: 0 0, 50% 50%; }
+      100% { background-position: 0 8px, 50% 48%; }
+    }
+
+    @keyframes crt-glow {
+      0% { opacity: 0.72; filter: drop-shadow(0 0 6px rgba(0, 255, 0, 0.2)); }
+      100% { opacity: 0.9; filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.28)); }
+    }
+
+    .crystal-ball-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      color: #c8d8ff;
+      font-size: 0.9em;
+      font-style: italic;
+      padding: 20px;
+      text-shadow: 0 0 12px rgba(100, 140, 200, 0.7), 0 0 4px rgba(255, 255, 255, 0.4);
+    }
+
+    .crystal-ball-input {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .crystal-ball-input input {
+      background: rgba(10, 5, 20, 0.95);
+      border: 1px solid rgba(201, 162, 39, 0.5);
+      color: #e8d5a3;
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.85em;
+      padding: 6px;
+      text-shadow: 0 0 8px rgba(201, 162, 39, 0.4);
+      border-radius: 4px;
+    }
+    
+    .crystal-ball-input input::placeholder {
+      color: rgba(201, 162, 39, 0.5);
+    }
+
+    .crystal-ball-input button {
+      padding: 6px 12px;
+      font-size: 0.8em;
+      background: linear-gradient(135deg, #c9a227 0%, #8b6914 100%);
+      border: none;
+      color: #0a0512;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    
+    .crystal-ball-input button:hover {
+      background: linear-gradient(135deg, #e8c547 0%, #c9a227 100%);
+      box-shadow: 0 0 15px rgba(201, 162, 39, 0.5);
+    }
+
+    /* ========== UI ENHANCEMENTS (ICON SPACING & CLARITY) ========== */
+    .technonomicon-tabs {
+       gap: 12px !important; /* Fix icon spacing in tabs */
+    }
+    
+    .technonomicon-tab {
+       border: 1px solid #004400; /* Subtle border for clarity */
+       border-radius: 4px;
+       margin-bottom: 4px;
+    }
+    
+    .oracle-controls {
+       display: flex;
+       gap: 12px; /* Clear spacing between icons */
+       align-items: center;
+    }
+    
+    .oracle-ctrl-btn {
+       width: 32px;
+       height: 32px;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       border: 1px solid rgba(201, 162, 39, 0.8) !important;
+       background: rgba(0,0,0,0.6) !important;
+       border-radius: 4px;
+       font-size: 1.1em;
+       transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .oracle-ctrl-btn:hover {
+       transform: scale(1.1);
+       box-shadow: 0 0 10px rgba(201, 162, 39, 0.6);
+       background: rgba(20, 10, 0, 0.8) !important;
+    }
+
+    /* ========== RESPONSIVE ========== */
+
+    @media (max-width: 1200px) {
+      .cast-console-wrapper {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto auto;
+      }
+
+      .cast-terminal {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .cast-log {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .stats-panel {
+        grid-column: 1;
+        grid-row: 3;
+      }
+
+      .technonomicon {
+        grid-column: 1;
+        grid-row: 4;
+      }
+
+      .crystal-ball {
+        grid-column: 1;
+        grid-row: 5;
+      }
+    }
+
+    /* ========== FLOATING WINDOWS ========== */
+    
+    .floating-window {
+      position: absolute;
+      background: #000;
+      border: 2px solid #00ff00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      min-width: 300px;
+      min-height: 200px;
+      z-index: 100;
+      resize: both;
+      overflow: auto;
+      cursor: move;
+      user-select: none;
+    }
+
+    .floating-window.dragging {
+      opacity: 0.8;
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.7);
+    }
+
+    .floating-window-header {
+      background: #000;
+      border-bottom: 1px solid #00ff00;
+      padding: 8px;
+      color: #00ff00;
+      font-weight: bold;
+      font-size: 0.9em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+    }
+
+    .floating-window-header:active {
+      cursor: grabbing;
+    }
+
+    .floating-window-close {
+      background: none;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-size: 0.8em;
+      margin-left: auto;
+    }
+
+    .floating-window-close:hover {
+      background: #00ff00;
+      color: #000;
+    }
+
+    .floating-window-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      color: #00ff00;
+    }
+  </style>
+</head>
+<body>
+  <!-- Boot Screen -->
+
+  <!-- Cinematic Intro Overlay -->
+  <div id="intro-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+    <div id="room-text" style="font-size: 1.3em; color: #2fb43a; margin-bottom: 18px;">You wake up in an empty room...</div>
+    <div id="boot-log" style="font-size: 13px; color: #00ff41; text-align: left; width: 320px; margin-top: 20px;"></div>
+  </div>
+  <script>
+  // --- INTRO SEQUENCE (from Coder Quest Alpha) ---
+  const log = document.getElementById('output');
+  const input = document.getElementById('console-input');
+  const bootLog = document.getElementById('boot-log');
+  const introScreen = document.getElementById('intro-screen');
+  let audioCtx;
+  let save = JSON.parse(localStorage.getItem('cq_v5')) || {
+    step: 'BOOT', name: '', class: '', ai_unlocked: false, ip: '', hp: 100, quiz: []
+  };
+
+  function playTone(freq, duration, type = "square", vol = 0.1) {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+  const knock = () => { playTone(100, 0.1, "sine", 0.5); };
+  const playTheme = () => {
+    const notes = [440, 493, 523, 587, 440, 523, 493];
+    notes.forEach((f, i) => setTimeout(() => playTone(f, 0.4), i * 500));
+  };
+
+  async function runBoot() {
+    await new Promise(r => setTimeout(r, 1000));
+    knock(); setTimeout(knock, 300);
+    const roomText = document.getElementById('room-text');
+    if (roomText) roomText.innerText = "*Knock Knock*";
+    await new Promise(r => setTimeout(r, 1500));
+    playTheme();
+    const messages = [
+      "Initializing CastConsole...", "Detecting Neural Interface...", 
+      "Bypassing Security Gates...", "Memory Partition Found: [CORRUPT]",
+      "Identity Protocol: ACTIVE", "Mounting OS..."
+    ];
+    for (let msg of messages) {
+      if (bootLog) bootLog.innerHTML += `> ${msg}<br>`;
+      await new Promise(r => setTimeout(r, 800));
+    }
+    await new Promise(r => setTimeout(r, 1000));
+    if (introScreen) {
+      introScreen.style.opacity = '0';
+      setTimeout(() => { introScreen.style.display = 'none'; startSequence(); }, 1000);
+    } else {
+      startSequence();
+    }
+  }
+
+  function print(msg, className = "") {
+    const div = document.createElement('div');
+    div.className = className;
+    div.innerHTML = msg;
+    if (log) {
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+  }
+
+  function startSequence() {
+    print("<span class='highlight'>[SYSTEM]: Identity Data Missing.</span>");
+    print("The console screen blinks. Two options remain:");
+    print("1. [Forgot Identity] - Run psych-eval protocol.");
+    print("2. [Select Config] - Restore from Technomancer/Data Knight pre-builds.");
+  }
+
+  async function handleInput(cmd) {
+    const raw = cmd.toLowerCase();
+    if (save.step === 'BOOT') {
+      if (raw.includes('forgot')) {
+        save.step = 'QUIZ_1';
+        print("> Running Psych-Eval...");
+        print("Question 1: In a failing system, do you fix the code or defend the server?");
+      } else if (raw.includes('config')) {
+        save.step = 'CLASS_SELECT';
+        print("Choose: [Technomancer] or [Data Knight]");
+      }
+    } 
+    else if (save.step === 'QUIZ_1') {
+      save.quiz.push(raw);
+      save.step = 'QUIZ_2';
+      print("Question 2: Do you prefer a [Blade] of light or a [Key] to all doors?");
+    }
+    else if (save.step === 'QUIZ_2') {
+      save.quiz.push(raw);
+      save.step = 'QUIZ_3';
+      print("Final Question: Is the Void [Home] or a [Prison]?");
+    }
+    else if (save.step === 'QUIZ_3') {
+      save.quiz.push(raw);
+      save.class = save.quiz[0].includes('code') ? 'Technomancer' : 'Data Knight';
+      save.step = 'RECALL_NAME';
+      print(`Evaluation Complete. You are a <span class='highlight'>${save.class}</span>.`);
+      print("Do you remember your name now?");
+    }
+    else if (save.step === 'RECALL_NAME' || save.step === 'CLASS_SELECT') {
+      if (save.step === 'CLASS_SELECT') save.class = raw.includes('techno') ? 'Technomancer' : 'Data Knight';
+      save.name = cmd;
+      save.step = 'SUMMON_DICE';
+      print(`Welcome back, <span class='highlight'>${save.name}</span>.`);
+      print("Finalize connection by typing: <span class='highlight'>'summon dice'</span>");
+    }
+    else if (save.step === 'SUMMON_DICE' && raw === 'summon dice') {
+      print("🎲 Dice Summoned. Enter Local IP to Invoke DM (e.g., http://10.81.53.190:1234)");
+      save.step = 'SET_IP';
+    }
+    else if (save.step === 'SET_IP' && raw.startsWith('http')) {
+      save.ip = cmd;
+      save.ai_unlocked = true;
+      save.step = 'PLAY';
+      print("REALITY BRIDGED. The DM is listening.");
+    }
+    else if (save.ai_unlocked) {
+      const res = await fetch(`${save.ip}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: "system", content: `You are the DM for ${save.name}, a ${save.class}.` }, { role: "user", content: cmd }]
+        })
+      }).then(r => r.json()).catch(() => ({choices: [{message: {content: "The connection flickers..."}}]}));
+      print(res.choices[0].message.content);
+    }
+    localStorage.setItem('cq_v5', JSON.stringify(save));
+  }
+
+  if (input) {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        handleInput(input.value);
+        input.value = '';
+      }
+    });
+  }
+
+  // Debounce click handler to prevent multiple rapid fires
+  let bootClickTimeout = null;
+  window.onclick = () => {
+    if (!audioCtx && !bootClickTimeout) {
+      bootClickTimeout = true;
+      runBoot();
+      // Reset after 2 seconds to allow next click if needed
+      setTimeout(() => { bootClickTimeout = null; }, 2000);
+    }
+  };
+  </script>
+
+  <!-- CRT Monitor Frame -->
+  <div class="crt-frame">
+    <div class="crt-inner">
+      <div class="container">
+        <h1>[ CAST CONSOLE ]</h1>
+        
+        <!-- Graphics Container (optional canvas layer) -->
+        <div id="graphics-container" style="margin-bottom: 15px; display: none;">
+          <!-- Canvas will be inserted here by GraphicsUI.js -->
+        </div>
+        
+        <!-- CAST CONSOLE UI GRID LAYOUT -->
+        <div class="cast-console-wrapper">
+          
+          <!-- CENTER: Floating Windows Area -->
+          <div class="windows-container" id="windows-container">
+            <!-- Game windows will be created here by WindowManager -->
+          </div>
+          
+          <!-- TOP-LEFT: Cast Console Terminal -->
+          <div class="cast-terminal">
+            <div class="cast-terminal-header">[ CAST CONSOLE - TERMINAL ]</div>
+            <div class="cast-terminal-output" id="output"></div>
+            <div class="cast-terminal-input">
+              <span style="color: #00ff00;">></span>
+              <input type="text" id="console-input" autofocus autocomplete="off" placeholder="Type 'help' to begin">
+              <button id="send-btn">Send</button>
+            </div>
+          </div>
+
+          <!-- BOTTOM-LEFT: Inventory -->
+          <div class="cast-log">
+            <div class="cast-log-header">[ INVENTORY ]</div>
+            <div class="cast-log-content" id="cast-log-content">
+              <!-- Log entries will be populated here -->
+            </div>
+          </div>
+
+          <!-- TOP-RIGHT: Stats Panel + Quests -->
+          <div class="stats-panel">
+            <!-- Stats Header -->
+            <div class="stats-header">[ CHARACTER STATUS ]</div>
+            
+            <!-- HP Bar -->
+            <div class="stat-bar">
+              <div class="stat-label">HP</div>
+              <div class="stat-value">
+                <div class="stat-fill" id="stat-hp" style="width: 100%;"></div>
+                <div class="stat-text" id="stat-hp-text">100/100</div>
+              </div>
+            </div>
+
+            <!-- MANA Bar -->
+            <div class="stat-bar">
+              <div class="stat-label">MANA</div>
+              <div class="stat-value">
+                <div class="stat-fill" id="stat-mana" style="width: 100%; background: linear-gradient(90deg, #aa77ff 0%, #cc99ff 50%, #aa77ff 100%);"></div>
+                <div class="stat-text" id="stat-mana-text">20/20</div>
+              </div>
+            </div>
+
+            <!-- DATA Bar -->
+            <div class="stat-bar">
+              <div class="stat-label">DATA</div>
+              <div class="stat-value">
+                <div class="stat-fill" id="stat-data" style="width: 100%; background: linear-gradient(90deg, #ffaa00 0%, #ffcc44 50%, #ffaa00 100%);"></div>
+                <div class="stat-text" id="stat-data-text">100/100</div>
+              </div>
+            </div>
+
+            <!-- Quests & Objectives -->
+            <div class="stats-header" style="margin-top: 8px;">[ QUESTS & OBJECTIVES ]</div>
+            <div class="quests-panel" id="quests-panel">
+              <!-- Quest items will be populated here -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- HIDDEN: Technonomicon + Crystal Ball (floated as windows) -->
+        <div style="display: none; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 2px;">
+          
+          <!-- TECHNONOMICON -->
+          <div class="technonomicon">
+            <div class="technonomicon-header">⬢ TECHNONOMICON ⬢</div>
+            <div class="technonomicon-tabs">
+              <button class="technonomicon-tab active" data-tab="spells">SPELLS</button>
+              <button class="technonomicon-tab" data-tab="skills">SKILLS</button>
+              <button class="technonomicon-tab" data-tab="dice">🎲 DICE</button>
+            </div>
+            <div class="technonomicon-content" id="technonomicon-content">
+              <!-- Content will be populated by tabs -->
+            </div>
+          </div>
+
+          <!-- CRYSTAL BALL -->
+          <div class="crystal-ball">
+            <div class="crystal-ball-header">
+              ✦ CHANNELING THE COSMOS ✦
+              <div class="oracle-controls" id="oracle-controls" style="display:none;">
+                <button class="oracle-ctrl-btn" id="oracle-tts-btn" title="Toggle Voice Output">🔊</button>
+                <button class="oracle-ctrl-btn" id="oracle-voice-btn" title="Voice Input">🎤</button>
+              </div>
+            </div>
+            <div class="crystal-ball-display" id="crystal-ball-display">
+              <div class="crystal-ball-content" id="crystal-ball-content">
+                Ready for DM interaction...
+              </div>
+            </div>
+            <div class="crystal-ball-input">
+              <input type="text" id="crystal-ball-input" placeholder="Ask the Oracle...">
+              <button id="crystal-ball-btn">✦ ASK</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- External Scripts -->
+  <script src="storage-polyfill.js"></script>
+  
+  <!-- Sprite Icons System (custom pixel art emojis) -->
+  <script src="sprite-icons.js"></script>
+  
+  <!-- NEW: Audio system -->
+  <script src="fx-audio.js"></script>
+  
+  <!-- NEW: Quest system -->
+  <script src="quest-system.js"></script>
+  
+  <!-- NEW: Save system -->
+  <script src="save-system.js"></script>
+  
+  <!-- NEW: Sprite resources (pixel art asset library) -->
+  <script src="sprites-resources.js"></script>
+  
+  <!-- NEW: AI Integration System -->
+  <script src="ai-config.js"></script>
+  
+  <!-- NEW: Authentication System (cloud saves) -->
+  <script src="auth-system.js"></script>
+  
+  <!-- NEW: Core engine (no DOM dependencies) -->
+  <!-- NEW: Core engine (no DOM dependencies) -->
+  <script src="GameEngine.js"></script>
+  
+  <!-- NEW: UI adapter layer -->
+  <script src="GameUI.js"></script>
+  
+  <!-- NEW: Neural TTS (high-quality voice synthesis) -->
+  <script src="neural-tts.js"></script>
+  
+  <!-- NEW: Cast Console UI (multipart layout) -->
+  <script src="cast-console-ui.js"></script>
+  
+  <!-- NEW: Graphics layer (canvas rendering) -->
+  <script src="GraphicsUI.js"></script>
+  
+  <!-- NEW: Zone transitions (Phase 4 polish) -->
+  <script src="zone-transitions.js"></script>
+  
+  <!-- NEW: Battle animations (Phase 4 polish) -->
+  <script src="battle-animations.js"></script>
+  
+  <!-- NEW: Integration tests (Phase 4 verification) -->
+  <script src="integration-tests.js"></script>
+  
+  <!-- NEW: Tutorial system (Phase 5 guided intro) -->
+  <script src="tutorial-system.js"></script>
+  
+  <!-- NEW: Command handlers (tutorial, system, debug commands) -->
+  <script src="command-handlers.js"></script>
+  
+  <!-- NEW: Intro system (character awakening & creation) -->
+  <script src="intro-system.js"></script>
+  
+  <!-- Data & Utility Systems -->
+  <script src="dice.js"></script>
+  <script src="ai-dm-integration.js"></script>
+  <script src="spell-tinkering.js"></script>
+  <script src="ai-summon-ritual.js"></script>
+  <script src="terminal-documents.js"></script>
+  <script src="terminal-lore.js"></script>
+  <script src="dynamic-narrative.js"></script>
+  <script src="boss-encounters.js"></script>
+  <script src="spells-data.js"></script>
+  <script src="spell-crafting.js"></script>
+  <script src="enemies-battle.js"></script>
+  <script src="terminals-data.js"></script>
+  <script src="ancient-terminals.js"></script>
+  <script src="encounters.js"></script>
+  <script src="battle-core.js"></script>
+  <script src="fx.js"></script>
+  <script src="zones-puzzles.js"></script>
+  
+  <!-- Integration bootstrap (ties all systems together) -->
+  <script src="integration-bootstrap.js"></script>
+  
+  <!-- NEW: Pane manager for resizable, draggable windows -->
+  <script src="pane-manager.js"></script>
+  
+  <!-- NEW: Enhanced command parser -->
+  <script src="command-parser-new.js"></script>
+  
+  <!-- NEW: Logging system for multiple log channels -->
+  <script src="logging-system.js"></script>
+  
+  <!-- NEW: Dice UI for visual dice roller -->
+  <script src="dice-ui.js"></script>
+  
+  <!-- NEW: Arcane background - fractals, particles, lighting -->
+  <script src="arcane-background.js"></script>
+  
+  <!-- NEW: Character Status Panel - HP/MANA/DATA bars -->
+  <script src="character-status-panel.js"></script>
+  
+  <!-- NEW: Technonomicon arcane spellbook -->
+  <script src="technonomicon.js"></script>
+  
+  <!-- NEW: UI Layout manager for windows positioning -->
+  <script src="ui-layout-manager.js"></script>
+  
+  <!-- NEW: Window manager for draggable, resizable UI -->
+  <script src="window-manager.js"></script>
+  
+  <!-- Inline initialization script -->
+  <script>
+    let gameEngine;
+    let gameUI;
+    let graphicsUI;
+    let graphicsEnabled = false;
+    let spriteSheet = null;
+
+    // Initialize the new modular system
+    async function initGame() {
+      // Hide boot screen immediately
+      const bootScreen = document.getElementById("boot-screen");
+      if (bootScreen) {
+        bootScreen.classList.add("hidden");
+      }
+      
+      // ============================================================
+      // AUTHENTICATION CHECK
+      // ============================================================
+      console.log("[Boot] Checking authentication...");
+      if (window.AuthSystem) {
+        const hasSession = await AuthSystem.init();
+        if (!hasSession) {
+          // No valid session - show login screen
+          console.log("[Boot] No session found - showing login");
+          AuthSystem.showLoginScreen();
+          
+          // Wait for login before continuing
+          await new Promise(resolve => {
+            const checkLogin = setInterval(() => {
+              if (AuthSystem.state.loggedIn || !document.getElementById('login-overlay')) {
+                clearInterval(checkLogin);
+                resolve();
+              }
+            }, 100);
+          });
+        }
+        console.log("[Boot] ✓ Authenticated as:", AuthSystem.state.username || 'Guest');
+      }
+      
+      // Initialize AI system first (optional, gracefully falls back)
+      console.log("[Boot] Initializing AI system...");
+      try {
+        // AI system is optional - game works without it
+        const aiReady = await AIConfig.initialize();
+        if (aiReady) {
+          console.log("[Boot] ✓ AI system ready:", AIConfig.getStatus().activeProvider);
+        } else {
+          console.log("[Boot] ⚠ AI system using fallback content");
+        }
+      } catch (e) {
+        console.warn("[Boot] ⚠ AI initialization non-critical error (ignored):", e.message);
+      }
+
+      // Create the pure game engine with callback for graphics unlock
+      gameEngine = new GameEngine({
+        onGraphicsUnlock: handleGraphicsUnlock
+      });
+
+      // ============================================================
+      // CLOUD SAVE SYNC
+      // ============================================================
+      if (window.AuthSystem && AuthSystem.state.loggedIn && AuthSystem.state.gameState) {
+        console.log("[Boot] Loading cloud save...");
+        // Merge cloud save with local engine state
+        Object.assign(gameEngine.gameState, AuthSystem.state.gameState);
+        console.log("[Boot] ✓ Cloud save loaded");
+      }
+
+      // Try to restore auto-save (with safety check) - only if no cloud save
+      let hasAutoSave = false;
+      if (!AuthSystem?.state?.gameState) {
+        if (gameEngine.saveSystem && typeof gameEngine.saveSystem.loadAutoSave === 'function') {
+          hasAutoSave = gameEngine.saveSystem.loadAutoSave();
+        }
+      } else {
+        hasAutoSave = true; // Cloud save counts as auto-save
+      }
+      
+      // Create the UI layer that connects to DOM
+      gameUI = new GameUI(gameEngine);
+      
+      // Setup zone transitions (Phase 4 polish)
+      initializeZoneTransitions(gameEngine);
+      
+      // Setup battle animations (Phase 4 polish)
+      initializeBattleAnimations(gameEngine);
+      
+      // Setup tutorial system (Phase 5)
+      initializeTutorial(gameEngine);
+      
+      // Setup command handlers (tutorial, system, debug)
+      CommandHandlers.initialize(gameEngine);
+      
+      // Initialize pane manager (resizable windows)
+      console.log("[Boot] Initializing pane manager...");
+      if (window.PaneManager) {
+        PaneManager.initialize();
+        console.log("[Boot] ✓ Pane manager ready");
+      }
+      
+      // Initialize command parser
+      console.log("[Boot] Initializing command parser...");
+      if (window.CommandParser && window.DiceSystem) {
+        CommandParser.initialize(gameEngine, window.DiceSystem);
+        console.log("[Boot] ✓ Command parser ready");
+        
+        // Wire up cast console input to command parser
+        const consoleInput = document.getElementById("console-input");
+        if (consoleInput) {
+          consoleInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const input = consoleInput.value.trim();
+              if (input) {
+                CommandParser.parse(input);
+                consoleInput.value = "";
+              }
+            }
+          });
+        }
+      }
+      
+      // Initialize logging system
+      console.log("[Boot] Initializing logging system...");
+      if (window.LoggingSystem) {
+        LoggingSystem.initialize();
+        console.log("[Boot] ✓ Logging system ready");
+        
+        // Log some startup messages
+        LoggingSystem.cast("Cast Console initialized", "BOOT", "#00ff00");
+        LoggingSystem.tech("Technonomicon ready", "BOOT", "#88ff00");
+        LoggingSystem.oracle("Oracle online", "BOOT", "#aa77ff");
+      }
+      
+      // Initialize dice UI
+      console.log("[Boot] Initializing dice UI...");
+      if (window.DiceUI && window.DiceSystem && window.LoggingSystem) {
+        DiceUI.initialize(window.DiceSystem, window.LoggingSystem);
+        console.log("[Boot] ✓ Dice UI ready");
+      }
+      
+      // Initialize Technonomicon (arcane spellbook)
+      console.log("[Boot] Initializing Technonomicon...");
+      if (window.Technonomicon && window.LoggingSystem) {
+        Technonomicon.initialize(gameEngine, window.LoggingSystem);
+        console.log("[Boot] ✓ Technonomicon ready");
+      }
+      
+      // Initialize UI Layout Manager (positions windows)
+      console.log("[Boot] Initializing UI layout...");
+      if (window.UILayoutManager) {
+        UILayoutManager.initialize(gameEngine);
+        
+        // Hook graphics unlock to quest completion
+        const originalOnGraphicsUnlock = gameEngine.onGraphicsUnlock;
+        gameEngine.onGraphicsUnlock = function() {
+          if (originalOnGraphicsUnlock) originalOnGraphicsUnlock();
+          if (UILayoutManager) UILayoutManager.unlockGraphics();
+        };
+        
+        console.log("[Boot] ✓ UI layout ready");
+      }
+      
+      // Initialize AI DM integration
+      console.log("[Boot] Initializing AI DM integration...");
+      // AIDMIntegration is an object (singleton), not a class
+      if (!window.AIDMIntegration.state.initialized) {
+        window.AIDMIntegration.initialize(gameEngine.gameState);
+      }
+      
+      // Bootstrap all integrations (pass DiceSystem singleton + aiDMIntegration)
+      console.log("[Boot] Bootstrapping system integrations...");
+      IntegrationBootstrap.initialize(gameEngine, window.DiceSystem, window.AIDMIntegration);
+      
+      // Hook into engine's onGraphicsUnlock for graphics layer
+      gameEngine.onGraphicsUnlock = handleGraphicsUnlock;
+
+      // Check for force intro URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const forceIntro = urlParams.get('forceIntro') === 'true';
+      
+      if (forceIntro) {
+        console.log("[Boot] Force intro parameter detected - resetting intro state");
+        gameEngine.gameState.introComplete = false;
+        IntroSystem.reset();
+      }
+
+      // Run intro sequence (character awakening & creation)
+      console.log("[Boot] Checking intro state...");
+      console.log("[Boot] introComplete:", gameEngine.gameState.introComplete);
+      console.log("[Boot] Character name:", gameEngine.gameState.character?.name);
+      
+      if (!gameEngine.gameState.introComplete || forceIntro) {
+        console.log("[Boot] Running intro sequence...");
+        await IntroSystem.run(gameEngine);
+      } else {
+        console.log("[Boot] Intro already completed, skipping");
+        gameEngine.output("=".repeat(50), "system");
+        gameEngine.output("  WELCOME BACK, " + (gameEngine.gameState.character?.name || "TECHNOMANCER").toUpperCase(), "system");
+        gameEngine.output("=".repeat(50), "system");
+      }
+
+      // Show welcome message
+      if (hasAutoSave) {
+        gameEngine.output("[ TECHNOMANCER: QUEST FOR THE CODE ]", "system");
+        gameEngine.output("Auto-save restored. Welcome back!", "hint");
+      } else {
+        gameEngine.output("[ TECHNOMANCER: QUEST FOR THE CODE ]", "system");
+        gameEngine.output("Welcome back, Technomancer.", "system");
+        gameEngine.output("Type 'help' for commands.", "system");
+        gameEngine.output("Type 'quests' to see active quests.", "hint");
+      }
+      gameEngine.output("", "system");
+
+      // Focus input
+      gameUI.focus();
+      
+      // Set up periodic auto-save every 2 minutes (local + cloud)
+      setInterval(() => {
+        gameEngine.saveSystem.autoSave();
+        console.log("[Auto-save] Local save complete");
+        
+        // Also sync to cloud if logged in
+        if (window.AuthSystem && AuthSystem.state.loggedIn) {
+          AuthSystem.saveToCloud(gameEngine.gameState);
+        }
+      }, 120000);
+    }
+
+    // Handle graphics unlock event
+    function handleGraphicsUnlock(unlock) {
+      if (!unlock || graphicsEnabled) return;
+      
+      // Graphics unlock animation/effect
+      const graphicsContainer = document.getElementById("graphics-container");
+      
+      if (spriteSheet) {
+        // If sprite sheet is loaded, create graphics UI
+        graphicsUI = new GraphicsUI(gameEngine, spriteSheet);
+        graphicsContainer.style.display = "block";
+        graphicsEnabled = true;
+        console.log("[Graphics] Graphics UI enabled!");
+      } else {
+        // Load sprite sheet on demand
+        spriteSheet = new Image();
+        spriteSheet.onload = () => {
+          graphicsUI = new GraphicsUI(gameEngine, spriteSheet);
+          graphicsContainer.style.display = "block";
+          graphicsEnabled = true;
+          console.log("[Graphics] Graphics UI enabled!");
+        };
+        spriteSheet.onerror = () => {
+          console.warn("[Graphics] Failed to load sprite sheet");
+          gameEngine.output("Graphics layer failed to initialize.", "error");
+        };
+        // For now, just show canvas even without sprite sheet
+        spriteSheet.src = "sprites-sheet.png"; // Will be provided later
+        graphicsUI = new GraphicsUI(gameEngine, spriteSheet);
+        graphicsContainer.style.display = "block";
+        graphicsEnabled = true;
+      }
+    }
+
+    // Technonomicon UI managed by pane-manager and ui-layout-manager
+    
+    // Start when page loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initGame);
+    } else {
+      initGame();
+    }
+  </script>
+</body>
+</html>

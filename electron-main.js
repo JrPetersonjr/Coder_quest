@@ -14,6 +14,7 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config(); // Load environment variables for dev
 
 // Keep global references of window objects
 let mainWindow;
@@ -96,17 +97,29 @@ app.on('window-all-closed', () => {
 // IPC HANDLERS - Secure API key storage
 // ============================================================
 
-// Get stored API key (from local config file)
+// Get stored API key (from local config file or .env)
 ipcMain.handle('get-api-key', async (event, provider) => {
   try {
+    // 1. Check secure config storage (User overrides)
     const configPath = path.join(app.getPath('userData'), 'config.json');
     if (fs.existsSync(configPath)) {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      return config.apiKeys?.[provider] || null;
+      if (config.apiKeys?.[provider]) {
+          return config.apiKeys[provider];
+      }
     }
   } catch (e) {
-    console.error('Failed to read API key:', e);
+    console.error('Failed to read configuration:', e);
   }
+
+  // 2. Check Environment Variables (Dev fallback)
+  if (provider === 'anthropic' && process.env.CLAUDE_API_KEY) {
+      return process.env.CLAUDE_API_KEY;
+  }
+  if (provider === 'openai' && process.env.OPENAI_API_KEY) {
+      return process.env.OPENAI_API_KEY;
+  }
+
   return null;
 });
 

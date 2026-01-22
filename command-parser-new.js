@@ -48,6 +48,8 @@ window.CommandParser = {
     this.registerCommand("skills", this.cmdSkills.bind(this), "List skills");
     this.registerCommand("inventory", this.cmdInventory.bind(this), "Show inventory");
     this.registerCommand("inv", this.cmdInventory.bind(this), "Show inventory (short)");
+    this.registerCommand("test", this.cmdTest.bind(this), "System diagnostics: test [ai|music|deck]");
+    this.registerCommand("music", this.cmdMusic.bind(this), "Music control: music [play|stop|volume]");
     this.registerCommand("cast", this.cmdCast.bind(this), "Cast a spell: cast [spell name]");
     this.registerCommand("use", this.cmdUse.bind(this), "Use an item: use [item name]");
     this.registerCommand("talk", this.cmdTalk.bind(this), "Talk to NPC: talk [npc name]");
@@ -369,6 +371,22 @@ window.CommandParser = {
   },
 
   cmdDebug: function(argString) {
+    // 1. Check if user wants AI debug
+    if (argString === "ai" || argString === "backend") {
+        if (this.gameEngine && this.gameEngine.cmdDebugAI) {
+            this.gameEngine.cmdDebugAI();
+            return;
+        }
+    }
+    
+    // 2. Check if user wants Graphics debug
+    if (argString === "graphics" || argString === "gfx") {
+        if (this.gameEngine && this.gameEngine.cmdDebugGraphics) {
+            this.gameEngine.cmdDebugGraphics();
+            return;
+        }
+    }
+
     this.logToConsole("[DEBUG INFO]", "highlight");
     this.logToConsole(`GameEngine ready: ${!!this.gameEngine}`, "text");
     this.logToConsole(`DiceSystem ready: ${!!this.diceSystem}`, "text");
@@ -378,6 +396,26 @@ window.CommandParser = {
     if (argString === "full" && this.gameEngine) {
       this.logToConsole("Game state:", "text");
       this.logToConsole(JSON.stringify(this.gameEngine.gameState, null, 2), "text");
+    }
+  },
+
+  // ============================================================
+  // [COMMANDS] - Test and Music Commands
+  // ============================================================
+  
+  cmdTest: function(args) {
+    if (this.gameEngine && this.gameEngine.cmdTest) {
+      this.gameEngine.cmdTest(args);
+    } else {
+      this.logToConsole("Test system not available", "error");
+    }
+  },
+
+  cmdMusic: function(args) {
+    if (this.gameEngine && this.gameEngine.cmdMusic) {
+      this.gameEngine.cmdMusic(args);
+    } else {
+      this.logToConsole("Music system not available", "error");
     }
   }
 

@@ -72,7 +72,13 @@ class GameUI {
     this.inputElement.focus();
 
     // Send to engine
-    this.engine.handleCommand(input);
+    if (this.engine.parseCommand) {
+        this.engine.parseCommand(input);
+    } else if (this.engine.handleCommand) {
+        this.engine.handleCommand(input);
+    } else {
+        console.error("[GameUI] Engine has no command handler!");
+    }
   }
 
   // ============================================================

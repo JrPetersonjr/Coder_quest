@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Coder Quest – CastConsole</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="zone-hub">
+  <div id="app">
+    <header id="header">
+      <div id="game-title">CODER QUEST</div>
+      <div id="castconsole-label">CastConsole</div>
+      <div id="status-bar">
+        <span id="status-location">Location: ???</span>
+        <span id="status-zone">Zone: HUB</span>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="output-panel">
+        <pre id="output-log"></pre>
+      </section>
+
+      <section id="input-panel">
+        <div id="prompt-row">
+          <span id="prompt-symbol">&gt;</span>
+          <input id="console-input" autocomplete="off" spellcheck="false" />
+        </div>
+        <div id="hint-row">
+          <button id="btn-help">HELP</button>
+          <button id="btn-look">LOOK</button>
+          <button id="btn-zones">ZONES</button>
+        </div>
+      </section>
+    </main>
+
+    <footer id="footer">
+      <span>CastConsole :: online</span>
+      <span id="footer-zone">Zone: HUB</span>
+    </footer>
+  </div>
+
+  <script src="content.js"></script>
+  <script src="filesystem.js"></script>
+  <script src="dice.js"></script>
+  <script src="dm.js"></script>
+  <script src="engine.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>

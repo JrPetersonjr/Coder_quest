@@ -48,28 +48,36 @@ window.AIConfig = {
   // [CONFIG] - User-configurable settings
   // ============================================================
   config: {
-    // API KEYS - Can be set by site admin in deployment
+    // API KEYS - Default to null for public distribution
+    // Users can set their own keys if desired
     apiKeys: {
-      anthropic: null,    // Claude Haiku via GitHub Copilot (PRIMARY)
-      huggingface: null,  // HuggingFace fallback
-      openai: null,       // For future OpenAI integration
+      openrouter: null, // Users can set: AIConfig.setAPIKey('openrouter', 'your-key')
+      anthropic: null,  // Users can set: AIConfig.setAPIKey('anthropic', 'your-key')
+      google: null,     // Users can set: AIConfig.setAPIKey('google', 'your-key')
+      huggingface: null, // Free tier available without key (rate limited)
+      openai: null,     // Users can set: AIConfig.setAPIKey('openai', 'your-key')
     },
 
-    // PROVIDER SELECTION
-    // PRIMARY: Claude Haiku (via GitHub Copilot)
-    // FALLBACK: HuggingFace only (no localhost LM Studio)
-    primaryProvider: "claude",  // "claude", "huggingface"
-    fallbackProviders: ["huggingface"],  // Order: cloud only (LM Studio disabled)
-    localModelUrl: "http://localhost:1234/v1/chat/completions",  // LM Studio
-    // ollamaUrl: "http://localhost:11434/api/generate",  // DISABLED - cloud-only operation
+    // PROVIDER SELECTION - Default to free/local options
+    // LOCAL MODEL (LM Studio/Ollama) -> FREE HUGGINGFACE -> USER'S API KEYS
+    primaryProvider: "local",  // Try local model first
+    fallbackProviders: ["huggingface", "google", "openrouter", "claude"],  // Free tier -> Premium APIs
+    // LOCAL MODEL CONFIG (LM Studio/Ollama)
+    localModelUrl: "http://localhost:1234/v1/chat/completions",  // LM Studio default
+    localModelUrlOllama: "http://localhost:11434/api/generate",   // Ollama alternative
+    localModelName: "auto",  // Auto-detect or specify model name
+    enableLocalModels: true,  // Allow local model connections
     
-    // CLAUDE CONFIG (Anthropic API)
-    claudeModel: "claude-sonnet-4-20250514",  // Current model (configurable via backend)
-    anthropicBaseUrl: "https://api.anthropic.com",  // Anthropic API endpoint
+    // OPENROUTER CONFIG (Access to multiple models)
+    openrouterModel: "anthropic/claude-3.5-sonnet",  // Premium Claude model via OpenRouter
+    openrouterBaseUrl: "https://openrouter.ai/api/v1/chat/completions",
+    openrouterFallbackModel: "meta-llama/llama-3.1-8b-instruct:free",  // Free fallback
     
     // BACKEND SERVER CONFIG (For secure online deployment)
     backendUrl: "https://coder-quest.onrender.com",  // Render backend URL
     useBackend: true,  // Use backend proxy for secure API access
+    enableCORS: true,  // Enable CORS for browser requests
+    timeout: 30000,    // 30 second timeout for AI requests
     
     // FEATURE TOGGLES
     aiFeatures: {
@@ -210,6 +218,13 @@ window.AIConfig = {
   async initialize() {
     console.log("[AI] Initializing AI Config System...");
 
+    // ⚠️ SECURITY WARNING: API keys are currently hardcoded
+    // For production, these should be:
+    // 1. Stored in environment variables on the server
+    // 2. Accessed via secure backend endpoints only
+    // 3. Never exposed to client-side code
+    console.warn("[AI] ⚠️ WARNING: API keys are hardcoded - not suitable for public distribution!");
+
     // Detect if running in Electron
     this.state.isElectron = !!(window.electronAPI?.isElectron);
     
@@ -301,11 +316,36 @@ window.AIConfig = {
   async detectProviders() {
     this.state.availableProviders = [];
 
-    // LM Studio localhost disabled - skip local model check
-    // if (await this.checkLocalModel()) {
-    //   this.state.availableProviders.push("local");
-    //   console.log("[AI] ✓ Local model detected");
-    // }
+    // Check Local Models FIRST (LM Studio/Ollama)
+    if (this.config.enableLocalModels) {
+      if (await this.checkLocalModel()) {
+        this.state.availableProviders.push("local");
+        console.log("[AI] ✓ Local model detected (LM Studio/Ollama)");
+      }
+    }
+
+    // Check HuggingFace API (FREE TIER - no key required)
+    if (await this.checkHuggingFace()) {
+      this.state.availableProviders.push("huggingface");
+      console.log("[AI] ✓ HuggingFace API available (free tier)");
+    }
+
+    // Check premium APIs only if users have set keys
+    if (this.config.apiKeys.openrouter && await this.checkOpenRouter()) {
+      this.state.availableProviders.push("openrouter");
+      console.log("[AI] ✓ OpenRouter API available (user key)");
+    }
+
+    if (this.config.apiKeys.google && await this.checkGoogle()) {
+      this.state.availableProviders.push("google");
+      console.log("[AI] ✓ Google Gemini API available (user key)");
+    }
+
+    // LM Studio localhost - re-enable for user choice
+    if (this.config.enableLocalModels && await this.checkLocalModel()) {
+      this.state.availableProviders.push("local");
+      console.log("[AI] ✓ Local model detected");
+    }
 
     // Check HuggingFace API
     if (await this.checkHuggingFace()) {
@@ -346,14 +386,76 @@ window.AIConfig = {
    */
   async checkHuggingFace() {
     try {
-      // We can make a request without a token, but it will be rate-limited
-      // A real token is needed for consistent access
-      if (!this.config.apiKeys.huggingface) {
-        console.log("[AI] HuggingFace: No API key set (will use free tier, rate-limited)");
-        return true;  // Free tier available
-      }
-      return true;
+      // HuggingFace free tier works without API key (rate limited)
+      // Having a key improves rate limits
+      console.log("[AI] HuggingFace: Using free tier (rate-limited)");
+      return true;  // Always available
     } catch (e) {
+      return false;
+    }
+  },
+
+  /**
+   * Check if local model (LM Studio/Ollama) is running
+   */
+  async checkLocalModel() {
+    try {
+      // Try LM Studio first
+      const lmResponse = await fetch(`${this.config.localModelUrl}/models`, {
+        signal: AbortSignal.timeout(3000), // Quick timeout for local
+      });
+      if (lmResponse.ok) {
+        console.log("[AI] Local LM Studio detected");
+        return true;
+      }
+      
+      // Try Ollama as fallback
+      const ollamaResponse = await fetch(`${this.config.localModelUrlOllama}/api/tags`, {
+        signal: AbortSignal.timeout(3000),
+      });
+      if (ollamaResponse.ok) {
+        console.log("[AI] Local Ollama detected");
+        this.config.localModelUrl = this.config.localModelUrlOllama;
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      return false; // Local model not running
+    }
+  },
+
+  /**
+   * Check if Google Gemini API is accessible
+   */
+  async checkGoogle() {
+    if (!this.config.apiKeys.google) return false;
+    try {
+      const response = await fetch(`${this.config.googleBaseUrl}?key=${this.config.apiKeys.google}`, {
+        signal: AbortSignal.timeout(this.config.timeout),
+      });
+      return response.ok;
+    } catch (e) {
+      console.warn("[AI] Google Gemini check failed:", e.message);
+      return false;
+    }
+  },
+
+  /**
+   * Check if OpenRouter API is accessible
+   */
+  async checkOpenRouter() {
+    if (!this.config.apiKeys.openrouter) return false;
+    try {
+      const response = await fetch(`${this.config.openrouterBaseUrl.replace('/chat/completions', '/models')}`, {
+        headers: {
+          "Authorization": `Bearer ${this.config.apiKeys.openrouter}`,
+        },
+        signal: AbortSignal.timeout(this.config.timeout),
+      });
+      return response.ok;
+    } catch (e) {
+      console.warn("[AI] OpenRouter check failed:", e.message);
       return false;
     }
   },
@@ -462,7 +564,46 @@ window.AIConfig = {
 
       let response;
 
-      // PRIMARY: Claude Haiku (if API key available)
+      // PRIMARY: Local Model (if available - user's choice, private, fast)
+      if (this.state.activeProvider === "local") {
+        try {
+          response = await this.generateLocal(prompt, framework);
+          if (response) {
+            console.log("[AI] Generated via Local Model");
+            return response;
+          }
+        } catch (e) {
+          console.warn("[AI] Local model failed, trying fallback:", e.message);
+        }
+      }
+
+      // SECONDARY: HuggingFace Free Tier (no API key needed)
+      if (this.state.availableProviders.includes("huggingface")) {
+        try {
+          response = await this.generateHuggingFace(prompt, framework);
+          if (response) {
+            console.log("[AI] Generated via HuggingFace (free tier)");
+            return response;
+          }
+        } catch (e) {
+          console.warn("[AI] HuggingFace failed, trying premium APIs:", e.message);
+        }
+      }
+
+      // PREMIUM: User's API keys (if they've set them)
+      if (this.config.apiKeys.openrouter && this.state.availableProviders.includes("openrouter")) {
+        try {
+          response = await this.generateOpenRouter(prompt, framework);
+          if (response) {
+            console.log("[AI] Generated via OpenRouter (user key)");
+            return response;
+          }
+        } catch (e) {
+          console.warn("[AI] OpenRouter failed, trying other APIs:", e.message);
+        }
+      }
+
+      // SECONDARY: Claude Haiku (if API key available)
       if (this.config.apiKeys.anthropic) {
         try {
           response = await this.generateClaude(prompt, framework);
@@ -574,6 +715,231 @@ window.AIConfig = {
       return data[0]?.generated_text?.split("User:")?.pop()?.trim() || null;
     }
     return data[0]?.generated_text || null;
+  },
+
+  /**
+   * Generate using Local Model (LM Studio/Ollama)
+   */
+  async generateLocal(prompt, framework) {
+    const params = framework.generationParams || this.config.generationParams;
+
+    // Check if it's Ollama format
+    if (this.config.localModelUrl.includes('ollama')) {
+      return this.generateOllama(prompt, framework);
+    }
+
+    // LM Studio format (OpenAI-compatible)
+    const response = await fetch(this.config.localModelUrl, {
+      method: "POST",
+      signal: AbortSignal.timeout(this.config.timeout),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: "system",
+            content: framework.systemPrompt
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: params.temperature,
+        top_p: params.topP,
+        max_tokens: params.maxTokens,
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Local model error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message?.content?.trim() || null;
+    }
+    
+    throw new Error("Local model: No valid response generated");
+  },
+
+  /**
+   * Generate using Ollama
+   */
+  async generateOllama(prompt, framework) {
+    const params = framework.generationParams || this.config.generationParams;
+    
+    const response = await fetch(this.config.localModelUrlOllama, {
+      method: "POST",
+      signal: AbortSignal.timeout(this.config.timeout),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama2", // Default model, could be configurable
+        prompt: `${framework.systemPrompt}\n\nUser: ${prompt}\nAssistant:`,
+        stream: false,
+        options: {
+          temperature: params.temperature,
+          top_p: params.topP,
+          num_predict: params.maxTokens
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ollama error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.response?.trim() || null;
+  },
+
+  /**
+   * Generate using Google Gemini API
+   */
+  async generateGoogle(prompt, framework) {
+    const params = framework.generationParams || this.config.generationParams;
+    const model = this.config.googleModel;
+
+    const response = await fetch(`${this.config.googleBaseUrl}/${model}:generateContent?key=${this.config.apiKeys.google}`, {
+      method: "POST",
+      signal: AbortSignal.timeout(this.config.timeout),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `${framework.systemPrompt}\n\n${prompt}`
+          }]
+        }],
+        generationConfig: {
+          temperature: params.temperature,
+          topP: params.topP,
+          maxOutputTokens: params.maxTokens,
+        },
+        safetySettings: [
+          {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            "category": "HARM_CATEGORY_HATE_SPEECH", 
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Google Gemini error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.candidates && data.candidates.length > 0) {
+      const candidate = data.candidates[0];
+      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+        return candidate.content.parts[0].text.trim();
+      }
+    }
+    
+    throw new Error("Google Gemini: No valid response generated");
+  },
+
+  /**
+   * Generate using OpenRouter API (access to multiple models)
+   */
+  async generateOpenRouter(prompt, framework) {
+    const params = framework.generationParams || this.config.generationParams;
+    const model = this.config.openrouterModel;
+
+    const response = await fetch(this.config.openrouterBaseUrl, {
+      method: "POST",
+      signal: AbortSignal.timeout(this.config.timeout),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${this.config.apiKeys.openrouter}`,
+        "HTTP-Referer": window.location.href,
+        "X-Title": "TECHNOMANCER Quest Game",
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: "system",
+            content: framework.systemPrompt
+          },
+          {
+            role: "user", 
+            content: prompt
+          }
+        ],
+        temperature: params.temperature,
+        top_p: params.topP,
+        max_tokens: params.maxTokens,
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      // Try fallback model if primary fails
+      if (model !== this.config.openrouterFallbackModel) {
+        console.warn(`[AI] OpenRouter primary model failed, trying fallback: ${this.config.openrouterFallbackModel}`);
+        return this.generateOpenRouterFallback(prompt, framework);
+      }
+      throw new Error(`OpenRouter error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.choices && data.choices.length > 0) {
+      const choice = data.choices[0];
+      if (choice.message && choice.message.content) {
+        return choice.message.content.trim();
+      }
+    }
+    
+    throw new Error("OpenRouter: No valid response generated");
+  },
+
+  /**
+   * OpenRouter fallback with free model
+   */
+  async generateOpenRouterFallback(prompt, framework) {
+    const params = framework.generationParams || this.config.generationParams;
+    
+    const response = await fetch(this.config.openrouterBaseUrl, {
+      method: "POST", 
+      signal: AbortSignal.timeout(this.config.timeout),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${this.config.apiKeys.openrouter}`,
+        "HTTP-Referer": window.location.href,
+        "X-Title": "TECHNOMANCER Quest Game",
+      },
+      body: JSON.stringify({
+        model: this.config.openrouterFallbackModel,
+        messages: [
+          { role: "system", content: framework.systemPrompt },
+          { role: "user", content: prompt }
+        ],
+        temperature: params.temperature,
+        top_p: params.topP,
+        max_tokens: params.maxTokens
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenRouter fallback error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content?.trim() || null;
   },
 
   /**
@@ -769,5 +1135,71 @@ window.AIConfig = {
   setGenerationParams(params) {
     Object.assign(this.config.generationParams, params);
     this.saveConfig();
+  },
+
+  /**
+   * Test AI backend connectivity
+   */
+  testConnection: async function() {
+    try {
+      const response = await fetch(`${this.config.backendUrl}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[AIConfig] Backend health check passed:', data);
+        return { success: true, data };
+      } else {
+        console.warn('[AIConfig] Backend health check failed:', response.status);
+        return { success: false, error: `HTTP ${response.status}` };
+      }
+    } catch (error) {
+      console.error('[AIConfig] Backend connection failed:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
+   * Clear API keys for public distribution
+   * Call this before sharing/deploying the game publicly
+   */
+  clearKeysForDistribution() {
+    console.warn(\"[AI] Clearing API keys for public distribution\");
+    this.config.apiKeys = {
+      openrouter: null,
+      anthropic: null, 
+      google: null,
+      huggingface: null,
+      openai: null
+    };
+    this.config.useBackend = true; // Force backend usage
+    console.log(\"[AI] Keys cleared. Game will use backend proxy or fallback to free models.\");
+  },
+
+  /**
+   * Check if running with personal API keys (security warning)
+   */
+  checkSecurityStatus() {
+    const hasPersonalKeys = !!(
+      this.config.apiKeys.openrouter || 
+      this.config.apiKeys.google || 
+      this.config.apiKeys.huggingface
+    );
+    
+    if (hasPersonalKeys) {
+      return {
+        secure: false,
+        warning: \"Personal API keys detected. Do not distribute this build publicly!\"
+      };
+    }
+    
+    return {
+      secure: true,
+      message: \"No personal API keys detected. Safe for public distribution.\"
+    };
   },
 };
