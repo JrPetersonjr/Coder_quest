@@ -119,9 +119,17 @@ class GameEngine {
         return;
     }
     
-    // Voice Training Commands
-    if (command === "train-voice") {
-        this.cmdTrainVoice(args);
+    // Database Integration Commands
+    if (command === "sync-data" || command === "save-cloud") {
+        this.cmdSyncData(args);
+        return;
+    }
+    if (command === "load-data" || command === "load-cloud") {
+        this.cmdLoadData(args);
+        return;
+    }
+    if (command === "generate-character" || command === "create-character") {
+        this.cmdGenerateCharacter(args);
         return;
     }
     if (command === "voice-test" || command === "test-voice") {
@@ -889,8 +897,13 @@ class GameEngine {
     this.output("  voice-list - List all trained character voices", "system");
     this.output("  set-voice <character> <description> - Quick voice setup", "system");
     this.output("", "system");
-    this.output("Example: train-voice wizard https://youtube.com/watch?v=abc wise,mystical", "hint");
-    this.output("Example: voice-test wizard The crystal ball reveals dark secrets", "hint");
+    this.output("DATABASE & CLOUD SYNC:", "highlight");
+    this.output("  sync-data - Save progress to cloud", "system");
+    this.output("  load-data - Load progress from cloud", "system");
+    this.output("  generate-character <context> - AI generates characters with voices", "system");
+    this.output("", "system");
+    this.output("Example: generate-character A wise wizard who guards ancient secrets", "hint");
+    this.output("Example: sync-data (saves everything to cloud permanently)", "hint");
     this.output("", "system");
     this.output("🔐 Debug tools available for authorized developers", "system");
     this.output("🔧 Developer: /DEV33 : hotdogwater to unlock AI assistant", "system");
@@ -3146,13 +3159,133 @@ GameEngine.prototype.testCharacterConsistency = async function(characterType = '
   }
 
   /**
-   * Process NPC creation requests
+   * SYNC DATA COMMAND
+   * Usage: sync-data
    */
-  async processNPCCreationRequest(request) {
-    this.output("👤 NPC Creation Request Detected!", "highlight");
-    this.output("🧠 AI designing character...", "system");
+  async cmdSyncData(args) {
+    if (!window.TechnomancerDB) {
+      this.output("❌ Database integration not loaded", "error");
+      return;
+    }
+
+    this.output("☁️ Syncing game data to cloud...", "system");
     
-    // This would integrate with character creation systems
-    this.output("🚧 NPC Creation system integration coming soon!", "hint");
-    this.output("💡 For now, use voice training commands directly", "hint");
+    try {
+      const gameData = {
+        gameState: this.gameState,
+        voiceProfiles: window.VoiceTrainer ? Array.from(window.VoiceTrainer.characterVoices.entries()) : [],
+        timestamp: Date.now()
+      };
+      
+      const success = await window.TechnomancerDB.saveUserData(gameData);
+      
+      if (success) {
+        this.output("✅ Game data synced to cloud successfully!", "highlight");
+        this.output("💾 Your progress is now saved permanently", "hint");
+      } else {
+        this.output("⚠️ Cloud sync failed - data saved locally only", "error");
+      }
+    } catch (error) {
+      this.output(`❌ Sync error: ${error.message}`, "error");
+    }
+  }
+
+  /**
+   * LOAD DATA COMMAND
+   * Usage: load-data
+   */
+  async cmdLoadData(args) {
+    if (!window.TechnomancerDB) {
+      this.output("❌ Database integration not loaded", "error");
+      return;
+    }
+
+    this.output("☁️ Loading game data from cloud...", "system");
+    
+    try {
+      const gameData = await window.TechnomancerDB.loadUserData();
+      
+      if (gameData) {
+        // Restore game state
+        if (gameData.gameState) {
+          this.gameState = { ...this.gameState, ...gameData.gameState };
+        }
+        
+        // Restore voice profiles
+        if (gameData.voiceProfiles && window.VoiceTrainer) {
+          for (const [name, profile] of gameData.voiceProfiles) {
+            window.VoiceTrainer.characterVoices.set(name, profile);
+          }
+          window.VoiceTrainer.saveToStorage();
+        }
+        
+        this.output("✅ Game data loaded from cloud successfully!", "highlight");
+        this.output(`📅 Last saved: ${new Date(gameData.timestamp).toLocaleString()}`, "hint");
+        this.output("🔄 Your game has been restored to the latest state", "hint");
+      } else {
+        this.output("ℹ️ No cloud save data found", "hint");
+        this.output("💡 Use 'sync-data' to save your progress to the cloud", "hint");
+      }
+    } catch (error) {
+      this.output(`❌ Load error: ${error.message}`, "error");
+    }
+  }
+
+  /**
+   * GENERATE CHARACTER COMMAND
+   * Usage: generate-character <context>
+   */
+  async cmdGenerateCharacter(args) {
+    if (!window.AutonomousCharacterGenerator) {
+      this.output("❌ Character generator not loaded", "error");
+      return;
+    }
+
+    if (args.length === 0) {
+      this.output("❌ Usage: generate-character <context>", "error");
+      this.output("💡 Examples:", "hint");
+      this.output("   generate-character A wise wizard who guards ancient secrets", "hint");
+      this.output("   generate-character A cheerful merchant in the crystal caverns", "hint");
+      this.output("   generate-character A mysterious oracle with prophetic visions", "hint");
+      return;
+    }
+
+    const context = args.join(' ');
+    
+    this.output(`🎭 Generating character: "${context}"`, "system");
+    this.output("🤖 AI is designing character with voice training...", "hint");
+    
+    try {
+      const result = await window.AutonomousCharacterGenerator.generateCharacter(context);
+      
+      if (result.success) {
+        const char = result.character;
+        
+        this.output("✨ Character generated successfully!", "highlight");
+        this.output("", "system");
+        this.output(`🎭 === ${char.name.toUpperCase()} ===`, "highlight");
+        this.output(`Type: ${char.type}`, "system");
+        this.output(`Personality: ${char.personality.join(', ')}`, "hint");
+        this.output(`Voice: ${char.voiceRef} (${char.voiceTrained ? '✅ Trained' : '⏳ Training...'})`, "hint");
+        this.output(`Role: ${char.role}`, "system");
+        this.output(`Background: ${char.background}`, "spell");
+        this.output("", "system");
+        
+        if (char.voiceTrained) {
+          this.output(`💬 Test voice with: voice-test ${char.name} Hello there!`, "hint");
+        }
+        
+        if (result.fromCache) {
+          this.output("⚡ Loaded from community cache", "hint");
+        } else {
+          this.output("🌟 Freshly generated and shared with community", "hint");
+        }
+        
+      } else {
+        this.output(`❌ Generation failed: ${result.error}`, "error");
+      }
+      
+    } catch (error) {
+      this.output(`❌ Character generation error: ${error.message}`, "error");
+    }
   }

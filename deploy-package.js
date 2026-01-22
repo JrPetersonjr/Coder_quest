@@ -57,6 +57,8 @@ const config = {
     "ai-config.js",
     "ai-dynamic-delegator.js",
     "ai-voice-trainer.js",
+    "database-integration.js",
+    "autonomous-character-generator.js",
     "ai-dm-integration.js",
     "browser-llm.js",
     "model-installer.js",

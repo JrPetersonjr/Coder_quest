@@ -1,14 +1,14 @@
 {
   "projectName": "TECHNOMANCER-Quest_For_The_Code",
   "version": "1.0.0",
-  "createdAt": "2026-01-22T11:20:14.946Z",
+  "createdAt": "2026-01-22T11:38:37.497Z",
   "packages": {
     "lightweight": {
       "name": "TECHNOMANCER-Lightweight",
       "description": "1.1GB - Single AI model for all tasks",
       "aiTier": "lightweight",
       "size": "~1.5GB",
-      "fileCount": 185,
+      "fileCount": 187,
       "path": "deploy\\TECHNOMANCER-Lightweight"
     },
     "standard": {
@@ -16,7 +16,7 @@
       "description": "2.7GB - Balanced AI performance",
       "aiTier": "standard",
       "size": "~3.2GB",
-      "fileCount": 185,
+      "fileCount": 187,
       "path": "deploy\\TECHNOMANCER-Standard"
     },
     "premium": {
@@ -24,7 +24,7 @@
       "description": "7GB - Full specialized AI suite",
       "aiTier": "premium",
       "size": "~7.5GB",
-      "fileCount": 185,
+      "fileCount": 187,
       "path": "deploy\\TECHNOMANCER-Premium"
     }
   },
@@ -37,6 +37,6 @@
     "Offline deployment capability",
     "Task-specific AI delegation"
   ],
-  "totalFiles": 555,
+  "totalFiles": 561,
   "estimatedSizes": {}
 }
