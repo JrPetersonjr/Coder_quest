@@ -149,17 +149,22 @@ app.post('/api/user/register', (req, res) => {
     characterClass: characterClass || 'codeweaver',
     stats: stats || { hp: 50, mp: 50 },
     gameState: {
-      level: 1,
-      experience: 0,
-      hp: stats?.hp || 50,
-      maxHp: stats?.hp || 50,
-      mp: stats?.mp || 50,
-      maxMp: stats?.mp || 50,
+      character: {
+        name: username.trim(),
+        class: characterClass || 'codeweaver',
+        hp: stats?.hp || 50,
+        maxHp: stats?.hp || 50,
+        mp: stats?.mp || 50,
+        maxMp: stats?.mp || 50,
+        level: 1,
+        experience: 0,
+        pronouns: 'they/them' // Default, can be changed later
+      },
       zone: 'intro',
       inventory: [],
       spells: [],
       quests: [],
-      introComplete: false
+      introComplete: false // Triggers the intro animation, but we'll skip the questions
     }
   };
 

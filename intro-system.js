@@ -184,20 +184,25 @@ window.IntroSystem = {
 
   // Class descriptions for character creation
   classDescriptions: {
-    technomancer: {
-      name: "TECHNOMANCER",
+    codeweaver: {
+      name: "CODEWEAVER",
       description: "Master of spells and code. Harness the quantum nature of reality.",
       bonuses: { spellPower: 1.2, codeAffinity: 1.3, hp: 40 }
     },
-    cryptid: {
-      name: "CRYPTID",
-      description: "Mysterious. Unpredictable. Operate in the shadows of systems.",
-      bonuses: { stealth: 1.3, hack: 1.2, hp: 45 }
+    debugger: {
+      name: "DEBUGGER",
+      description: "Unstoppable tank. Resolves conflicts by force and resilience.",
+      bonuses: { defense: 1.3, fortitude: 1.2, hp: 70 }
     },
-    architect: {
-      name: "ARCHITECT",
-      description: "Designer of networks. Build and repair the infrastructure.",
-      bonuses: { engineering: 1.3, repair: 1.2, hp: 50 }
+    compiler: {
+      name: "COMPILER",
+      description: "Optimized damage dealer. Executes enemies with extreme efficiency.",
+      bonuses: { attack: 1.3, speed: 1.2, hp: 55 }
+    },
+    sysadmin: {
+      name: "SYSADMIN",
+      description: "Utility master. Controls the environment and manages resources.",
+      bonuses: { utility: 1.3, control: 1.2, hp: 50 }
     }
   },
 
@@ -305,11 +310,30 @@ window.IntroSystem = {
   
   showCharacterCreation: async function(gameEngine) {
     console.log("[IntroSystem] Starting character creation...");
-    console.log("[IntroSystem] GameEngine output method:", typeof gameEngine.output);
-    console.log("[IntroSystem] Game output container:", document.getElementById("game-output"));
-    
     const gameState = gameEngine.gameState;
+
+    // CHECK: Does identity already exist from Cloud Save?
+    if (gameState.character && gameState.character.name && gameState.character.class) {
+      console.log("[IntroSystem] Identity detected:", gameState.character.name);
+      
+      gameEngine.output("[IDENTITY RECONSTRUCTION PHASE]", "system");
+      await this.delay(600);
+      gameEngine.output(`[CASTCONSOLE] Scanning deep storage...`, "system");
+      await this.delay(800);
+      gameEngine.output(`[CASTCONSOLE] Found existing specificiation: ${gameState.character.name.toUpperCase()}`, "highlight");
+      await this.delay(600);
+      gameEngine.output(`[CASTCONSOLE] Class: ${gameState.character.class.toUpperCase()}`, "highlight");
+      await this.delay(600);
+      gameEngine.output(`[CASTCONSOLE] Restoring neural pathways... 100%`, "system");
+      await this.delay(1000);
+      
+      this.state.screen.name = gameState.character.name;
+      this.state.screen.pronouns = gameState.character.pronouns || "Unknown";
+      this.state.characterDefined = true;
+      return;
+    }
     
+    // IF NOT: Proceed with normal questionnaire
     try {
       // Step 1: Get name
       console.log("[IntroSystem] Step 1: Prompting for name");
@@ -323,6 +347,9 @@ window.IntroSystem = {
       );
       
       console.log("[IntroSystem] Name received:", this.state.screen.name);
+      // Ensure character object exists
+      if (!gameState.character) gameState.character = {};
+      
       gameState.character.name = this.state.screen.name;
       gameEngine.output(`[CASTCONSOLE] ${this.state.screen.name}... a name retrieved from the void.`, "system");
       await this.delay(700);
@@ -344,23 +371,25 @@ window.IntroSystem = {
       console.log("[IntroSystem] Step 3: Prompting for class");
       await this.delay(500);
       gameEngine.output("[ARCANE ATTUNEMENT DETECTED]", "highlight");
-      gameEngine.output("Three resonances await activation:", "hint");
-      gameEngine.output("  [1] TECHNOMANCER  — Command spells and pure code", "hint");
-      gameEngine.output("  [2] CRYPTID       — Walk unseen through all systems", "hint");
-      gameEngine.output("  [3] ARCHITECT     — Forge new networks from ruin", "hint");
+      gameEngine.output("Four resonances await activation:", "hint");
+      gameEngine.output("  [1] CODEWEAVER  — Master effects and reality manipulation", "hint");
+      gameEngine.output("  [2] DEBUGGER    — Unstoppable tank and resolution", "hint");
+      gameEngine.output("  [3] COMPILER    — Extreme efficiency and speed", "hint");
+      gameEngine.output("  [4] SYSADMIN    — Control and resource management", "hint");
       
       const classChoice = await this.promptQuestion(
         gameEngine,
-        "[CASTCONSOLE] Which path calls to you? (1, 2, or 3)",
+        "[CASTCONSOLE] Which path calls to you? (1-4)",
         "choice",
-        ["1", "2", "3"]
+        ["1", "2", "3", "4"]
       );
       
       console.log("[IntroSystem] Class choice received:", classChoice);
       const classMap = {
-        "1": "technomancer",
-        "2": "cryptid",
-        "3": "architect"
+        "1": "codeweaver",
+        "2": "debugger",
+        "3": "compiler",
+        "4": "sysadmin"
       };
       
       const selectedClass = classMap[classChoice];
@@ -396,8 +425,8 @@ window.IntroSystem = {
       gameState.character.experience = 0;
       gameState.character.hp = classInfo.bonuses.hp;
       gameState.character.maxHp = classInfo.bonuses.hp;
-      gameState.character.mp = 20;
-      gameState.character.maxMp = 20;
+      gameState.character.mp = 80;
+      gameState.character.maxMp = 80;
       
       this.state.characterDefined = true;
       console.log("[IntroSystem] Character created:", gameState.character);
