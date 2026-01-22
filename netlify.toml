@@ -1,6 +1,6 @@
 [build]
   # Build command to run before deploy
-  command = "pwsh -ExecutionPolicy Bypass -File ./create-netlify-build.ps1"
+  command = "bash ./create-netlify-build.sh"
   
   # Directory to deploy (your public folder)
   publish = "public"
