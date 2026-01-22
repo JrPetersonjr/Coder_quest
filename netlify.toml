@@ -1,0 +1,34 @@
+[build]
+  # Build command to run before deploy
+  command = "powershell.exe -ExecutionPolicy Bypass -File ./create-netlify-build.ps1"
+  
+  # Directory to deploy (your public folder)
+  publish = "public"
+
+[build.environment]
+  # Ensure PowerShell is available in build
+  NODE_VERSION = "18"
+
+# Redirect rules for SPA-like behavior
+[[redirects]]
+  from = "/game"
+  to = "/game.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "max-age=31536000"
