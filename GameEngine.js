@@ -49,6 +49,8 @@ class GameEngine {
   async parseCommand(input) {
     if (!input || !input.trim()) return;
     
+    console.log("[GameEngine] Processing command:", input);
+    
     // Parse parts for debug commands handling
     const parts = input.trim().split(/\s+/);
     const command = parts[0].toLowerCase();
@@ -68,22 +70,25 @@ class GameEngine {
         return;
     }
 
-    // 2. Delegate to CommandParser (if initialized)
-    // Send full input string to parser
+    // 2. Check for built-in commands
+    const methodName = "cmd" + command.charAt(0).toUpperCase() + command.slice(1);
+    if (typeof this[methodName] === "function") {
+        console.log("[GameEngine] Executing built-in command:", methodName);
+        await this[methodName](args);
+        return;
+    }
+
+    // 3. Delegate to CommandParser (if initialized)
     if (window.CommandParser && window.CommandParser.parse) {
+        console.log("[GameEngine] Delegating to CommandParser:", input);
         window.CommandParser.parse(input);
         return;
     }
     
-    // 3. Fallback: Internal dispatch (legacy/direct)
-    // Dispatch to cmd[Command] (e.g. cmdStats, cmdHelp)
-    const methodName = "cmd" + command.charAt(0).toUpperCase() + command.slice(1);
-    if (typeof this[methodName] === "function") {
-        await this[methodName](args);
-    } else {
-        this.output(`Unknown command: '${command}'. Type 'help' for commands.`, "hint");
-        this.output("Available commands: help, look, stats, go, battle, inventory, spells, cast, roll, use, map, quests, save, load", "hint");
-    }
+    // 4. Unknown command fallback
+    this.output(`Unknown command: '${command}'. Type 'help' for commands.`, "hint");
+    this.output("Available commands: help, look, stats, go, battle, inventory, spells, cast, roll, use, map, quests, save, load, music", "hint");
+  }
   }
 
   // ============================================================
@@ -530,6 +535,9 @@ class GameEngine {
     this.output("  music stop - Stop music", "system");
     this.output("  music volume [0-100] - Set volume", "system");
     this.output("", "system");
+    this.output("SYSTEM:", "highlight");
+    this.output("  syscheck - Check all system status", "system");
+    this.output("", "system");
     this.output("DEBUG:", "highlight");
     this.output("  test ai - Test AI backend connection", "system");
     this.output("  test music - Test MIDI player", "system");
@@ -572,6 +580,61 @@ class GameEngine {
     } catch (e) {
         this.output(`Generation Error: ${e.message}`, "error");
     }
+  }
+
+  /**
+   * SYSTEM CHECK: Show status of all game systems
+   */
+  cmdSyscheck() {
+    this.output("🔧 SYSTEM STATUS CHECK", "system");
+    this.output("════════════════════════════════════", "highlight");
+    
+    // Core Systems
+    this.output("CORE SYSTEMS:", "system");
+    this.output(`  GameEngine: ✅ Running (Level ${this.gameState.level || "1"})`, "hint");
+    this.output(`  CommandParser: ${window.CommandParser ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  DiceSystem: ${window.DiceSystem ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  IntegrationBootstrap: ${window.IntegrationBootstrap ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output("", "system");
+    
+    // Audio Systems
+    this.output("AUDIO SYSTEMS:", "system");
+    this.output(`  MIDIPlayer: ${window.MIDIPlayer ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  FXSystem: ${window.FXSystem ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  AudioSystem: ${this.audioSystem ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output("", "system");
+    
+    // AI Systems
+    this.output("AI SYSTEMS:", "system");
+    this.output(`  AIConfig: ${window.AIConfig ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  AIDMIntegration: ${window.AIDMIntegration ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  BrowserLLM: ${window.BrowserLLM ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  AI Connection Wizard: ${window.AIConnectionWizard ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output("", "system");
+    
+    // UI Systems
+    this.output("UI SYSTEMS:", "system");
+    this.output(`  CastConsoleUI: ${window.CastConsoleUI ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  PaneManager: ${window.PaneManager ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  UILayoutManager: ${window.UILayoutManager ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output("", "system");
+    
+    // Game Systems
+    this.output("GAME SYSTEMS:", "system");
+    this.output(`  QuestSystem: ${this.questSystem ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  SaveSystem: ${this.saveSystem ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  SpellTinkering: ${this.spellTinkering ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output(`  SummonRituals: ${this.summonRituals ? "✅ Ready" : "❌ Missing"}`, "hint");
+    this.output("", "system");
+    
+    // Test key functions
+    this.output("FUNCTION TESTS:", "system");
+    this.output(`  Music Command: ${typeof this.cmdMusic === 'function' ? "✅ Available" : "❌ Missing"}`, "hint");
+    this.output(`  Parse Command: ${typeof this.parseCommand === 'function' ? "✅ Available" : "❌ Missing"}`, "hint");
+    this.output("", "system");
+    
+    this.output("📝 Run 'test music' or 'test ai' for detailed diagnostics.", "system");
+    this.output("🎵 Try 'music play menu' to test audio systems.", "system");
   }
 
   /**
