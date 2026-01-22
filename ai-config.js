@@ -210,15 +210,22 @@ window.AIConfig = {
   async initialize() {
     console.log("[AI] Initializing AI Config System...");
 
-    // Detect if running in Electron (direct API access, secure key storage)
+    // Detect if running in Electron
     this.state.isElectron = !!(window.electronAPI?.isElectron);
     
     if (this.state.isElectron) {
-      console.log("[AI] Running in Electron - direct Claude API enabled");
-      // In Electron, we can call Claude directly (no CORS)
-      this.config.useBackend = false;
-      // Load API key from secure Electron storage
+      console.log("[AI] Running in Electron");
+      // Try to load API key from secure Electron storage
       await this.loadElectronApiKey();
+      
+      // If no local API key, use backend (same as browser)
+      if (!this.config.apiKeys.anthropic) {
+        console.log("[AI] No local API key - using backend proxy");
+        this.config.useBackend = true;
+      } else {
+        console.log("[AI] Using local API key - direct Claude API");
+        this.config.useBackend = false;
+      }
     }
 
     // Load saved configuration from localStorage

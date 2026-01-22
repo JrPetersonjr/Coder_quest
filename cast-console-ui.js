@@ -546,6 +546,18 @@ window.CastConsoleUI = {
    * Initialize Text-to-Speech
    */
   initTTS: function() {
+    // Initialize Neural TTS (high-quality voices via API)
+    if (window.NeuralTTS) {
+      NeuralTTS.init().then(success => {
+        if (success) {
+          console.log("[TTS] Neural TTS initialized");
+        }
+      }).catch(e => {
+        console.log("[TTS] Neural TTS failed, using browser fallback");
+      });
+    }
+
+    // Also init browser TTS as fallback
     if (!('speechSynthesis' in window)) {
       console.warn("[TTS] Speech synthesis not supported");
       return;
@@ -563,7 +575,7 @@ window.CastConsoleUI = {
       ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
       
       if (this.ttsVoice) {
-        console.log("[TTS] Voice selected:", this.ttsVoice.name);
+        console.log("[TTS] Browser voice selected:", this.ttsVoice.name);
       }
     };
 
@@ -579,9 +591,22 @@ window.CastConsoleUI = {
 
   /**
    * Speak Oracle response with TTS
+   * Uses Neural TTS if available, falls back to browser TTS
    */
   speakOracle: function(text) {
-    if (!this.ttsEnabled || !('speechSynthesis' in window)) return;
+    if (!this.ttsEnabled) return;
+    
+    // Try Neural TTS first (high-quality voices)
+    if (window.NeuralTTS && NeuralTTS.state.initialized) {
+      NeuralTTS.speak(text, {
+        character: 'oracle',
+        // Emotion auto-detected from text
+      });
+      return;
+    }
+    
+    // Fallback to browser TTS
+    if (!('speechSynthesis' in window)) return;
     
     // Cancel any ongoing speech
     speechSynthesis.cancel();

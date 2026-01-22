@@ -1359,12 +1359,18 @@
   <!-- NEW: AI Integration System -->
   <script src="ai-config.js"></script>
   
+  <!-- NEW: Authentication System (cloud saves) -->
+  <script src="auth-system.js"></script>
+  
   <!-- NEW: Core engine (no DOM dependencies) -->
   <!-- NEW: Core engine (no DOM dependencies) -->
   <script src="GameEngine.js"></script>
   
   <!-- NEW: UI adapter layer -->
   <script src="GameUI.js"></script>
+  
+  <!-- NEW: Neural TTS (high-quality voice synthesis) -->
+  <script src="neural-tts.js"></script>
   
   <!-- NEW: Cast Console UI (multipart layout) -->
   <script src="cast-console-ui.js"></script>
@@ -1455,6 +1461,30 @@
         bootScreen.classList.add("hidden");
       }
       
+      // ============================================================
+      // AUTHENTICATION CHECK
+      // ============================================================
+      console.log("[Boot] Checking authentication...");
+      if (window.AuthSystem) {
+        const hasSession = await AuthSystem.init();
+        if (!hasSession) {
+          // No valid session - show login screen
+          console.log("[Boot] No session found - showing login");
+          AuthSystem.showLoginScreen();
+          
+          // Wait for login before continuing
+          await new Promise(resolve => {
+            const checkLogin = setInterval(() => {
+              if (AuthSystem.state.loggedIn || !document.getElementById('login-overlay')) {
+                clearInterval(checkLogin);
+                resolve();
+              }
+            }, 100);
+          });
+        }
+        console.log("[Boot] ✓ Authenticated as:", AuthSystem.state.username || 'Guest');
+      }
+      
       // Initialize AI system first (optional, gracefully falls back)
       console.log("[Boot] Initializing AI system...");
       try {
@@ -1474,10 +1504,24 @@
         onGraphicsUnlock: handleGraphicsUnlock
       });
 
-      // Try to restore auto-save (with safety check)
+      // ============================================================
+      // CLOUD SAVE SYNC
+      // ============================================================
+      if (window.AuthSystem && AuthSystem.state.loggedIn && AuthSystem.state.gameState) {
+        console.log("[Boot] Loading cloud save...");
+        // Merge cloud save with local engine state
+        Object.assign(gameEngine.gameState, AuthSystem.state.gameState);
+        console.log("[Boot] ✓ Cloud save loaded");
+      }
+
+      // Try to restore auto-save (with safety check) - only if no cloud save
       let hasAutoSave = false;
-      if (gameEngine.saveSystem && typeof gameEngine.saveSystem.loadAutoSave === 'function') {
-        hasAutoSave = gameEngine.saveSystem.loadAutoSave();
+      if (!AuthSystem?.state?.gameState) {
+        if (gameEngine.saveSystem && typeof gameEngine.saveSystem.loadAutoSave === 'function') {
+          hasAutoSave = gameEngine.saveSystem.loadAutoSave();
+        }
+      } else {
+        hasAutoSave = true; // Cloud save counts as auto-save
       }
       
       // Create the UI layer that connects to DOM
@@ -1619,10 +1663,15 @@
       // Focus input
       gameUI.focus();
       
-      // Set up periodic auto-save every 2 minutes
+      // Set up periodic auto-save every 2 minutes (local + cloud)
       setInterval(() => {
         gameEngine.saveSystem.autoSave();
-        console.log("[Auto-save] Game saved");
+        console.log("[Auto-save] Local save complete");
+        
+        // Also sync to cloud if logged in
+        if (window.AuthSystem && AuthSystem.state.loggedIn) {
+          AuthSystem.saveToCloud(gameEngine.gameState);
+        }
       }, 120000);
     }
 

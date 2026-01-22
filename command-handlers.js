@@ -326,6 +326,167 @@ window.CommandHandlers = {
         }
         break;
 
+      case "graphics":
+      case "gfx":
+        // Graphics/2D engine debug mode
+        const gfxSub = args[1]?.toLowerCase() || "show";
+        switch (gfxSub) {
+          case "show":
+          case "on":
+            // Show graphics container
+            const gfxContainer = document.getElementById("graphics-container");
+            if (gfxContainer) {
+              gfxContainer.style.display = "block";
+              gameEngine.output("✓ Graphics container visible", "system");
+            } else {
+              gameEngine.output("Creating graphics container...", "system");
+              this.initGraphicsDebug(gameEngine);
+            }
+            break;
+            
+          case "hide":
+          case "off":
+            const hideContainer = document.getElementById("graphics-container");
+            if (hideContainer) {
+              hideContainer.style.display = "none";
+              gameEngine.output("✓ Graphics container hidden", "system");
+            }
+            break;
+            
+          case "test":
+            // Test animation
+            const anim = args[2] || "player_attack";
+            if (window.graphicsUI) {
+              window.graphicsUI.queueAnimation(anim, 500);
+              gameEngine.output(`✓ Playing animation: ${anim}`, "system");
+            } else {
+              gameEngine.output("Graphics UI not initialized - run 'debug graphics init' first", "error");
+            }
+            break;
+            
+          case "init":
+            this.initGraphicsDebug(gameEngine);
+            break;
+            
+          case "battle":
+            // Start a test battle scene
+            if (window.graphicsUI) {
+              window.graphicsUI.currentEnemy = { name: "Debug Slime", hp: 30, maxHp: 30 };
+              window.graphicsUI.playerHP = gameEngine.gameState.hp || 50;
+              window.graphicsUI.enemyHP = 30;
+              gameEngine.output("✓ Test battle scene active", "system");
+              gameEngine.output("Try: debug graphics test player_attack", "hint");
+              gameEngine.output("     debug graphics test enemy_attack", "hint");
+              gameEngine.output("     debug graphics test spell_cast", "hint");
+              gameEngine.output("     debug graphics test hit_flash", "hint");
+              gameEngine.output("     debug graphics test enemy_death", "hint");
+            } else {
+              gameEngine.output("Run 'debug graphics init' first", "error");
+            }
+            break;
+            
+          case "zone":
+            // Change zone
+            const zone = args[2] || "hub";
+            if (window.graphicsUI) {
+              window.graphicsUI.currentZone = zone;
+              window.graphicsUI.queueAnimation("zone_transition", 500);
+              gameEngine.output(`✓ Zone set to: ${zone}`, "system");
+            }
+            break;
+            
+          default:
+            gameEngine.output("", "system");
+            gameEngine.output("GRAPHICS DEBUG COMMANDS:", "system");
+            gameEngine.output("  debug graphics show   - Show graphics canvas", "hint");
+            gameEngine.output("  debug graphics hide   - Hide graphics canvas", "hint");
+            gameEngine.output("  debug graphics init   - Initialize GraphicsUI", "hint");
+            gameEngine.output("  debug graphics test X - Play animation X", "hint");
+            gameEngine.output("  debug graphics battle - Start test battle", "hint");
+            gameEngine.output("  debug graphics zone X - Change zone to X", "hint");
+            gameEngine.output("", "system");
+            gameEngine.output("Animations: player_attack, enemy_attack, spell_cast,", "hint");
+            gameEngine.output("            hit_flash, enemy_death, zone_transition", "hint");
+        }
+        break;
+
+      case "tts":
+      case "voice":
+        // TTS debug mode
+        const ttsSub = args[1]?.toLowerCase() || "status";
+        switch (ttsSub) {
+          case "status":
+            gameEngine.output("", "system");
+            gameEngine.output("=== TTS STATUS ===", "system");
+            if (window.NeuralTTS) {
+              const status = NeuralTTS.getStatus();
+              gameEngine.output(`Neural TTS: ${status.initialized ? "✓ READY" : "✗ Not initialized"}`, "hint");
+              gameEngine.output(`  Provider: ${status.provider}`, "hint");
+              gameEngine.output(`  Backend enabled: ${status.enabled}`, "hint");
+              gameEngine.output(`  Currently speaking: ${status.speaking}`, "hint");
+            } else {
+              gameEngine.output("Neural TTS: Not loaded", "hint");
+            }
+            if ('speechSynthesis' in window) {
+              gameEngine.output("Browser TTS: ✓ Available", "hint");
+            }
+            gameEngine.output("", "system");
+            break;
+            
+          case "test":
+            // Test speak
+            const testText = args.slice(2).join(" ") || "The ancient oracle speaks to you through the mists of time.";
+            if (window.NeuralTTS && NeuralTTS.state.initialized && NeuralTTS.config.enabled) {
+              NeuralTTS.speak(testText, { character: 'oracle' });
+              gameEngine.output("✓ Speaking with Neural TTS...", "system");
+            } else if (window.CastConsoleUI) {
+              CastConsoleUI.ttsEnabled = true;
+              CastConsoleUI.speakOracle(testText);
+              gameEngine.output("✓ Speaking with browser TTS...", "system");
+            }
+            break;
+            
+          case "emotion":
+            // Test emotional speech
+            const emotion = args[2] || "mysterious";
+            const emotionText = args.slice(3).join(" ") || "This is a test of emotional speech synthesis.";
+            if (window.NeuralTTS) {
+              NeuralTTS.speak(emotionText, { character: 'oracle', emotion: emotion });
+              gameEngine.output(`✓ Speaking with emotion: ${emotion}`, "system");
+            }
+            break;
+            
+          case "provider":
+            // Set TTS provider
+            const provider = args[2];
+            if (provider && window.NeuralTTS) {
+              NeuralTTS.setProvider(provider);
+              gameEngine.output(`✓ TTS provider set to: ${provider}`, "system");
+            } else {
+              gameEngine.output("Usage: debug tts provider [azure|elevenlabs|playht|google]", "hint");
+            }
+            break;
+            
+          case "stop":
+            if (window.NeuralTTS) NeuralTTS.stop();
+            if ('speechSynthesis' in window) speechSynthesis.cancel();
+            gameEngine.output("✓ TTS stopped", "system");
+            break;
+            
+          default:
+            gameEngine.output("", "system");
+            gameEngine.output("TTS DEBUG COMMANDS:", "system");
+            gameEngine.output("  debug tts status        - Show TTS status", "hint");
+            gameEngine.output("  debug tts test [text]   - Test TTS with text", "hint");
+            gameEngine.output("  debug tts emotion X [text] - Test emotion X", "hint");
+            gameEngine.output("  debug tts provider X    - Set provider", "hint");
+            gameEngine.output("  debug tts stop          - Stop speaking", "hint");
+            gameEngine.output("", "system");
+            gameEngine.output("Emotions: calm, excited, sad, urgent, mysterious, fear", "hint");
+            gameEngine.output("Providers: azure, elevenlabs, playht, google", "hint");
+        }
+        break;
+
       default:
         gameEngine.output("", "system");
         gameEngine.output("DEBUG COMMANDS (developer only):", "system");
@@ -337,6 +498,8 @@ window.CommandHandlers = {
         gameEngine.output("  debug mp N      - Set MP to N", "hint");
         gameEngine.output("  debug intro     - Reset intro sequence", "hint");
         gameEngine.output("  debug character - Show character details", "hint");
+        gameEngine.output("  debug graphics  - 2D engine debug mode", "hint");
+        gameEngine.output("  debug tts       - TTS/voice debug mode", "hint");
         gameEngine.output("", "system");
     }
   },
@@ -344,6 +507,45 @@ window.CommandHandlers = {
   // ============================================================
   // [INITIALIZATION]
   // ============================================================
+
+  /**
+   * Initialize graphics debug mode
+   */
+  initGraphicsDebug(gameEngine) {
+    if (window.graphicsUI) {
+      gameEngine.output("✓ GraphicsUI already initialized", "system");
+      return;
+    }
+    
+    // Create graphics container if needed
+    let container = document.getElementById("graphics-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "graphics-container";
+      container.style.cssText = "position: fixed; top: 10px; right: 10px; z-index: 1000; background: #0a0e27; border: 2px solid #2fb43a; border-radius: 8px; padding: 5px;";
+      document.body.appendChild(container);
+    }
+    container.style.display = "block";
+    
+    // Try to load sprite sheet and init GraphicsUI
+    if (typeof GraphicsUI !== "undefined") {
+      const spriteImg = new Image();
+      spriteImg.onload = () => {
+        window.graphicsUI = new GraphicsUI(gameEngine, spriteImg);
+        gameEngine.output("✓ GraphicsUI initialized with sprite sheet", "system");
+        gameEngine.output("Type 'debug graphics' for commands", "hint");
+      };
+      spriteImg.onerror = () => {
+        // Init without sprites (will use placeholder colors)
+        window.graphicsUI = new GraphicsUI(gameEngine, null);
+        gameEngine.output("✓ GraphicsUI initialized (no sprite sheet)", "system");
+        gameEngine.output("Type 'debug graphics' for commands", "hint");
+      };
+      spriteImg.src = "ASSETS/custom/sprite-sheet.png";
+    } else {
+      gameEngine.output("GraphicsUI class not loaded - check if GraphicsUI.js is included", "error");
+    }
+  },
 
   /**
    * Register all built-in commands

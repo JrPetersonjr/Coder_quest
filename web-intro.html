@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TECHNOMANCER - Begin Your Journey</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap">
+  <style>
+    :root {
+      --terminal-green: #2fb43a;
+      --terminal-cyan: #00d4ff;
+      --terminal-purple: #b967ff;
+      --terminal-gold: #ffd700;
+      --bg-dark: #0a0e1a;
+      --bg-panel: #0d1117;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Share Tech Mono', monospace;
+      background: var(--bg-dark);
+      color: var(--terminal-green);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scanline effect */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15),
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* CRT glow */
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 40px 0;
+      border-bottom: 2px solid var(--terminal-green);
+      margin-bottom: 30px;
+    }
+
+    .title {
+      font-family: 'VT323', monospace;
+      font-size: 4rem;
+      color: var(--terminal-cyan);
+      text-shadow: 0 0 20px var(--terminal-cyan), 0 0 40px var(--terminal-cyan);
+      letter-spacing: 8px;
+      animation: flicker 4s infinite;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--terminal-purple);
+      margin-top: 10px;
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      92% { opacity: 1; }
+      93% { opacity: 0.8; }
+      94% { opacity: 1; }
+    }
+
+    /* Steps */
+    .step {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-title {
+      font-family: 'VT323', monospace;
+      font-size: 2rem;
+      color: var(--terminal-gold);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step-number {
+      background: var(--terminal-green);
+      color: var(--bg-dark);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .narrative {
+      background: var(--bg-panel);
+      border: 1px solid var(--terminal-green);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      line-height: 1.8;
+    }
+
+    .narrative p {
+      margin-bottom: 15px;
+    }
+
+    .narrative .highlight {
+      color: var(--terminal-cyan);
+    }
+
+    /* Form elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: var(--terminal-cyan);
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 15px;
+      background: var(--bg-panel);
+      border: 2px solid var(--terminal-green);
+      border-radius: 4px;
+      color: var(--terminal-green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.2rem;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    input:focus {
+      border-color: var(--terminal-cyan);
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+
+    input.error {
+      border-color: #ff4444;
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    .error-message {
+      color: #ff4444;
+      font-size: 0.9rem;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .error-message.visible {
+      display: block;
+    }
+
+    .availability {
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+
+    .availability.available {
+      color: var(--terminal-green);
+    }
+
+    .availability.taken {
+      color: #ff4444;
+    }
+
+    .availability.checking {
+      color: var(--terminal-gold);
+    }
+
+    /* Class selection */
+    .class-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .class-card {
+      background: var(--bg-panel);
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    .class-card:hover {
+      border-color: var(--terminal-cyan);
+      transform: translateY(-5px);
+    }
+
+    .class-card.selected {
+      border-color: var(--terminal-gold);
+      background: rgba(255, 215, 0, 0.1);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+
+    .class-icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .class-name {
+      font-family: 'VT323', monospace;
+      font-size: 1.5rem;
+      color: var(--terminal-cyan);
+      margin-bottom: 5px;
+    }
+
+    .class-desc {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .class-stats {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--terminal-green);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 15px 40px;
+      font-family: 'VT323', monospace;
+      font-size: 1.5rem;
+      border: 2px solid var(--terminal-green);
+      background: transparent;
+      color: var(--terminal-green);
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .btn:hover {
+      background: var(--terminal-green);
+      color: var(--bg-dark);
+      box-shadow: 0 0 20px var(--terminal-green);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      border-color: var(--terminal-cyan);
+      color: var(--terminal-cyan);
+    }
+
+    .btn-primary:hover {
+      background: var(--terminal-cyan);
+    }
+
+    .btn-gold {
+      border-color: var(--terminal-gold);
+      color: var(--terminal-gold);
+    }
+
+    .btn-gold:hover {
+      background: var(--terminal-gold);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    .progress-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #333;
+      transition: all 0.3s;
+    }
+
+    .progress-dot.active {
+      background: var(--terminal-cyan);
+      box-shadow: 0 0 10px var(--terminal-cyan);
+    }
+
+    .progress-dot.complete {
+      background: var(--terminal-green);
+    }
+
+    /* Download section */
+    .download-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .download-card {
+      background: var(--bg-panel);
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 25px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .download-card:hover {
+      border-color: var(--terminal-green);
+    }
+
+    .download-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+
+    .download-title {
+      font-family: 'VT323', monospace;
+      font-size: 1.5rem;
+      color: var(--terminal-cyan);
+      margin-bottom: 10px;
+    }
+
+    /* Terminal typing effect */
+    .typing {
+      overflow: hidden;
+      border-right: 2px solid var(--terminal-green);
+      white-space: nowrap;
+      animation: typing 2s steps(40) forwards, blink 0.7s step-end infinite;
+    }
+
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent; }
+    }
+
+    /* Loading spinner */
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #333;
+      border-top-color: var(--terminal-cyan);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Summary panel */
+    .summary-panel {
+      background: var(--bg-panel);
+      border: 2px solid var(--terminal-gold);
+      border-radius: 8px;
+      padding: 25px;
+      margin: 20px 0;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-label {
+      color: #888;
+    }
+
+    .summary-value {
+      color: var(--terminal-cyan);
+      font-weight: bold;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 40px 0;
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .title {
+        font-size: 2.5rem;
+        letter-spacing: 4px;
+      }
+
+      .class-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .button-row {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1 class="title">TECHNOMANCER</h1>
+      <p class="subtitle">Quest for the Code</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-bar">
+      <div class="progress-dot active" data-step="1"></div>
+      <div class="progress-dot" data-step="2"></div>
+      <div class="progress-dot" data-step="3"></div>
+      <div class="progress-dot" data-step="4"></div>
+      <div class="progress-dot" data-step="5"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div class="step active" id="step-1">
+      <div class="step-title">
+        <span class="step-number">1</span>
+        SYSTEM INITIALIZATION
+      </div>
+
+      <div class="narrative">
+        <p>The screen flickers to life...</p>
+        <p>You don't remember how you got here. The terminal hums with ancient power, its green phosphor glow casting shadows across forgotten circuitry.</p>
+        <p>A message appears:</p>
+        <p class="highlight">> WELCOME, TRAVELER. THE SYSTEM HAS BEEN WAITING FOR YOU.</p>
+        <p class="highlight">> TO PROCEED, YOU MUST IDENTIFY YOURSELF...</p>
+      </div>
+
+      <div class="button-row">
+        <button class="btn btn-primary" onclick="IntroSystem.nextStep()">BEGIN INITIALIZATION</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Name & Password -->
+    <div class="step" id="step-2">
+      <div class="step-title">
+        <span class="step-number">2</span>
+        IDENTITY REGISTRATION
+      </div>
+
+      <div class="narrative">
+        <p>> ENTER YOUR DESIGNATION. THIS WILL BE YOUR IDENTITY IN THE SYSTEM.</p>
+        <p>> CHOOSE WISELY. EACH NAME IS UNIQUE TO ITS BEARER.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="username">TECHNOMANCER NAME</label>
+        <input type="text" id="username" placeholder="Enter your name..." 
+               maxlength="20" autocomplete="off" oninput="IntroSystem.checkName()">
+        <div class="availability" id="name-status"></div>
+        <div class="error-message" id="name-error"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">ACCESS CODE (Password)</label>
+        <input type="password" id="password" placeholder="Create a password..." 
+               minlength="4" oninput="IntroSystem.validatePassword()">
+        <div class="error-message" id="password-error"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="password-confirm">CONFIRM ACCESS CODE</label>
+        <input type="password" id="password-confirm" placeholder="Confirm password..." 
+               oninput="IntroSystem.validatePassword()">
+        <div class="error-message" id="password-confirm-error"></div>
+      </div>
+
+      <div class="button-row">
+        <button class="btn" onclick="IntroSystem.prevStep()">◄ BACK</button>
+        <button class="btn btn-primary" id="btn-step2" onclick="IntroSystem.nextStep()" disabled>PROCEED ►</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Class Selection -->
+    <div class="step" id="step-3">
+      <div class="step-title">
+        <span class="step-number">3</span>
+        CLASS SELECTION
+      </div>
+
+      <div class="narrative">
+        <p>> THE SYSTEM DETECTS LATENT ABILITIES WITHIN YOU.</p>
+        <p>> SELECT YOUR PATH. EACH GRANTS UNIQUE POWERS.</p>
+      </div>
+
+      <div class="class-grid">
+        <div class="class-card" onclick="IntroSystem.selectClass('codeweaver')">
+          <div class="class-icon">🧙</div>
+          <div class="class-name">CODEWEAVER</div>
+          <div class="class-desc">Masters of arcane algorithms. High MP, powerful spells.</div>
+          <div class="class-stats">HP: 40 | MP: 80 | Focus: Magic</div>
+        </div>
+
+        <div class="class-card" onclick="IntroSystem.selectClass('debugger')">
+          <div class="class-icon">🛡️</div>
+          <div class="class-name">DEBUGGER</div>
+          <div class="class-desc">Warriors who fix what is broken. High HP, balanced skills.</div>
+          <div class="class-stats">HP: 70 | MP: 50 | Focus: Defense</div>
+        </div>
+
+        <div class="class-card" onclick="IntroSystem.selectClass('compiler')">
+          <div class="class-icon">⚔️</div>
+          <div class="class-name">COMPILER</div>
+          <div class="class-desc">Transform code into raw power. High damage, fast execution.</div>
+          <div class="class-stats">HP: 55 | MP: 60 | Focus: Attack</div>
+        </div>
+
+        <div class="class-card" onclick="IntroSystem.selectClass('sysadmin')">
+          <div class="class-icon">🔧</div>
+          <div class="class-name">SYSADMIN</div>
+          <div class="class-desc">Control the system itself. Utility skills, resource management.</div>
+          <div class="class-stats">HP: 50 | MP: 70 | Focus: Utility</div>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button class="btn" onclick="IntroSystem.prevStep()">◄ BACK</button>
+        <button class="btn btn-primary" id="btn-step3" onclick="IntroSystem.nextStep()" disabled>PROCEED ►</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Download -->
+    <div class="step" id="step-4">
+      <div class="step-title">
+        <span class="step-number">4</span>
+        SYSTEM DOWNLOAD
+      </div>
+
+      <div class="narrative">
+        <p>> YOUR IDENTITY HAS BEEN REGISTERED IN THE SYSTEM.</p>
+        <p>> TO ACCESS THE FULL EXPERIENCE, DOWNLOAD THE TECHNOMANCER CLIENT.</p>
+        <p>> YOUR PROGRESS WILL SYNC AUTOMATICALLY.</p>
+      </div>
+
+      <div class="download-options">
+        <div class="download-card">
+          <div class="download-icon">🖥️</div>
+          <div class="download-title">WINDOWS</div>
+          <p>Windows 10/11 64-bit</p>
+          <button class="btn" onclick="IntroSystem.download('windows')" style="margin-top: 15px;">
+            DOWNLOAD
+          </button>
+        </div>
+
+        <div class="download-card">
+          <div class="download-icon">🌐</div>
+          <div class="download-title">PLAY IN BROWSER</div>
+          <p>No download required</p>
+          <button class="btn btn-gold" onclick="IntroSystem.playInBrowser()" style="margin-top: 15px;">
+            PLAY NOW
+          </button>
+        </div>
+      </div>
+
+      <div class="narrative" style="text-align: center;">
+        <p style="color: #888;">Already have the client? Skip to login.</p>
+      </div>
+
+      <div class="button-row">
+        <button class="btn" onclick="IntroSystem.prevStep()">◄ BACK</button>
+        <button class="btn btn-primary" onclick="IntroSystem.nextStep()">SKIP TO SUMMARY ►</button>
+      </div>
+    </div>
+
+    <!-- Step 5: Summary & Complete -->
+    <div class="step" id="step-5">
+      <div class="step-title">
+        <span class="step-number">✓</span>
+        REGISTRATION COMPLETE
+      </div>
+
+      <div class="narrative">
+        <p>> INITIALIZATION SUCCESSFUL. YOUR JOURNEY BEGINS.</p>
+      </div>
+
+      <div class="summary-panel">
+        <div class="summary-row">
+          <span class="summary-label">Technomancer Name:</span>
+          <span class="summary-value" id="summary-name">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Class:</span>
+          <span class="summary-value" id="summary-class">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Starting HP:</span>
+          <span class="summary-value" id="summary-hp">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Starting MP:</span>
+          <span class="summary-value" id="summary-mp">-</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Account Status:</span>
+          <span class="summary-value" style="color: var(--terminal-green);">✓ ACTIVE</span>
+        </div>
+      </div>
+
+      <div class="narrative">
+        <p class="highlight">> REMEMBER YOUR CREDENTIALS:</p>
+        <p>Name: <strong id="cred-name">-</strong></p>
+        <p>Password: <strong>••••••••</strong> (the one you entered)</p>
+        <p style="margin-top: 15px; color: #888;">Use these to log in on any device or the desktop client.</p>
+      </div>
+
+      <div class="button-row">
+        <button class="btn btn-gold" onclick="IntroSystem.launchGame()">
+          ⚡ ENTER THE SYSTEM ⚡
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>TECHNOMANCER © 2026 | Quest for the Code</p>
+      <p style="margin-top: 10px;">
+        Already have an account? <a href="index.html" style="color: var(--terminal-cyan);">Log In</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // INTRO SYSTEM - Web-based character creation
+    // ============================================================
+    const IntroSystem = {
+      currentStep: 1,
+      totalSteps: 5,
+      
+      // User data being collected
+      userData: {
+        username: '',
+        password: '',
+        characterClass: '',
+        stats: {}
+      },
+
+      // Class definitions
+      classes: {
+        codeweaver: { name: 'Codeweaver', hp: 40, mp: 80, focus: 'Magic' },
+        debugger: { name: 'Debugger', hp: 70, mp: 50, focus: 'Defense' },
+        compiler: { name: 'Compiler', hp: 55, mp: 60, focus: 'Attack' },
+        sysadmin: { name: 'Sysadmin', hp: 50, mp: 70, focus: 'Utility' }
+      },
+
+      // Backend URL
+      backendUrl: 'https://coder-quest.onrender.com',
+
+      // Debounce timer for name checking
+      nameCheckTimer: null,
+
+      // ============================================================
+      // NAVIGATION
+      // ============================================================
+
+      nextStep() {
+        if (this.currentStep >= this.totalSteps) return;
+        
+        // Validate current step before proceeding
+        if (!this.validateStep(this.currentStep)) return;
+
+        // On step 2 completion, create the account
+        if (this.currentStep === 2) {
+          this.userData.username = document.getElementById('username').value.trim();
+          this.userData.password = document.getElementById('password').value;
+        }
+
+        // On step 3 completion, register the account
+        if (this.currentStep === 3) {
+          this.registerAccount();
+        }
+
+        this.currentStep++;
+        this.updateUI();
+      },
+
+      prevStep() {
+        if (this.currentStep <= 1) return;
+        this.currentStep--;
+        this.updateUI();
+      },
+
+      goToStep(step) {
+        if (step < 1 || step > this.totalSteps) return;
+        this.currentStep = step;
+        this.updateUI();
+      },
+
+      updateUI() {
+        // Update steps visibility
+        document.querySelectorAll('.step').forEach((el, i) => {
+          el.classList.toggle('active', i + 1 === this.currentStep);
+        });
+
+        // Update progress dots
+        document.querySelectorAll('.progress-dot').forEach((dot, i) => {
+          dot.classList.remove('active', 'complete');
+          if (i + 1 === this.currentStep) {
+            dot.classList.add('active');
+          } else if (i + 1 < this.currentStep) {
+            dot.classList.add('complete');
+          }
+        });
+
+        // Update summary if on final step
+        if (this.currentStep === 5) {
+          this.updateSummary();
+        }
+      },
+
+      // ============================================================
+      // VALIDATION
+      // ============================================================
+
+      validateStep(step) {
+        switch (step) {
+          case 2:
+            return this.validateIdentity();
+          case 3:
+            return !!this.userData.characterClass;
+          default:
+            return true;
+        }
+      },
+
+      validateIdentity() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('password-confirm').value;
+
+        if (!username || username.length < 3) {
+          this.showError('name-error', 'Name must be at least 3 characters');
+          return false;
+        }
+
+        if (!password || password.length < 4) {
+          this.showError('password-error', 'Password must be at least 4 characters');
+          return false;
+        }
+
+        if (password !== passwordConfirm) {
+          this.showError('password-confirm-error', 'Passwords do not match');
+          return false;
+        }
+
+        return true;
+      },
+
+      validatePassword() {
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('password-confirm').value;
+        
+        let valid = true;
+        
+        if (password && password.length < 4) {
+          this.showError('password-error', 'Password must be at least 4 characters');
+          valid = false;
+        } else {
+          this.hideError('password-error');
+        }
+
+        if (confirm && password !== confirm) {
+          this.showError('password-confirm-error', 'Passwords do not match');
+          valid = false;
+        } else if (confirm) {
+          this.hideError('password-confirm-error');
+        }
+
+        this.updateStep2Button();
+        return valid;
+      },
+
+      showError(id, message) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.textContent = message;
+          el.classList.add('visible');
+        }
+      },
+
+      hideError(id) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.remove('visible');
+        }
+      },
+
+      // ============================================================
+      // NAME AVAILABILITY CHECK
+      // ============================================================
+
+      checkName() {
+        const username = document.getElementById('username').value.trim();
+        const statusEl = document.getElementById('name-status');
+        
+        // Clear previous timer
+        if (this.nameCheckTimer) clearTimeout(this.nameCheckTimer);
+
+        // Validate locally first
+        if (!username) {
+          statusEl.textContent = '';
+          statusEl.className = 'availability';
+          this.updateStep2Button();
+          return;
+        }
+
+        if (username.length < 3) {
+          statusEl.textContent = 'Name must be at least 3 characters';
+          statusEl.className = 'availability taken';
+          this.updateStep2Button();
+          return;
+        }
+
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          statusEl.textContent = 'Only letters, numbers, and underscores allowed';
+          statusEl.className = 'availability taken';
+          this.updateStep2Button();
+          return;
+        }
+
+        // Show checking status
+        statusEl.textContent = 'Checking availability...';
+        statusEl.className = 'availability checking';
+
+        // Debounce the API call
+        this.nameCheckTimer = setTimeout(() => {
+          this.checkNameAvailability(username);
+        }, 500);
+      },
+
+      async checkNameAvailability(username) {
+        const statusEl = document.getElementById('name-status');
+        
+        try {
+          const response = await fetch(`${this.backendUrl}/api/user/check-name`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+          });
+
+          const data = await response.json();
+
+          if (data.available) {
+            statusEl.textContent = '✓ Name is available!';
+            statusEl.className = 'availability available';
+            this.userData.nameAvailable = true;
+          } else {
+            statusEl.textContent = '✗ Name is already taken';
+            statusEl.className = 'availability taken';
+            this.userData.nameAvailable = false;
+          }
+        } catch (error) {
+          // If backend is down, allow the name (will be checked on registration)
+          statusEl.textContent = '⚠ Could not verify (will check on submit)';
+          statusEl.className = 'availability checking';
+          this.userData.nameAvailable = true;
+        }
+
+        this.updateStep2Button();
+      },
+
+      updateStep2Button() {
+        const btn = document.getElementById('btn-step2');
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('password-confirm').value;
+
+        const valid = username.length >= 3 && 
+                     password.length >= 4 && 
+                     password === confirm &&
+                     this.userData.nameAvailable !== false;
+
+        btn.disabled = !valid;
+      },
+
+      // ============================================================
+      // CLASS SELECTION
+      // ============================================================
+
+      selectClass(className) {
+        // Update selection visuals
+        document.querySelectorAll('.class-card').forEach(card => {
+          card.classList.remove('selected');
+        });
+        event.currentTarget.classList.add('selected');
+
+        // Store selection
+        this.userData.characterClass = className;
+        this.userData.stats = this.classes[className];
+
+        // Enable proceed button
+        document.getElementById('btn-step3').disabled = false;
+      },
+
+      // ============================================================
+      // ACCOUNT REGISTRATION
+      // ============================================================
+
+      async registerAccount() {
+        try {
+          const response = await fetch(`${this.backendUrl}/api/user/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: this.userData.username,
+              password: this.userData.password,
+              characterClass: this.userData.characterClass,
+              stats: this.userData.stats
+            })
+          });
+
+          const data = await response.json();
+
+          if (!data.success) {
+            alert(`Registration failed: ${data.error}`);
+            this.goToStep(2);
+            return false;
+          }
+
+          // Store session token
+          this.userData.token = data.token;
+          localStorage.setItem('technomancer_token', data.token);
+          localStorage.setItem('technomancer_username', this.userData.username);
+
+          console.log('[Intro] Account registered successfully');
+          return true;
+
+        } catch (error) {
+          console.error('[Intro] Registration error:', error);
+          alert('Could not connect to server. Please try again.');
+          return false;
+        }
+      },
+
+      // ============================================================
+      // SUMMARY
+      // ============================================================
+
+      updateSummary() {
+        const stats = this.userData.stats;
+        document.getElementById('summary-name').textContent = this.userData.username;
+        document.getElementById('summary-class').textContent = stats.name || '-';
+        document.getElementById('summary-hp').textContent = stats.hp || '-';
+        document.getElementById('summary-mp').textContent = stats.mp || '-';
+        document.getElementById('cred-name').textContent = this.userData.username;
+      },
+
+      // ============================================================
+      // DOWNLOAD & LAUNCH
+      // ============================================================
+
+      download(platform) {
+        // TODO: Replace with actual download URLs
+        const urls = {
+          windows: 'https://github.com/JrPetersonjr/Coder_quest/releases/latest/download/TECHNOMANCER-win32-x64.zip',
+          mac: 'https://github.com/JrPetersonjr/Coder_quest/releases/latest/download/TECHNOMANCER-darwin-x64.zip',
+          linux: 'https://github.com/JrPetersonjr/Coder_quest/releases/latest/download/TECHNOMANCER-linux-x64.zip'
+        };
+
+        if (urls[platform]) {
+          window.open(urls[platform], '_blank');
+        } else {
+          alert('Download not available for this platform yet.');
+        }
+      },
+
+      playInBrowser() {
+        // Redirect to game with auto-login
+        window.location.href = `index.html?autoLogin=true&token=${this.userData.token}`;
+      },
+
+      launchGame() {
+        // Store credentials and launch
+        localStorage.setItem('technomancer_token', this.userData.token);
+        localStorage.setItem('technomancer_username', this.userData.username);
+        window.location.href = 'index.html?autoLogin=true';
+      }
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      IntroSystem.updateUI();
+      console.log('[Intro] Web intro system initialized');
+    });
+  </script>
+</body>
+</html>
