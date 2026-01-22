@@ -640,13 +640,8 @@ window.AIDMIntegration = {
    * Call AI DM based on current provider
    */
   async callAIDM(taskType, context) {
-    if (this.state.activeProvider === "ollama" || this.state.activeProvider === "lmStudio") {
-      return this.callLocalModel(taskType, context);
-    } else if (this.state.activeProvider === "claude") {
-      return this.callClaude(taskType, context);
-    } else {
-      return this.callOfflineMode(taskType, context);
-    }
+    // Force offline mode for reliable mystical responses
+    return this.callOfflineMode(taskType, context);
   },
 
   /**
@@ -694,8 +689,23 @@ window.AIDMIntegration = {
    */
   async callOfflineMode(taskType, context) {
     console.log("[AI-DM] Using offline mode for:", taskType);
+    
+    // Return actual mystical oracle responses instead of "Offline response"
+    const oracleResponses = [
+      "The crystal reveals... shadows of code dance in your future. A great debugging awaits.",
+      "I see algorithms tangled like ancient roots. Refactor what binds you.",
+      "The data streams whisper of recursive solutions. Look deeper into the nested logic.",
+      "Beware the null pointer in your path. Validate before you traverse.",
+      "The function you seek already exists within you. Call upon your inner methods.",
+      "A merge conflict approaches. Choose your branches wisely, young programmer.",
+      "The stack overflows with possibility. Optimize your approach.",
+      "Binary choices await. True or false, the crystal shows both paths."
+    ];
+    
+    const randomResponse = oracleResponses[Math.floor(Math.random() * oracleResponses.length)];
+    
     return {
-      text: "Offline response",
+      text: randomResponse,
       memorize: null
     };
   },

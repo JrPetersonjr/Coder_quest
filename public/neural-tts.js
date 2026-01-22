@@ -11,8 +11,8 @@ window.NeuralTTS = {
   // [CONFIG] - TTS Provider Settings
   // ============================================================
   config: {
-    enabled: false,
-    provider: 'azure',  // 'azure', 'elevenlabs', 'playht', 'google'
+    enabled: true,  // Enable by default
+    provider: 'browser',  // Use browser TTS for now
     
     // Backend endpoint (Render server will proxy to TTS API)
     backendUrl: 'https://coder-quest.onrender.com',
