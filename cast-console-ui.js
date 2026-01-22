@@ -590,23 +590,59 @@ window.CastConsoleUI = {
   },
 
   /**
-   * Speak Oracle response with TTS
-   * Uses Neural TTS if available, falls back to browser TTS
+   * Speak Oracle response with TTS - FORCE BROWSER TTS
    */
   speakOracle: function(text) {
-    if (!this.ttsEnabled) return;
+    console.log("[TTS] FORCE speaking oracle:", text);
     
-    // Try Neural TTS first (high-quality voices)
-    if (window.NeuralTTS && NeuralTTS.state.initialized) {
-      NeuralTTS.speak(text, {
-        character: 'oracle',
-        // Emotion auto-detected from text
-      });
+    // ALWAYS use browser TTS - it works reliably
+    if (!('speechSynthesis' in window)) {
+      console.warn("[TTS] No speech synthesis available");
       return;
     }
     
-    // Fallback to browser TTS
-    if (!('speechSynthesis' in window)) return;
+    // Cancel any ongoing speech
+    speechSynthesis.cancel();
+    
+    setTimeout(() => {
+      const cleanText = text
+        .replace(/\[.*?\]/g, '')  // Remove [brackets]
+        .replace(/[*_~`]/g, '')   // Remove markdown  
+        .replace(/\s+/g, ' ')     // Normalize whitespace
+        .trim();
+      
+      if (!cleanText) return;
+      
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      
+      // Get voices and log them
+      const voices = speechSynthesis.getVoices();
+      console.log("[TTS] Available voices:", voices.length);
+      
+      // Find mystical female voice
+      const oracleVoice = voices.find(v => 
+        v.name.includes('Zira') ||     // Windows
+        v.name.includes('Samantha') || // Mac
+        v.name.includes('female')
+      ) || voices[0];
+      
+      if (oracleVoice) {
+        utterance.voice = oracleVoice;
+        console.log("[TTS] Using voice:", oracleVoice.name);
+      }
+      
+      // Oracle voice settings
+      utterance.rate = 0.8;
+      utterance.pitch = 0.9; 
+      utterance.volume = 1.0;
+      
+      utterance.onstart = () => console.log("[TTS] Speaking started");
+      utterance.onend = () => console.log("[TTS] Speaking ended");
+      utterance.onerror = (e) => console.error("[TTS] Error:", e);
+      
+      speechSynthesis.speak(utterance);
+    }, 100);
+  },
     
     // Cancel any ongoing speech
     speechSynthesis.cancel();

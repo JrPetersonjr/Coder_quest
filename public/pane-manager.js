@@ -463,9 +463,12 @@ window.PaneManager = {
   },
 
   dockPane: function(id) {
-      const pane = this.panes[id];
-      if (!pane) return;
-      
+    // DECK FUNCTIONALITY DISABLED DUE TO CARD RELEASE ISSUES
+    console.log("[PaneManager] Deck system disabled - cannot dock pane:", id);
+    if (this.gameEngine) {
+      this.gameEngine.output("⚠️ Deck system temporarily disabled", "system");
+    }
+  },
       console.log("[PaneManager] Docking pane:", id);
       pane.isInDeck = true;
       pane.savedRect = { width: pane.element.style.width, height: pane.element.style.height };
@@ -552,12 +555,12 @@ window.PaneManager = {
   },
   
   undockPane: function(id, mouseX, mouseY) {
-      const pane = this.panes[id];
-      if (!pane) {
-        console.warn("[PaneManager] Cannot undock - pane not found:", id);
-        return;
-      }
-      
+    // DECK FUNCTIONALITY DISABLED DUE TO CARD RELEASE ISSUES
+    console.log("[PaneManager] Deck system disabled - cannot undock pane:", id);
+    if (this.gameEngine) {
+      this.gameEngine.output("⚠️ Deck system temporarily disabled", "system");
+    }
+  },
       console.log("[PaneManager] FORCE Undocking pane:", id, "from deck:", pane.isInDeck);
       
       // Force undock regardless of state
