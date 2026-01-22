@@ -1,6 +1,6 @@
 [build]
   # Build command to run before deploy
-  command = "powershell.exe -ExecutionPolicy Bypass -File ./create-netlify-build.ps1"
+  command = "pwsh -ExecutionPolicy Bypass -File ./create-netlify-build.ps1"
   
   # Directory to deploy (your public folder)
   publish = "public"
