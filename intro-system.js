@@ -367,22 +367,71 @@ window.IntroSystem = {
       gameEngine.output(`[CASTCONSOLE] Parameters accepted. Identity locked in.`, "system");
       await this.delay(700);
       
-      // Step 3: Choose class
-      console.log("[IntroSystem] Step 3: Prompting for class");
+      // Step 3: Determine class via AI Interview
+      console.log("[IntroSystem] Step 3: Initiating AI Class Determination");
       await this.delay(500);
-      gameEngine.output("[ARCANE ATTUNEMENT DETECTED]", "highlight");
-      gameEngine.output("Four resonances await activation:", "hint");
-      gameEngine.output("  [1] CODEWEAVER  — Master effects and reality manipulation", "hint");
-      gameEngine.output("  [2] DEBUGGER    — Unstoppable tank and resolution", "hint");
-      gameEngine.output("  [3] COMPILER    — Extreme efficiency and speed", "hint");
-      gameEngine.output("  [4] SYSADMIN    — Control and resource management", "hint");
+      gameEngine.output("[ARCANE RELEVANCE DETECTED]", "highlight");
+      gameEngine.output("The system must calibrate to your frequency...", "hint");
       
-      const classChoice = await this.promptQuestion(
-        gameEngine,
-        "[CASTCONSOLE] Which path calls to you? (1-4)",
-        "choice",
-        ["1", "2", "3", "4"]
-      );
+      let classChoice = null;
+      
+      // If AI is available, run the interview
+      if (window.AIConfig && window.AIConfig.state.initialized) {
+          gameEngine.output("[CASTCONSOLE] I will ask you three questions. Answer truthfully.", "system");
+          
+          const q1 = await this.promptQuestion(gameEngine, "[CASTCONSOLE] When a system breaks, what is your first instinct? (Analyze/Attack/Rewire/Observe)", "text");
+          const q2 = await this.promptQuestion(gameEngine, "[CASTCONSOLE] What do you fear most? (Irrelevance/Failure/Chaos/Stillness)", "text");
+          const q3 = await this.promptQuestion(gameEngine, "[CASTCONSOLE] describe your perfect reality in one sentence.", "text");
+
+          gameEngine.output("[CASTCONSOLE] Processing psychometric data...", "system");
+          
+          try {
+              const prompt = `
+              Analyze these three user answers and assign them one of the following classes:
+              - Codeweaver (Creative, magic-focused, reality manipulation)
+              - Debugger (Tank, conflict resolution, resilience)
+              - Compiler (Efficiency, speed, aggressive optimization)
+              - Sysadmin (Control, resource management, utility)
+
+              Answers:
+              1. System Break Instinct: ${q1}
+              2. Greatest Fear: ${q2}
+              3. Perfect Reality: ${q3}
+
+              Respond ONLY with the class name (Codeweaver, Debugger, Compiler, or Sysadmin).
+              `;
+              
+              const aiResponse = await window.AIConfig.chat(prompt, "You are the Ancient Terminal. Analyze the user's soul.");
+              const detectedClass = aiResponse.trim().toLowerCase();
+              
+              if (detectedClass.includes("codeweaver")) classChoice = "1";
+              else if (detectedClass.includes("debugger")) classChoice = "2";
+              else if (detectedClass.includes("compiler")) classChoice = "3";
+              else if (detectedClass.includes("sysadmin")) classChoice = "4";
+              
+              gameEngine.output(`[CASTCONSOLE] Analysis Complete. Your soul resonance is: ${detectedClass.toUpperCase()}`, "highlight");
+              await this.delay(1000);
+          } catch (e) {
+              console.warn("[IntroSystem] AI analysis failed, falling back to manual selection", e);
+              gameEngine.output("[CASTCONSOLE] Automated analysis failed. Manual override engaged.", "error");
+          }
+      }
+
+      // Fallback if AI failed or not initialized
+      if (!classChoice) {
+          gameEngine.output("Manual Selection Required:", "hint");
+          gameEngine.output("  [1] CODEWEAVER  — Master effects and reality manipulation", "hint");
+          gameEngine.output("  [2] DEBUGGER    — Unstoppable tank and resolution", "hint");
+          gameEngine.output("  [3] COMPILER    — Extreme efficiency and speed", "hint");
+          gameEngine.output("  [4] SYSADMIN    — Control and resource management", "hint");
+          
+          classChoice = await this.promptQuestion(
+              gameEngine,
+              "[CASTCONSOLE] Which path calls to you? (1-4)",
+              "choice",
+              ["1", "2", "3", "4"]
+          );
+      }
       
       console.log("[IntroSystem] Class choice received:", classChoice);
       const classMap = {
