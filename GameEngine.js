@@ -51,20 +51,38 @@ class GameEngine {
     
     console.log("[GameEngine] Processing command:", input);
     
-    // Parse parts for debug commands handling
+    // Priority 0: Admin authentication (/admin33)
+    if (input.trim() === "/admin33" && window.AdminDebugPanel) {
+        window.AdminDebugPanel.authenticate(input.trim());
+        return;
+    }
+    
+    // Parse parts for commands handling
     const parts = input.trim().split(/\s+/);
     const command = parts[0].toLowerCase();
     const args = parts.slice(1);
 
-    // 1. Check for debug commands directly first
-    if (command === "debug-graphics") {
-        this.cmdDebugGraphics(args);
-        return;
+    // 1. Check for debug commands - now require admin auth
+    if (command === "debug-graphics" || command === "debug-ai" || command === "syscheck") {
+        if (!window.AdminDebugPanel || !window.AdminDebugPanel.state.isAuthenticated) {
+            this.output("🔒 Debug commands require admin authentication.", "error");
+            return;
+        }
+        
+        if (command === "debug-graphics") {
+            this.cmdDebugGraphics(args);
+            return;
+        }
+        if (command === "debug-ai") {
+            this.cmdDebugAI(args);
+            return;
+        }
+        if (command === "syscheck") {
+            this.cmdSyscheck(args);
+            return;
+        }
     }
-    if (command === "debug-ai") {
-        this.cmdDebugAI(args);
-        return;
-    }
+    
     if (command === "apikey") {
         this.cmdApikey(args);
         return;
@@ -536,13 +554,10 @@ class GameEngine {
     this.output("  music volume [0-100] - Set volume", "system");
     this.output("", "system");
     this.output("SYSTEM:", "highlight");
-    this.output("  syscheck - Check all system status", "system");
+    this.output("  AI summon - Access AI dungeon master", "system");
     this.output("", "system");
-    this.output("DEBUG:", "highlight");
-    this.output("  test ai - Test AI backend connection", "system");
-    this.output("  test music - Test MIDI player", "system");
-    this.output("  test deck - Test deck functionality", "system");
-    this.output("", "system");
+    this.output("🔐 Admin debug tools available for authorized users", "system");
+    this.output("═══════════════════════════════════════════════════", "system");
   }
 
   /**
