@@ -23,25 +23,59 @@ const config = {
   version: "1.0.0",
   deployDir: "./deploy",
   
-  // Package configurations
+  // Package configurations - Consumer consumption-only versions
   packages: {
-    lightweight: {
-      name: "TECHNOMANCER-Lightweight",
-      description: "1.1GB - Single AI model for all tasks",
-      aiTier: "lightweight",
-      size: "~1.5GB"
+    web: {
+      name: "TECHNOMANCER-Web",
+      description: "Browser version - No installation required",
+      platform: "web",
+      aiTier: "consumption_only",
+      size: "~50MB",
+      features: ["pre_made_characters", "mystical_ai_responses", "browser_play"]
     },
-    standard: {
-      name: "TECHNOMANCER-Standard", 
-      description: "2.7GB - Balanced AI performance",
-      aiTier: "standard",
-      size: "~3.2GB"
+    desktop: {
+      name: "TECHNOMANCER-Desktop",
+      description: "Electron desktop app with packaged content",
+      platform: "electron", 
+      aiTier: "consumption_plus",
+      size: "~200MB",
+      features: ["offline_play", "pre_made_characters", "saved_progress", "mystical_ai"]
     },
-    premium: {
-      name: "TECHNOMANCER-Premium",
-      description: "7GB - Full specialized AI suite", 
-      aiTier: "premium",
-      size: "~7.5GB"
+    deluxe: {
+      name: "TECHNOMANCER-Deluxe",
+      description: "Premium desktop with extended content library",
+      platform: "electron",
+      aiTier: "consumption_deluxe", 
+      size: "~500MB",
+      features: ["extended_character_library", "premium_voices", "bonus_quests", "mystical_ai_enhanced"]
+    }
+  },
+
+  // Electron configuration for desktop packages
+  electronConfig: {
+    appId: "com.technomancer.questforthecode",
+    productName: "TECHNOMANCER: Quest for the Code",
+    copyright: "Copyright © 2026 TECHNOMANCER Games",
+    icon: "./ASSETS/icon",
+    directories: {
+      output: "./deploy/electron-dist"
+    },
+    files: [
+      "game/**/*",
+      "node_modules/**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,readme.md}"
+    ],
+    win: {
+      target: "nsis",
+      icon: "./ASSETS/icon.ico"
+    },
+    mac: {
+      target: "dmg",
+      icon: "./ASSETS/icon.icns"
+    },
+    linux: {
+      target: "AppImage",
+      icon: "./ASSETS/icon.png"
     }
   },
 
@@ -53,16 +87,14 @@ const config = {
     "GameUI.js", 
     "GraphicsUI.js",
     
-    // AI systems
-    "ai-config.js",
-    "ai-dynamic-delegator.js",
-    "ai-voice-trainer.js",
-    "database-integration.js",
-    "autonomous-character-generator.js",
-    "ai-dm-integration.js",
+    // Consumer AI systems - consumption only, no creation
+    "ai-config-consumer.js",
+    "ai-dm-integration.js", 
     "browser-llm.js",
-    "model-installer.js",
-    "deployment-config.js",
+    "neural-tts.js",
+    "cast-console-ui.js",
+    "pre-made-content.js",
+    "mystical-responses.js",
     
     // Game systems
     "ancient-terminals.js",
@@ -166,6 +198,237 @@ function copyDirectory(source, destination) {
   for (const item of items) {
     const sourcePath = path.join(source, item);
     const destPath = path.join(destination, item);
+    
+    if (fs.lstatSync(sourcePath).isDirectory()) {
+      copyDirectory(sourcePath, destPath);
+    } else {
+      fs.copyFileSync(sourcePath, destPath);
+    }
+  }
+}
+
+// ============================================================
+// [CONSUMER PACKAGING FUNCTIONS]
+// ============================================================
+
+async function createConsumerPackages() {
+  console.log('📱 Creating consumer packages...');
+  
+  for (const [packageId, packageConfig] of Object.entries(config.packages)) {
+    await createSinglePackage(packageId, packageConfig);
+  }
+  
+  console.log('✅ All consumer packages created');
+}
+
+async function createSinglePackage(packageId, packageConfig) {
+  console.log(`🎮 Creating ${packageConfig.name}...`);
+  
+  const packageDir = path.join(config.deployDir, packageConfig.name);
+  fs.mkdirSync(packageDir, { recursive: true });
+  
+  if (packageConfig.platform === 'electron') {
+    await createElectronPackage(packageId, packageConfig, packageDir);
+  } else {
+    await createWebPackage(packageId, packageConfig, packageDir);
+  }
+  
+  // Create consumer-specific configuration
+  await createConsumerConfig(packageConfig, packageDir);
+  
+  console.log(`✅ ${packageConfig.name} package created`);
+}
+
+async function createWebPackage(packageId, packageConfig, packageDir) {
+  // Copy game files to web package
+  const gameDir = path.join(packageDir, 'game');
+  fs.mkdirSync(gameDir, { recursive: true });
+  
+  // Copy consumer-safe files only
+  const consumerFiles = [
+    'index.html',
+    'GameEngine.js',
+    'GameUI.js',
+    'GraphicsUI.js',
+    'ai-config-consumer.js',
+    'ai-dm-integration.js',
+    'browser-llm.js',
+    'neural-tts.js',
+    'pre-made-content.js',
+    'mystical-responses.js',
+    'ancient-terminals.js',
+    'quest-system.js',
+    'save-system.js',
+    'battle-core.js',
+    'spell-crafting.js',
+    'dice.js',
+    'fx.js',
+    'fx-audio.js'
+  ];
+  
+  for (const file of consumerFiles) {
+    if (fs.existsSync(file)) {
+      fs.copyFileSync(file, path.join(gameDir, file));
+    }
+  }
+  
+  // Copy assets
+  if (fs.existsSync('./ASSETS')) {
+    copyDirectory('./ASSETS', path.join(gameDir, 'ASSETS'));
+  }
+  
+  // Create web-specific files
+  await createWebSpecificFiles(packageDir, packageConfig);
+}
+
+async function createElectronPackage(packageId, packageConfig, packageDir) {
+  // Copy all web files first
+  await createWebPackage(packageId, packageConfig, packageDir);
+  
+  // Add Electron-specific files
+  await createElectronFiles(packageDir, packageConfig);
+  
+  console.log(`  📱 Electron files created for ${packageConfig.name}`);
+}
+
+async function createElectronFiles(packageDir, packageConfig) {
+  // Create main.js for Electron
+  const mainJs = `
+const { app, BrowserWindow, Menu } = require('electron');
+const path = require('path');
+
+function createWindow() {
+  const mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    },
+    icon: path.join(__dirname, 'game/ASSETS/icon.png'),
+    title: '${packageConfig.name}'
+  });
+
+  mainWindow.loadFile('game/index.html');
+  
+  // Hide menu bar for clean gaming experience
+  Menu.setApplicationMenu(null);
+  
+  // Prevent external navigation
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    const parsedUrl = new URL(navigationUrl);
+    if (parsedUrl.origin !== 'file://') {
+      event.preventDefault();
+    }
+  });
+}
+
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+`;
+  
+  fs.writeFileSync(path.join(packageDir, 'main.js'), mainJs);
+  
+  // Create package.json for Electron
+  const electronPackageJson = {
+    name: packageConfig.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+    version: "1.0.0",
+    description: packageConfig.description,
+    main: "main.js",
+    scripts: {
+      start: "electron .",
+      build: "electron-builder"
+    },
+    author: "TECHNOMANCER Games",
+    license: "Proprietary",
+    devDependencies: {
+      electron: "^27.0.0",
+      "electron-builder": "^24.0.0"
+    }
+  };
+  
+  fs.writeFileSync(
+    path.join(packageDir, 'package.json'),
+    JSON.stringify(electronPackageJson, null, 2)
+  );
+}
+
+async function createWebSpecificFiles(packageDir, packageConfig) {
+  // Create README for web version
+  const readme = `# ${packageConfig.name}
+
+${packageConfig.description}
+
+## How to Play
+
+1. Open index.html in your web browser
+2. Enjoy the mystical adventure!
+
+## Features
+
+${packageConfig.features?.map(f => `- ${f.replace(/_/g, ' ')}`).join('\n') || '- Magical RPG experience'}
+
+## Size
+
+${packageConfig.size}
+
+---
+
+*Powered by TECHNOMANCER Engine*
+`;
+  
+  fs.writeFileSync(path.join(packageDir, 'README.txt'), readme);
+  
+  // Create simple launch script
+  const launchScript = `@echo off
+echo Starting TECHNOMANCER...
+echo.
+echo Opening game in your default browser...
+start game/index.html
+echo.
+echo Game launched! Close this window if desired.
+pause
+`;
+  
+  fs.writeFileSync(path.join(packageDir, 'START_GAME.bat'), launchScript);
+}
+
+async function createConsumerConfig(packageConfig, packageDir) {
+  // Create deployment info for this package
+  const deploymentInfo = {
+    packageName: packageConfig.name,
+    description: packageConfig.description,
+    platform: packageConfig.platform,
+    aiTier: packageConfig.aiTier,
+    size: packageConfig.size,
+    features: packageConfig.features || [],
+    restrictions: {
+      characterCreation: false,
+      voiceTraining: false, 
+      contentGeneration: false,
+      devModeAccess: false
+    },
+    consumptionOnly: true,
+    version: "1.0.0",
+    buildDate: new Date().toISOString()
+  };
+  
+  fs.writeFileSync(
+    path.join(packageDir, 'deployment-info.json'),
+    JSON.stringify(deploymentInfo, null, 2)
+  );
+}
     
     const stat = fs.statSync(sourcePath);
     
