@@ -370,6 +370,11 @@ window.CastConsoleUI = {
   voiceRecognition: null,
   isListening: false,
   isOraclePopped: false,
+  
+  // Text-to-Speech state
+  ttsEnabled: true,
+  ttsVoice: null,
+  ttsSpeaking: false,
 
   /**
    * Setup Crystal Ball interaction
@@ -398,48 +403,73 @@ window.CastConsoleUI = {
   },
 
   /**
-   * Setup Electron-only features (voice, popout)
+   * Setup voice features (works in browser and Electron)
    */
   setupOracleElectronFeatures: function() {
     const controls = document.getElementById("oracle-controls");
     const voiceBtn = document.getElementById("oracle-voice-btn");
     const popoutBtn = document.getElementById("oracle-popout-btn");
+    const ttsBtn = document.getElementById("oracle-tts-btn");
 
-    // Only show controls in Electron
-    if (window.electronAPI?.isElectron) {
+    // Show voice controls if speech APIs are supported
+    const hasVoiceInput = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+    const hasVoiceOutput = 'speechSynthesis' in window;
+    
+    if (hasVoiceInput || hasVoiceOutput) {
       if (controls) controls.style.display = "flex";
+      
+      // Initialize TTS and setup toggle button
+      if (hasVoiceOutput) {
+        this.initTTS();
+        if (ttsBtn) {
+          ttsBtn.addEventListener("click", () => {
+            const enabled = this.toggleTTS();
+            ttsBtn.textContent = enabled ? "🔊" : "🔇";
+            ttsBtn.title = enabled ? "Voice Output ON" : "Voice Output OFF";
+          });
+        }
+      } else if (ttsBtn) {
+        ttsBtn.style.display = "none";
+      }
 
-      // Setup voice recognition
-      if (voiceBtn) {
+      // Setup voice recognition (input)
+      if (voiceBtn && hasVoiceInput) {
         this.initVoiceRecognition();
         voiceBtn.addEventListener("click", () => this.toggleVoice());
+      } else if (voiceBtn && !hasVoiceInput) {
+        voiceBtn.style.display = "none";
       }
 
-      // Setup popout
-      if (popoutBtn) {
+      // Setup popout (Electron only)
+      if (popoutBtn && window.electronAPI?.isElectron) {
         popoutBtn.addEventListener("click", () => this.toggleOraclePopout());
+      } else if (popoutBtn) {
+        popoutBtn.style.display = "none";  // Hide popout in browser
       }
 
-      // Listen for Oracle responses from popout window
-      window.electronAPI.onOracleResponse((data) => {
-        if (data.type === "query") {
-          // User sent query from popout - process it
-          document.getElementById("crystal-ball-input").value = data.text;
-          this.consultOracle();
-        } else if (data.type === "dock") {
-          // User clicked dock button
+      // Electron-only event listeners
+      if (window.electronAPI?.isElectron) {
+        // Listen for Oracle responses from popout window
+        window.electronAPI.onOracleResponse((data) => {
+          if (data.type === "query") {
+            // User sent query from popout - process it
+            document.getElementById("crystal-ball-input").value = data.text;
+            this.consultOracle();
+          } else if (data.type === "dock") {
+            // User clicked dock button
+            this.isOraclePopped = false;
+            if (popoutBtn) popoutBtn.textContent = "⬈";
+          }
+        });
+
+        // Listen for Oracle being docked
+        window.electronAPI.onOracleDocked(() => {
           this.isOraclePopped = false;
           if (popoutBtn) popoutBtn.textContent = "⬈";
-        }
-      });
+        });
+      }
 
-      // Listen for Oracle being docked
-      window.electronAPI.onOracleDocked(() => {
-        this.isOraclePopped = false;
-        if (popoutBtn) popoutBtn.textContent = "⬈";
-      });
-
-      console.log("[CastConsoleUI] Electron Oracle features initialized");
+      console.log("[CastConsoleUI] Voice features initialized");
     }
   },
 
@@ -510,6 +540,109 @@ window.CastConsoleUI = {
     this.isListening = false;
     const btn = document.getElementById("oracle-voice-btn");
     if (btn) btn.classList.remove("listening");
+  },
+
+  /**
+   * Initialize Text-to-Speech
+   */
+  initTTS: function() {
+    if (!('speechSynthesis' in window)) {
+      console.warn("[TTS] Speech synthesis not supported");
+      return;
+    }
+
+    // Load voices (may be async)
+    const loadVoices = () => {
+      const voices = speechSynthesis.getVoices();
+      // Try to find a mystical-sounding voice (prefer female British or similar)
+      this.ttsVoice = voices.find(v => 
+        v.name.includes('Google UK English Female') ||
+        v.name.includes('Microsoft Zira') ||
+        v.name.includes('Samantha') ||
+        v.name.includes('Karen')
+      ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+      
+      if (this.ttsVoice) {
+        console.log("[TTS] Voice selected:", this.ttsVoice.name);
+      }
+    };
+
+    // Voices may load async
+    if (speechSynthesis.getVoices().length > 0) {
+      loadVoices();
+    } else {
+      speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    console.log("[CastConsoleUI] TTS initialized");
+  },
+
+  /**
+   * Speak Oracle response with TTS
+   */
+  speakOracle: function(text) {
+    if (!this.ttsEnabled || !('speechSynthesis' in window)) return;
+    
+    // Cancel any ongoing speech
+    speechSynthesis.cancel();
+
+    // Clean up text for speaking (remove special chars, etc)
+    const cleanText = text
+      .replace(/\[.*?\]/g, '')  // Remove [brackets]
+      .replace(/[*_~`]/g, '')   // Remove markdown
+      .replace(/\s+/g, ' ')     // Normalize whitespace
+      .trim();
+
+    if (!cleanText) return;
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    
+    // Oracle voice settings - mystical and ethereal
+    utterance.voice = this.ttsVoice;
+    utterance.rate = 0.85;      // Slightly slower for mystical effect
+    utterance.pitch = 1.1;      // Slightly higher for ethereal quality
+    utterance.volume = 0.9;
+
+    utterance.onstart = () => {
+      this.ttsSpeaking = true;
+      const display = document.getElementById("crystal-ball-display");
+      if (display) display.classList.add("active");
+    };
+
+    utterance.onend = () => {
+      this.ttsSpeaking = false;
+      const display = document.getElementById("crystal-ball-display");
+      if (display) display.classList.remove("active");
+    };
+
+    utterance.onerror = (e) => {
+      console.warn("[TTS] Error:", e.error);
+      this.ttsSpeaking = false;
+    };
+
+    speechSynthesis.speak(utterance);
+  },
+
+  /**
+   * Toggle TTS on/off
+   */
+  toggleTTS: function() {
+    this.ttsEnabled = !this.ttsEnabled;
+    if (!this.ttsEnabled) {
+      speechSynthesis.cancel();
+    }
+    console.log("[TTS]", this.ttsEnabled ? "Enabled" : "Disabled");
+    return this.ttsEnabled;
+  },
+
+  /**
+   * Stop current speech
+   */
+  stopSpeaking: function() {
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+      this.ttsSpeaking = false;
+    }
   },
 
   /**
@@ -588,6 +721,9 @@ window.CastConsoleUI = {
           setTimeout(() => display.classList.remove("active"), 2000);
         }
         this.updateCrystalBallDisplay();
+        
+        // Speak the response with TTS
+        this.speakOracle(response);
         
         // Send to popout window if open
         this.sendToOraclePopout(response);
