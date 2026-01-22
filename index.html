@@ -1090,6 +1090,45 @@
       padding: 8px;
       color: #00ff00;
     }
+
+    /* AI Status Panel Styles */
+    .ai-status-panel {
+      margin-top: 8px;
+    }
+
+    .ai-connection-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #ai-status-text {
+      font-size: 0.85em;
+      font-weight: bold;
+      color: #ffaa00;
+    }
+
+    #ai-setup-btn {
+      background: #002200;
+      border: 1px solid #00ff00;
+      color: #00ff00;
+      padding: 4px 8px;
+      font-size: 0.7em;
+      cursor: pointer;
+      border-radius: 3px;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    #ai-setup-btn:hover {
+      background: #004400;
+      transform: scale(1.05);
+    }
+
+    #ai-setup-btn:active {
+      transform: scale(0.95);
+    }
   </style>
 </head>
 <body>
@@ -1375,6 +1414,17 @@
             <div class="quests-panel" id="quests-panel">
               <!-- Quest items will be populated here -->
             </div>
+
+            <!-- AI Oracle Status -->
+            <div class="stats-header" style="margin-top: 8px;">[ AI ORACLE STATUS ]</div>
+            <div class="ai-status-panel">
+              <div class="stat-group">
+                <div class="ai-connection-info">
+                  <span id="ai-status-text">🔮 Checking...</span>
+                  <button id="ai-setup-btn" onclick="window.AIConnectionWizard && AIConnectionWizard.show()" title="Configure AI Oracle">⚙️ Setup</button>
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -1449,6 +1499,9 @@
   
   <!-- NEW: AI Integration System -->
   <script src="ai-config.js"></script>
+  
+  <!-- NEW: AI Connection Wizard -->
+  <script src="ai-connection-wizard.js"></script>
   
   <!-- NEW: Qwen Roleplay V2 Configuration -->
   <script src="qwen-roleplay-config.js"></script>
@@ -1713,6 +1766,38 @@
       // Bootstrap all integrations (pass DiceSystem singleton + aiDMIntegration)
       console.log("[Boot] Bootstrapping system integrations...");
       IntegrationBootstrap.initialize(gameEngine, window.DiceSystem, window.AIDMIntegration);
+      
+      // Initialize AI status display
+      function updateAIStatus() {
+        const statusEl = document.getElementById('ai-status-text');
+        const setupBtn = document.getElementById('ai-setup-btn');
+        
+        if (!statusEl) return;
+        
+        try {
+          if (window.AIConfig && window.AIConfig.state.activeProvider) {
+            statusEl.textContent = '✅ Oracle Connected';
+            statusEl.style.color = '#00ff00';
+            if (setupBtn) setupBtn.textContent = '🔧 Reconfigure';
+          } else if (window.AIDMIntegration && window.AIDMIntegration.callOfflineMode) {
+            statusEl.textContent = '🔮 Offline Oracle Ready';
+            statusEl.style.color = '#ffaa00';
+            if (setupBtn) setupBtn.textContent = '⚙️ Setup Enhanced';
+          } else {
+            statusEl.textContent = '❌ Oracle Offline';
+            statusEl.style.color = '#ff4400';
+            if (setupBtn) setupBtn.textContent = '⚙️ Setup Oracle';
+          }
+        } catch (e) {
+          statusEl.textContent = '🔮 Fallback Oracle';
+          statusEl.style.color = '#ffaa00';
+          if (setupBtn) setupBtn.textContent = '⚙️ Setup AI';
+        }
+      }
+      
+      updateAIStatus();
+      // Update AI status every 10 seconds
+      setInterval(updateAIStatus, 10000);
       
       // Hook into engine's onGraphicsUnlock for graphics layer
       gameEngine.onGraphicsUnlock = handleGraphicsUnlock;

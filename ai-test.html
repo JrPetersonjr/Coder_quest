@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Mechanics Test Console</title>
+    <style>
+        body { 
+            background: #000; 
+            color: #00ff00; 
+            font-family: monospace; 
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        button {
+            background: #002200;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #004400; }
+        #results { 
+            background: #001100; 
+            padding: 10px; 
+            margin: 10px 0; 
+            max-height: 300px; 
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔮 AI MECHANICS TEST CONSOLE 🔮</h1>
+    
+    <div class="test-section">
+        <h3>1. AI CONFIG VERIFICATION</h3>
+        <button onclick="testAIConfig()">Test AI Config</button>
+        <button onclick="testBrowserLLM()">Test Browser LLM</button>
+    </div>
+
+    <div class="test-section">
+        <h3>2. ORACLE/DM SYSTEM</h3>
+        <button onclick="testOracleOffline()">Test Oracle (Offline Mode)</button>
+        <button onclick="testMysticalResponses()">Test Mystical Responses</button>
+    </div>
+
+    <div class="test-section">
+        <h3>3. TTS SYSTEM</h3>
+        <button onclick="testTTSAvailable()">Test TTS Available</button>
+        <button onclick="testOracleVoice()">Test Oracle Voice</button>
+    </div>
+
+    <div class="test-section">
+        <h3>4. INTEGRATION TESTS</h3>
+        <button onclick="testFullOracle()">Full Oracle Test</button>
+        <button onclick="testAIFallbacks()">Test AI Fallbacks</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script src="./ai-config.js"></script>
+    <script src="./ai-dm-integration.js"></script>
+    <script src="./browser-llm.js"></script>
+    <script src="./cast-console-ui.js"></script>
+
+    <script>
+        const log = (msg) => {
+            const results = document.getElementById('results');
+            results.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            results.scrollTop = results.scrollHeight;
+        };
+
+        function testAIConfig() {
+            if (typeof window.AIConfig !== 'undefined') {
+                log('✓ AI Config loaded successfully');
+                log(`✓ Primary provider: ${window.AIConfig.config.primaryProvider}`);
+                log(`✓ Fallback providers: ${window.AIConfig.config.fallbackProviders.join(', ')}`);
+            } else {
+                log('✗ AI Config not loaded');
+            }
+        }
+
+        function testBrowserLLM() {
+            if (typeof window.BrowserLLM !== 'undefined') {
+                log('✓ Browser LLM module loaded');
+                log(`✓ Model: ${window.BrowserLLM.config.model}`);
+                log(`✓ Fallback: ${window.BrowserLLM.config.fallbackModel}`);
+            } else {
+                log('✗ Browser LLM not loaded');
+            }
+        }
+
+        async function testOracleOffline() {
+            if (typeof window.AIDMIntegration !== 'undefined') {
+                log('✓ AI DM Integration loaded');
+                
+                try {
+                    const response = await window.AIDMIntegration.callOfflineMode('oracle', 'test');
+                    log(`✓ Oracle offline response: "${response.text}"`);
+                } catch (e) {
+                    log(`✗ Oracle offline error: ${e.message}`);
+                }
+            } else {
+                log('✗ AI DM Integration not loaded');
+            }
+        }
+
+        function testMysticalResponses() {
+            if (typeof window.AIDMIntegration !== 'undefined') {
+                // Test multiple responses
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(async () => {
+                        const response = await window.AIDMIntegration.callOfflineMode('oracle', 'test');
+                        log(`✓ Mystical response ${i+1}: "${response.text}"`);
+                    }, i * 500);
+                }
+            } else {
+                log('✗ Cannot test - AI DM not loaded');
+            }
+        }
+
+        function testTTSAvailable() {
+            if ('speechSynthesis' in window) {
+                log('✓ Speech synthesis available');
+                
+                const voices = speechSynthesis.getVoices();
+                log(`✓ Available voices: ${voices.length}`);
+                
+                const femaleVoice = voices.find(v => 
+                    v.name.includes('Zira') || 
+                    v.name.includes('Samantha') || 
+                    v.name.includes('female')
+                );
+                
+                if (femaleVoice) {
+                    log(`✓ Oracle voice found: ${femaleVoice.name}`);
+                } else {
+                    log('⚠ No specific oracle voice found, using default');
+                }
+            } else {
+                log('✗ Speech synthesis not available');
+            }
+        }
+
+        function testOracleVoice() {
+            if ('speechSynthesis' in window) {
+                const testText = "The crystal reveals your future in code.";
+                
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(testText);
+                
+                const voices = speechSynthesis.getVoices();
+                const oracleVoice = voices.find(v => 
+                    v.name.includes('Zira') || 
+                    v.name.includes('Samantha')
+                ) || voices[0];
+                
+                if (oracleVoice) utterance.voice = oracleVoice;
+                utterance.rate = 0.8;
+                utterance.pitch = 0.9;
+                
+                utterance.onstart = () => log('✓ Oracle speaking...');
+                utterance.onend = () => log('✓ Oracle speech complete');
+                utterance.onerror = (e) => log(`✗ TTS error: ${e.error}`);
+                
+                speechSynthesis.speak(utterance);
+            } else {
+                log('✗ TTS not available');
+            }
+        }
+
+        async function testFullOracle() {
+            log('🔮 Starting full Oracle test...');
+            
+            try {
+                // Get mystical response
+                const response = await window.AIDMIntegration.callOfflineMode('oracle', 'Tell me my future');
+                log(`✓ Oracle response: "${response.text}"`);
+                
+                // Speak it
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(response.text);
+                    const voices = speechSynthesis.getVoices();
+                    const oracleVoice = voices.find(v => v.name.includes('Zira')) || voices[0];
+                    
+                    if (oracleVoice) utterance.voice = oracleVoice;
+                    utterance.rate = 0.8;
+                    utterance.pitch = 0.9;
+                    
+                    speechSynthesis.speak(utterance);
+                    log('✓ Full Oracle test complete - mystical response spoken');
+                } else {
+                    log('⚠ Oracle response generated but TTS unavailable');
+                }
+            } catch (e) {
+                log(`✗ Full Oracle test failed: ${e.message}`);
+            }
+        }
+
+        function testAIFallbacks() {
+            log('Testing AI fallback chain...');
+            
+            // Test primary (browser LLM)
+            if (window.BrowserLLM) {
+                log('✓ Primary: Browser LLM available');
+            } else {
+                log('✗ Primary: Browser LLM missing');
+            }
+            
+            // Test offline mode
+            if (window.AIDMIntegration && window.AIDMIntegration.callOfflineMode) {
+                log('✓ Fallback: Offline mode available');
+            } else {
+                log('✗ Fallback: Offline mode missing');
+            }
+            
+            // Test TTS fallback
+            if ('speechSynthesis' in window) {
+                log('✓ TTS: Browser synthesis available');
+            } else {
+                log('✗ TTS: No synthesis available');
+            }
+            
+            log('✓ Fallback chain verification complete');
+        }
+
+        // Initialize when page loads
+        window.onload = () => {
+            log('AI Mechanics Test Console Ready');
+            log('Click buttons above to test each system');
+        };
+    </script>
+</body>
+</html>
